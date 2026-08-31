@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [1.0.3] - 2026-09-01
+
+### Changed
+- Refresh the public example workflow layout using the user-tested ComfyUI arrangement.
+- Simplify visible node titles and remove two redundant explanatory note nodes for a cleaner canvas.
+- Keep the optional saved-configuration loader bypassed in the example workflow.
+- Preserve all MiniMax Music 3, FlashSR, restoration, release-prep, artwork, metadata, and output processing values.
+- Keep the repaired MiniMax Music 3 subgraph boundary links introduced in 1.0.1.
+- Remove the transient serialized `Refresh prompt lists` button state; the frontend extension recreates the button at runtime.
+
 ## [1.0.1] - 2026-08-31
 
 ### Fixed

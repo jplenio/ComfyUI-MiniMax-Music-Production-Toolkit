@@ -63,7 +63,7 @@ def create_zip(output: Path) -> None:
             data = path.read_bytes()
             info = zipfile.ZipInfo(str(arcname).replace(os.sep, "/"))
             # Stable timestamp so identical source content creates reproducible ZIP metadata.
-            info.date_time = (2026, 8, 31, 12, 0, 0)
+            info.date_time = (2026, 9, 1, 12, 0, 0)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (0o100644 & 0xFFFF) << 16
             zf.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
