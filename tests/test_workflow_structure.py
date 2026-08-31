@@ -29,6 +29,41 @@ class WorkflowTests(unittest.TestCase):
                 for lid in out.get("links") or []:
                     self.assertIn(lid, links)
 
+
+    def test_subgraph_links_resolve_including_boundary_nodes(self):
+        definitions = self.wf.get("definitions") or {}
+        for subgraph in definitions.get("subgraphs", []) or []:
+            nodes = {n["id"]: n for n in subgraph.get("nodes", [])}
+            links = {l["id"]: l for l in subgraph.get("links", [])}
+            input_id = (subgraph.get("inputNode") or {}).get("id")
+            output_id = (subgraph.get("outputNode") or {}).get("id")
+            valid_endpoints = set(nodes) | {x for x in (input_id, output_id) if x is not None}
+
+            for item in (subgraph.get("inputs", []) or []) + (subgraph.get("outputs", []) or []):
+                for lid in item.get("linkIds") or []:
+                    self.assertIn(lid, links, (subgraph.get("name"), item.get("name"), lid))
+
+            for node in nodes.values():
+                for inp in node.get("inputs", []) or []:
+                    if inp.get("link") is not None:
+                        self.assertIn(inp["link"], links, (subgraph.get("name"), node["id"], inp.get("name")))
+                for out in node.get("outputs", []) or []:
+                    for lid in out.get("links") or []:
+                        self.assertIn(lid, links, (subgraph.get("name"), node["id"], out.get("name")))
+
+            for lid, link in links.items():
+                self.assertIn(link["origin_id"], valid_endpoints, lid)
+                self.assertIn(link["target_id"], valid_endpoints, lid)
+
+    def test_subgraph_instance_inputs_match_definition(self):
+        definitions = self.wf.get("definitions") or {}
+        defs = {d.get("id"): d for d in definitions.get("subgraphs", []) or []}
+        for node in self.wf.get("nodes", []):
+            if node.get("type") in defs:
+                expected = [i.get("name") for i in defs[node["type"]].get("inputs", [])]
+                actual = [i.get("name") for i in node.get("inputs", [])]
+                self.assertEqual(actual, expected, node.get("id"))
+
     def test_public_metadata_is_generic(self):
         tags = next(n for n in self.wf["nodes"] if n["type"] == "MiniMaxStandardAudioTags")
         values = tags["widgets_values_named"]

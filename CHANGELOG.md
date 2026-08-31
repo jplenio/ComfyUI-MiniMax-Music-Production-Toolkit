@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [1.0.1] - 2026-08-31
+
+### Fixed
+- Preserve MiniMax Music 3 subgraph boundary links while sanitizing the public example workflow.
+- Fix ComfyUI `No link found in parent graph ... unet_name` and equivalent missing subgraph-input/output link errors.
+- Extend release validation and unit tests to verify subgraph boundary links, child-node links, and parent/definition input alignment.
+- Make public-workflow version metadata follow `VERSION` automatically.
+
 ## [1.0.0] - 2026-08-31
 
 ### Added

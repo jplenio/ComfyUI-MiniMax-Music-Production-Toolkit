@@ -47,3 +47,8 @@ Do not assume that more reconstructed bandwidth sounds more natural.
 ## Quiet tracks change level unexpectedly
 
 `Audio Release Prep` uses static full-program gain only. If you hear time-varying pumping, verify you are running the current toolkit version and that no additional compressor/limiter/loudness node exists elsewhere in the graph.
+
+
+## `No link found in parent graph ...`
+
+If ComfyUI reports a message such as `No link found in parent graph for id [37:6] slot [0] unet_name`, the workflow contains a broken serialized subgraph boundary link. Version 1.0.1 fixes the affected v1.0.0 example workflow. Use the v1.0.1 example workflow or later. This is a workflow-serialization issue, not a missing MiniMax model file.

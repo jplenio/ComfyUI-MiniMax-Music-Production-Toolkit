@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import tomllib
 import unittest
 from pathlib import Path
@@ -15,7 +16,13 @@ class RepositoryMetadataTests(unittest.TestCase):
     def test_versions_are_consistent(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertEqual(self.data["project"]["version"], version)
-        self.assertEqual(version, "1.0.0")
+        self.assertRegex(version, r"^\d+\.\d+\.\d+$")
+        project_info = (ROOT / "project_info.py").read_text(encoding="utf-8")
+        match = re.search(r'^VERSION\s*=\s*["\']([^"\']+)["\']', project_info, re.M)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), version)
+        citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+        self.assertIn(f"version: {version}", citation)
 
     def test_publisher_and_repository_are_configured(self):
         self.assertEqual(self.data["tool"]["comfy"]["PublisherId"], "jplenio")

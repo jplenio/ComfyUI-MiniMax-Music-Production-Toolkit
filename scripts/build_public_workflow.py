@@ -35,6 +35,8 @@ def widget_named(node: dict, values: dict) -> None:
 def build(source: Path, destination: Path, system_prompt_file: Path) -> dict:
     wf = json.loads(source.read_text(encoding="utf-8"))
     system_prompt = system_prompt_file.read_text(encoding="utf-8-sig").strip()
+    version_file = Path(__file__).resolve().parents[1] / "VERSION"
+    release_version = version_file.read_text(encoding="utf-8").strip() if version_file.exists() else "dev"
 
     wf["nodes"] = [n for n in wf["nodes"] if n["id"] not in REMOVE_NODE_IDS]
     wf["links"] = [l for l in wf["links"] if l[0] not in REMOVE_LINK_IDS]
@@ -61,7 +63,7 @@ def build(source: Path, destination: Path, system_prompt_file: Path) -> dict:
 
     # Public toolkit name in reproducibility metadata.
     n57 = node_by_id(wf, 57)
-    workflow_name = "MiniMax Music Production Toolkit 1.0.0 – Example Workflow"
+    workflow_name = f"MiniMax Music Production Toolkit {release_version} – Example Workflow"
     if n57.get("widgets_values"):
         n57["widgets_values"][-1] = workflow_name
     n57.setdefault("widgets_values_named", {})["workflow_name"] = workflow_name
@@ -175,17 +177,30 @@ def build(source: Path, destination: Path, system_prompt_file: Path) -> dict:
                     if n.get("type") not in {"Note", "MarkdownNote"}
                 ]
                 sub_ids = {n.get("id") for n in subgraph.get("nodes", [])}
+                # Subgraphs use virtual boundary nodes for their public inputs/outputs.
+                # Those boundary IDs are NOT present in subgraph["nodes"], so they must
+                # be treated as valid endpoints when sanitizing links. Dropping them
+                # produces ComfyUI errors such as:
+                #   No link found in parent graph for id [37:6] slot [0] unet_name
+                input_boundary_id = (subgraph.get("inputNode") or {}).get("id")
+                output_boundary_id = (subgraph.get("outputNode") or {}).get("id")
+                valid_endpoints = set(sub_ids)
+                if input_boundary_id is not None:
+                    valid_endpoints.add(input_boundary_id)
+                if output_boundary_id is not None:
+                    valid_endpoints.add(output_boundary_id)
+
                 # Definitions may use object-style links rather than the top-level array form.
                 cleaned_links = []
                 for link in subgraph.get("links", []) or []:
                     if isinstance(link, dict):
-                        if link.get("origin_id") not in sub_ids or link.get("target_id") not in sub_ids:
+                        if link.get("origin_id") not in valid_endpoints or link.get("target_id") not in valid_endpoints:
                             continue
                     cleaned_links.append(link)
                 subgraph["links"] = cleaned_links
 
     wf.setdefault("extra", {})["workflow_name"] = "MiniMax Music Production Toolkit – Example Workflow"
-    wf["extra"]["workflow_version"] = "1.0.0"
+    wf["extra"]["workflow_version"] = release_version
 
     wf["last_node_id"] = max(n["id"] for n in wf["nodes"])
     wf["last_link_id"] = max(l[0] for l in wf["links"])

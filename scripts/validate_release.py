@@ -14,7 +14,7 @@ REQUIRED = [
     "README.md", "INSTALLATION.md", "WORKFLOW.md", "PROMPT_LIBRARY.md",
     "AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
     "NOTICE.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md",
-    "CITATION.cff", "RELEASE_NOTES_v1.0.0.md", "VERSION",
+    "CITATION.cff", "VERSION",
     "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py",
     "example_workflows/MiniMax_Music3_Production_Toolkit.json",
     "prompts/system/minimax-music3-production.txt",
@@ -28,7 +28,11 @@ def fail(message: str) -> None:
 
 
 def check_required() -> None:
-    missing = [rel for rel in REQUIRED if not (ROOT / rel).exists()]
+    required = list(REQUIRED)
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip() if (ROOT / "VERSION").exists() else ""
+    if version:
+        required.append(f"RELEASE_NOTES_v{version}.md")
+    missing = [rel for rel in required if not (ROOT / rel).exists()]
     if missing:
         fail("Missing required files: " + ", ".join(missing))
 
@@ -51,6 +55,54 @@ def check_pyproject() -> None:
         fail("[tool.comfy].PublisherId must be jplenio for this release")
     if project.get("version") != (ROOT / "VERSION").read_text(encoding="utf-8").strip():
         fail("VERSION and pyproject.toml version differ")
+
+
+def _validate_subgraph(subgraph: dict, errors: list[str], label: str) -> None:
+    nodes = {n.get("id"): n for n in subgraph.get("nodes", [])}
+    links = {l.get("id"): l for l in subgraph.get("links", []) if isinstance(l, dict)}
+    input_id = (subgraph.get("inputNode") or {}).get("id")
+    output_id = (subgraph.get("outputNode") or {}).get("id")
+    valid_endpoints = set(nodes) | {x for x in (input_id, output_id) if x is not None}
+
+    # Boundary declarations must point to real subgraph links.
+    for boundary_kind in ("inputs", "outputs"):
+        for slot, item in enumerate(subgraph.get(boundary_kind, []) or []):
+            for lid in item.get("linkIds") or []:
+                if lid not in links:
+                    errors.append(f"{label} {boundary_kind}[{slot}] {item.get('name')}: dangling linkId {lid}")
+
+    # Node input/output references must resolve inside this subgraph.
+    for node_id, node in nodes.items():
+        for slot, inp in enumerate(node.get("inputs", []) or []):
+            lid = inp.get("link")
+            if lid is not None and lid not in links:
+                errors.append(f"{label} node {node_id} input[{slot}] {inp.get('name')}: dangling link {lid}")
+        for slot, out in enumerate(node.get("outputs", []) or []):
+            for lid in out.get("links") or []:
+                if lid not in links:
+                    errors.append(f"{label} node {node_id} output[{slot}] {out.get('name')}: dangling link {lid}")
+
+    # Every stored link must connect valid real/virtual endpoints and valid slots.
+    for lid, link in links.items():
+        origin_id = link.get("origin_id")
+        target_id = link.get("target_id")
+        origin_slot = link.get("origin_slot")
+        target_slot = link.get("target_slot")
+        if origin_id not in valid_endpoints or target_id not in valid_endpoints:
+            errors.append(f"{label} link {lid}: invalid endpoint {origin_id}->{target_id}")
+            continue
+        if origin_id == input_id:
+            if not isinstance(origin_slot, int) or origin_slot >= len(subgraph.get("inputs", []) or []):
+                errors.append(f"{label} link {lid}: invalid subgraph input slot {origin_slot}")
+        elif origin_id in nodes:
+            if not isinstance(origin_slot, int) or origin_slot >= len(nodes[origin_id].get("outputs", []) or []):
+                errors.append(f"{label} link {lid}: invalid source slot {origin_slot}")
+        if target_id == output_id:
+            if not isinstance(target_slot, int) or target_slot >= len(subgraph.get("outputs", []) or []):
+                errors.append(f"{label} link {lid}: invalid subgraph output slot {target_slot}")
+        elif target_id in nodes:
+            if not isinstance(target_slot, int) or target_slot >= len(nodes[target_id].get("inputs", []) or []):
+                errors.append(f"{label} link {lid}: invalid destination slot {target_slot}")
 
 
 def check_workflow() -> None:
@@ -76,6 +128,12 @@ def check_workflow() -> None:
             for lid in out.get("links") or []:
                 if lid not in links:
                     errors.append(f"node {node['id']} output {out.get('name')}: dangling link {lid}")
+
+    definitions = wf.get("definitions") or {}
+    for idx, subgraph in enumerate(definitions.get("subgraphs", []) or []):
+        if isinstance(subgraph, dict):
+            _validate_subgraph(subgraph, errors, f"subgraph[{idx}] {subgraph.get('name', subgraph.get('id', 'unnamed'))}")
+
     if errors:
         fail("Invalid example workflow: " + "; ".join(errors[:10]))
     if "MiniMaxLLMSessionId" not in {n.get("type") for n in wf.get("nodes", [])}:
