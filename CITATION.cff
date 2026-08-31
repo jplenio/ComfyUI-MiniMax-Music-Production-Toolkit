@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If this toolkit is useful in your work, please cite the repository."
+title: "MiniMax Music Production Toolkit for ComfyUI"
+type: software
+authors:
+  - family-names: "Plenio"
+    given-names: "Johannes"
+repository-code: "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit"
+url: "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit"
+license: MIT
+version: 1.0.0
+date-released: 2026-08-31

@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose an improvement to the nodes, workflow, prompt library, audio processing, or documentation.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What production problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the desired inputs, outputs, or workflow behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Describe workarounds or other approaches you tried.

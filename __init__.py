@@ -1,0 +1,120 @@
+"""ComfyUI MiniMax Music Production Toolkit.
+
+The node class identifiers intentionally remain backwards-compatible with the
+earlier workflow versions, while display names and documentation use the
+public project naming introduced in 1.0.0.
+"""
+from __future__ import annotations
+
+from .project_info import PROJECT_NAME, VERSION
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("startup")
+
+from .audio_lowpass import (
+    NODE_CLASS_MAPPINGS as LOWPASS_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as LOWPASS_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .save_audio_absolute import (
+    NODE_CLASS_MAPPINGS as SAVEABS_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as SAVEABS_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .save_audio_smart_prefix import (
+    NODE_CLASS_MAPPINGS as SAVESMART_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as SAVESMART_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_batch import (
+    NODE_CLASS_MAPPINGS as BATCH_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as BATCH_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_settings import (
+    NODE_CLASS_MAPPINGS as SETTINGS_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as SETTINGS_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_metadata import (
+    NODE_CLASS_MAPPINGS as META_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as META_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_prompt_source import (
+    NODE_CLASS_MAPPINGS as PROMPT_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as PROMPT_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .ksampler_config import (
+    NODE_CLASS_MAPPINGS as KSAMPLER_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as KSAMPLER_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_audio_tags import (
+    NODE_CLASS_MAPPINGS as TAG_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as TAG_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .audio_declip import (
+    NODE_CLASS_MAPPINGS as DECLIP_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as DECLIP_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .audio_hf_repair import (
+    NODE_CLASS_MAPPINGS as HFREPAIR_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as HFREPAIR_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .audio_release_prep import (
+    NODE_CLASS_MAPPINGS as RELEASE_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as RELEASE_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .minimax_artwork import (
+    NODE_CLASS_MAPPINGS as ART_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as ART_NODE_DISPLAY_NAME_MAPPINGS,
+)
+from .session_utils import (
+    NODE_CLASS_MAPPINGS as SESSION_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as SESSION_NODE_DISPLAY_NAME_MAPPINGS,
+)
+
+NODE_CLASS_MAPPINGS = {
+    **LOWPASS_NODE_CLASS_MAPPINGS,
+    **SAVEABS_NODE_CLASS_MAPPINGS,
+    **SAVESMART_NODE_CLASS_MAPPINGS,
+    **BATCH_NODE_CLASS_MAPPINGS,
+    **SETTINGS_NODE_CLASS_MAPPINGS,
+    **META_NODE_CLASS_MAPPINGS,
+    **PROMPT_NODE_CLASS_MAPPINGS,
+    **KSAMPLER_NODE_CLASS_MAPPINGS,
+    **TAG_NODE_CLASS_MAPPINGS,
+    **ART_NODE_CLASS_MAPPINGS,
+    **RELEASE_NODE_CLASS_MAPPINGS,
+    **HFREPAIR_NODE_CLASS_MAPPINGS,
+    **DECLIP_NODE_CLASS_MAPPINGS,
+    **SESSION_NODE_CLASS_MAPPINGS,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    **LOWPASS_NODE_DISPLAY_NAME_MAPPINGS,
+    **SAVEABS_NODE_DISPLAY_NAME_MAPPINGS,
+    **SAVESMART_NODE_DISPLAY_NAME_MAPPINGS,
+    **BATCH_NODE_DISPLAY_NAME_MAPPINGS,
+    **SETTINGS_NODE_DISPLAY_NAME_MAPPINGS,
+    **META_NODE_DISPLAY_NAME_MAPPINGS,
+    **PROMPT_NODE_DISPLAY_NAME_MAPPINGS,
+    **KSAMPLER_NODE_DISPLAY_NAME_MAPPINGS,
+    **TAG_NODE_DISPLAY_NAME_MAPPINGS,
+    **ART_NODE_DISPLAY_NAME_MAPPINGS,
+    **RELEASE_NODE_DISPLAY_NAME_MAPPINGS,
+    **HFREPAIR_NODE_DISPLAY_NAME_MAPPINGS,
+    **DECLIP_NODE_DISPLAY_NAME_MAPPINGS,
+    **SESSION_NODE_DISPLAY_NAME_MAPPINGS,
+}
+
+from .ui_help import install_input_tooltips
+install_input_tooltips(NODE_CLASS_MAPPINGS)
+
+# WEB_DIRECTORY must point to the directory containing both JavaScript files and
+# docs/.  ComfyUI loads .js extensions and node documentation from this root.
+WEB_DIRECTORY = "./web"
+
+try:
+    from .prompt_library import register_routes
+    register_routes()
+except Exception:  # pragma: no cover - keep node import alive if server API changes
+    LOGGER.exception("Prompt-library route registration failed")
+
+LOGGER.info("Loaded %s %s (%d nodes)", PROJECT_NAME, VERSION, len(NODE_CLASS_MAPPINGS))
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

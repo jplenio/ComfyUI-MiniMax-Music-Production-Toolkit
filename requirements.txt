@@ -1,0 +1,5 @@
+scipy>=1.10
+soundfile>=0.12
+imageio-ffmpeg>=0.5
+mutagen>=1.47
+Pillow>=10.0

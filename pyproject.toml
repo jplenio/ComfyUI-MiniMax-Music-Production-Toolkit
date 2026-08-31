@@ -1,0 +1,33 @@
+[project]
+name = "comfyui-minimax-music-production-toolkit"
+version = "1.0.0"
+description = "Production-focused ComfyUI nodes for MiniMax Music 3 prompt orchestration, audio restoration, FlashSR hybrid processing, mastering, artwork and release metadata."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Johannes Plenio" }
+]
+dependencies = [
+  "scipy>=1.10",
+  "soundfile>=0.12",
+  "imageio-ffmpeg>=0.5",
+  "mutagen>=1.47",
+  "Pillow>=10.0"
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Sound/Audio"
+]
+
+[project.urls]
+Repository = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit"
+Documentation = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit#readme"
+"Bug Tracker" = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit/issues"
+
+[tool.comfy]
+PublisherId = "jplenio"
+DisplayName = "MiniMax Music Production Toolkit"

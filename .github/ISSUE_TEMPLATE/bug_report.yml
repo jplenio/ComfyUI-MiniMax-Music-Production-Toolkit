@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible problem with the toolkit or bundled example workflow.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve MiniMax Music Production Toolkit. Please remove private paths, prompts, API keys, and personal metadata before posting logs or workflow JSON.
+  - type: input
+    id: comfy_version
+    attributes:
+      label: ComfyUI version
+      placeholder: e.g. 0.x.x / frontend x.x.x
+    validations:
+      required: true
+  - type: input
+    id: toolkit_version
+    attributes:
+      label: Toolkit version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and Python
+      placeholder: e.g. Windows 11, Python 3.12
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Load ...
+        2. Set ...
+        3. Queue ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / traceback
+      description: Paste only the relevant section and redact private information.
+      render: text
+  - type: textarea
+    id: extras
+    attributes:
+      label: Additional context
+      description: Model variants, sample rate, workflow modifications, or other details that may matter.

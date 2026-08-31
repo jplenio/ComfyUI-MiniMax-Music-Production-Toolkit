@@ -1,0 +1,48 @@
+{
+  "purpose": "MiniMax Music 3 32 kHz -> controlled lowpass -> FlashSR 48 kHz",
+  "flashsr": {
+    "lowpass_input": false,
+    "output_sr": 48000
+  },
+  "phase_1_pre_filter_tests": [
+    {
+      "name": "baseline",
+      "pre_filter": "bypass / none",
+      "post_filter": "none"
+    },
+    {
+      "name": "pre_14k",
+      "preset": "PRE 14 kHz - light",
+      "post_filter": "none"
+    },
+    {
+      "name": "pre_12k",
+      "preset": "PRE 12 kHz - recommended",
+      "post_filter": "none"
+    },
+    {
+      "name": "pre_10k",
+      "preset": "PRE 10 kHz - strong",
+      "post_filter": "none"
+    },
+    {
+      "name": "pre_8k",
+      "preset": "PRE 8 kHz - aggressive",
+      "post_filter": "none"
+    }
+  ],
+  "phase_2_post_filter_tests": [
+    {
+      "name": "best_pre_no_post",
+      "post_filter": "none"
+    },
+    {
+      "name": "best_pre_post_20k",
+      "preset": "POST 20 kHz - recommended gentle"
+    },
+    {
+      "name": "best_pre_post_19k",
+      "preset": "POST 19 kHz - slightly stronger"
+    }
+  ]
+}
