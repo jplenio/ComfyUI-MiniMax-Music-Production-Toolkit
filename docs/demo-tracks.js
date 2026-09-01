@@ -51,7 +51,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Strange Horizons - The Amber Frame.jpg",
+    "cover": "assets/demo-covers/The Amber Frame.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/strange-horizons-the-amber-frame-1?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -87,7 +87,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Strange Horizons - The Long Way Back.jpg",
+    "cover": "assets/demo-covers/The Long Way Back.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/strange-horizons-the-long-way-back-11?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -123,7 +123,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Strange Horizons - The Slow Meridian.jpg",
+    "cover": "assets/demo-covers/The Slow Meridian.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/strange-horizons-the-slow-meridian-14?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -159,7 +159,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Strange Horizons - Marrow.jpg",
+    "cover": "assets/demo-covers/Marrow.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/strange-horizons-marrow-16?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -195,7 +195,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Beyond the Known - The Long Resonance.jpg",
+    "cover": "assets/demo-covers/The Long Resonance.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/beyond-the-known-the-long-resonance-2?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -231,7 +231,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/After Midnight - Piano in the Low Light.jpg",
+    "cover": "assets/demo-covers/Piano in the Low Light.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/after-midnight-piano-in-the-low-light-3?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -267,7 +267,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Neon Memories - Violet Static.jpg",
+    "cover": "assets/demo-covers/Violet Static.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/neon-memories-violet-static-7?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -303,7 +303,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Beyond the Known - The Frequency of Dusk.jpg",
+    "cover": "assets/demo-covers/The Frequency of Dusk.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/beyond-the-known-the-frequency-of-dusk-12?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -339,7 +339,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Beyond the Known - Beneath the Meridian.jpg",
+    "cover": "assets/demo-covers/Beneath the Meridian.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/beyond-the-known-beneath-the-meridian-15?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -375,7 +375,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Between Earth and Sky - The Long Afternoon.jpg",
+    "cover": "assets/demo-covers/The Long Afternoon.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/between-earth-and-sky-the-long-afternoon-9?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -411,7 +411,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Places We Left Behind - The Light Was Different.jpg",
+    "cover": "assets/demo-covers/The Light Was Different.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/places-we-left-behind-the-light-was-different-4?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -447,7 +447,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Wir waren analog - Vergeben.jpg",
+    "cover": "assets/demo-covers/Vergeben.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/wir-waren-analog-vergeben-13?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -483,7 +483,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Groove Theory - Pocket City.jpg",
+    "cover": "assets/demo-covers/Pocket City.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/groove-theory-pocket-city-5?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -519,7 +519,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Wir waren analog - Freigabe.jpg",
+    "cover": "assets/demo-covers/Freigabe.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/wir-waren-analog-freigabe-8?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -555,7 +555,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Beyond the Known - The Shape of Returning.jpg",
+    "cover": "assets/demo-covers/The Shape of Returning.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/beyond-the-known-the-shape-of-returning-17?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -591,7 +591,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Echoes Of Tomorrow - Where the Melody Rests.jpg",
+    "cover": "assets/demo-covers/Where the Melody Rests.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/echoes-of-tomorrow-where-the-melody-rests-10?in=pelenio/sets/minimax-music-3-comfyui"
   },
   {
@@ -627,7 +627,7 @@ window.MINIMAX_DEMO_TRACKS = [
       "targetTruePeakDbtp": -1.0,
       "processing": "Streaming Safe -14 LUFS / -1 dBTP"
     },
-    "cover": "assets/demo-covers/Celtic Folk - lyrics - A Name on the Dark.jpg",
+    "cover": "assets/demo-covers/A Name on the Dark.jpg",
     "soundcloudUrl": "https://soundcloud.com/pelenio/celtic-folk-lyrics-a-name-on-the-dark-6?in=pelenio/sets/minimax-music-3-comfyui"
   }
 ];
