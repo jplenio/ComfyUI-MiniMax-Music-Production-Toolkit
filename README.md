@@ -6,6 +6,12 @@ Author: [Johannes Plenio](https://github.com/jplenio)
 
 > Independent community project. No MiniMax, FLUX, LLM or FlashSR model weights are included.
 
+## 🎧 Listen to Demo Tracks
+
+Hear music generated entirely with this ComfyUI workflow:
+
+👉 [Open the MiniMax Music Production Toolkit Demo Gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/)
+
 ## What the toolkit does
 
 - **LLM Prompt Library / Template** — use manual prompts, bundled prompt files or external prompt directories for both user prompts and system prompts.
