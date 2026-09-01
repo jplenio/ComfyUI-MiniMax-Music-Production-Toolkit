@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-minimax-music-production-toolkit"
-version = "1.0.3"
+version = "1.0.5"
 description = "Production-focused ComfyUI nodes for MiniMax Music 3 prompt orchestration, audio restoration, FlashSR hybrid processing, mastering, artwork and release metadata."
 readme = "README.md"
 requires-python = ">=3.10"

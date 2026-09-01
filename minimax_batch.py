@@ -243,6 +243,7 @@ class MiniMaxOutputPaths:
                 "sr_flac_subdir": ("STRING", {"default": "48flac/", "multiline": False}),
                 "sr_mp3_subdir": ("STRING", {"default": "48mp3/", "multiline": False}),
                 "artwork_subdir": ("STRING", {"default": "artwork/", "multiline": False}),
+                "configuration_subdir": ("STRING", {"default": "json", "multiline": False}),
                 "append_variant_index": ("BOOLEAN", {"default": True}),
                 "variant_padding": ("INT", {"default": 2, "min": 1, "max": 6, "step": 1}),
             },
@@ -252,8 +253,8 @@ class MiniMaxOutputPaths:
             },
         }
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("original_prefix", "sr_flac_prefix", "sr_mp3_prefix", "artwork_prefix")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("original_prefix", "sr_flac_prefix", "sr_mp3_prefix", "artwork_prefix", "configuration_prefix")
     FUNCTION = "build"
     CATEGORY = "MiniMax Music Production Toolkit/batch"
 
@@ -269,7 +270,7 @@ class MiniMaxOutputPaths:
         pieces.append(source)
         return "/".join(pieces)
 
-    def build(self, source_name, base_output, original_subdir, sr_flac_subdir, sr_mp3_subdir, artwork_subdir,
+    def build(self, source_name, base_output, original_subdir, sr_flac_subdir, sr_mp3_subdir, artwork_subdir, configuration_subdir="json",
               append_variant_index=True, variant_padding=2, run_index=1, variant_count=1):
         source = _clean_source_name(source_name)
         if append_variant_index and int(variant_count or 1) > 1:
@@ -279,6 +280,7 @@ class MiniMaxOutputPaths:
             self._join(base_output, sr_flac_subdir, source),
             self._join(base_output, sr_mp3_subdir, source),
             self._join(base_output, artwork_subdir, source),
+            self._join(base_output, configuration_subdir, source),
         )
 
 

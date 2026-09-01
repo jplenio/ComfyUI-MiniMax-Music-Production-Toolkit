@@ -1,6 +1,6 @@
 # Save Image Smart Prefix
 
-Saves generated artwork as JPEG using the workflow's smart filename prefix and collision handling.
+Saves generated artwork as JPEG using smart output paths, collision handling and the same filename convention as the audio/JSON savers.
 
 **Node ID:** `SaveImageSmartPrefix`  
 **Category:** `MiniMax Music Production Toolkit/artwork`
@@ -10,15 +10,29 @@ Saves generated artwork as JPEG using the workflow's smart filename prefix and c
 ### Required
 
 - **`image`** (`IMAGE`) — ComfyUI IMAGE tensor to save as the cover JPG.
-- **`filename_prefix`** (`STRING`) — Output prefix/path for the JPG cover, normally produced by MiniMax Output Paths. The node adds .jpg and resolves collisions according to collision_mode.
-- **`collision_mode`** (choice: `auto_increment`, `overwrite`, `error_if_exists`) — What to do when the target file already exists: auto_increment creates a new numbered filename, overwrite replaces it, and error_if_exists stops with an error.
-- **`create_directories`** (`BOOLEAN`) — Create missing output folders automatically. Disable only if you deliberately want saving to fail when the destination directory does not already exist.
-- **`jpeg_quality`** (`INT`) — JPEG encoding quality from 50 to 100. Higher values preserve more detail at larger file size; around 90–95 is normally visually transparent for album artwork.
+- **`filename_prefix`** (`STRING`) — Output path/prefix, normally produced by `MiniMax Output Paths`. Its directory is preserved; the basename can be rebuilt by `filename_mode`.
+- **`collision_mode`** — `auto_increment`, `overwrite`, or `error_if_exists`.
+- **`create_directories`** (`BOOLEAN`) — Create missing output folders automatically.
+- **`jpeg_quality`** (`INT`) — JPEG quality from 50 to 100; 90–95 is normally visually transparent for album artwork.
 
-## Outputs
+### Optional / connected in the bundled workflow
 
-- **`saved_path`** (`STRING`)
+- **`title`** (`STRING`) — Generated song title.
+- **`audio_tags_json`** (`STRING`) — Standard tag object containing at least the configured album and generated title. The bundled workflow connects the same tag JSON that is sent to FLAC/MP3 saving.
+- **`filename_mode`** — `album - title` (default), `title only`, or `prefix as provided`.
 
-## Usage notes
+## Filename behavior
 
-Start with the defaults used by the bundled example workflow unless you have a specific reason to change this stage. Hover each input label in ComfyUI for parameter guidance.
+With the recommended `album - title` mode:
+
+```text
+Album = Example Album
+Title = Last Wick
+→ artwork/Example Album - Last Wick.jpg
+```
+
+The audio saver, artwork saver and centralized JSON writer use the same shared filename helper, so their basenames stay aligned. This fixes the pre-v1.0.5 behavior where the artwork could retain the selected prompt filename (for example `nordic-folk-vocal.jpg`).
+
+## Output
+
+- **`saved_path`** (`STRING`) — Actual JPG path after collision handling. This path is used for cover embedding and stored in the canonical production JSON.

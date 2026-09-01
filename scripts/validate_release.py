@@ -14,7 +14,7 @@ REQUIRED = [
     "README.md", "INSTALLATION.md", "WORKFLOW.md", "PROMPT_LIBRARY.md",
     "AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
     "NOTICE.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md",
-    "CITATION.cff", "VERSION",
+    "AUDIO_EXAMPLES.md", "docs/index.html", "CITATION.cff", "VERSION",
     "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py",
     "example_workflows/MiniMax_Music3_Production_Toolkit.json",
     "prompts/system/minimax-music3-production.txt",
@@ -140,6 +140,38 @@ def check_workflow() -> None:
         fail("Public workflow is missing MiniMaxLLMSessionId")
     if {"Number to Text", "Seed"} & {n.get("type") for n in wf.get("nodes", [])}:
         fail("Public workflow still depends on legacy utility nodes")
+
+    # Current output contract: one centralized JSON after all final artifacts and matching artwork naming.
+    nodes_by_type = {}
+    for node in wf.get("nodes", []):
+        nodes_by_type.setdefault(node.get("type"), []).append(node)
+    if "MiniMaxSaveProductionJSON" not in nodes_by_type:
+        fail("Public workflow is missing centralized Save Production JSON")
+    llm_nodes = nodes_by_type.get("LLMSessionChatNode", [])
+    if llm_nodes:
+        llm_values = llm_nodes[0].get("widgets_values_named", {})
+        if llm_values.get("max_tokens") != 16384 or llm_values.get("n_ctx") != 32768:
+            fail("Public workflow LLM example must use max_tokens=16384 and n_ctx=32768")
+    path_nodes = nodes_by_type.get("MiniMaxOutputPaths", [])
+    if not path_nodes or path_nodes[0].get("widgets_values_named", {}).get("configuration_subdir") != "json":
+        fail("Public workflow configuration_subdir must default to json")
+    for saver in nodes_by_type.get("SaveAudioSmartPrefix", []):
+        if saver.get("widgets_values_named", {}).get("write_json_sidecar"):
+            fail("Public workflow must not write duplicated per-audio JSON sidecars")
+
+    artwork_nodes = nodes_by_type.get("SaveImageSmartPrefix", [])
+    if not artwork_nodes:
+        fail("Public workflow is missing Save Image Smart Prefix")
+    artwork = artwork_nodes[0]
+    artwork_inputs = {i.get("name"): i.get("link") for i in artwork.get("inputs", [])}
+    if artwork_inputs.get("title") is None or artwork_inputs.get("audio_tags_json") is None:
+        fail("Artwork saver must receive generated title and audio_tags_json")
+    if artwork.get("widgets_values_named", {}).get("filename_mode") != "album - title":
+        fail("Artwork saver must default to album - title naming")
+
+    expected_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    if (wf.get("extra") or {}).get("workflow_version") != expected_version:
+        fail("Example workflow version metadata does not match VERSION")
 
 
 def check_prompt_library() -> None:

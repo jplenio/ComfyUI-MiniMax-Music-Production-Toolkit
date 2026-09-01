@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from .filename_utils import apply_filename_mode
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("minimax_artwork")
 
+import json
 import os
 import re
 from pathlib import Path
@@ -155,7 +157,12 @@ class SaveImageSmartPrefix:
                 "collision_mode": (["auto_increment", "overwrite", "error_if_exists"], {"default": "auto_increment"}),
                 "create_directories": ("BOOLEAN", {"default": True}),
                 "jpeg_quality": ("INT", {"default": 95, "min": 50, "max": 100, "step": 1}),
-            }
+            },
+            "optional": {
+                "title": ("STRING", {"forceInput": True}),
+                "audio_tags_json": ("STRING", {"forceInput": True}),
+                "filename_mode": (["album - title", "title only", "prefix as provided"], {"default": "album - title"}),
+            },
         }
 
     RETURN_TYPES = ("STRING",)
@@ -164,9 +171,28 @@ class SaveImageSmartPrefix:
     CATEGORY = "MiniMax Music Production Toolkit/artwork"
     OUTPUT_NODE = True
 
-    def save(self, image, filename_prefix, collision_mode, create_directories, jpeg_quality):
+    def save(
+        self, image, filename_prefix, collision_mode, create_directories, jpeg_quality,
+        title="", audio_tags_json="", filename_mode="album - title",
+    ):
         pil = _image_tensor_to_pil(image)
         prefix = _resolve_prefix(filename_prefix)
+
+        tags_meta = {}
+        if (audio_tags_json or "").strip():
+            try:
+                parsed = json.loads(audio_tags_json)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Save Image Smart Prefix: invalid audio_tags_json: {exc}") from exc
+            if not isinstance(parsed, dict):
+                raise ValueError("Save Image Smart Prefix: audio_tags_json must contain a JSON object.")
+            tags_meta = parsed
+        if title and not tags_meta.get("title"):
+            tags_meta["title"] = title
+
+        prefix = apply_filename_mode(
+            prefix, tags_meta, title, filename_mode, error_prefix="Save Image Smart Prefix"
+        )
         directory = os.path.dirname(prefix)
         if directory and not os.path.exists(directory):
             if create_directories:

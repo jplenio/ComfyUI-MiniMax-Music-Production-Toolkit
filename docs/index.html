@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Public MiniMax Music 3 demo tracks generated in ComfyUI with the open-source MiniMax Music Production Toolkit.">
+  <title>MiniMax Music Production Toolkit — Audio Demos</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#0b0d10; --panel:#12161b; --panel2:#171c22; --line:#29313a;
+      --text:#edf2f7; --muted:#98a6b5; --accent:#d7e7ff; --max:1240px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+    a{color:inherit}
+    header,main,footer{width:min(var(--max),calc(100% - 32px));margin-inline:auto}
+    header{padding:56px 0 28px}
+    .eyebrow{font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:700}
+    h1{margin:.35rem 0 .7rem;font-size:clamp(2.25rem,5vw,4.35rem);line-height:.98;letter-spacing:-.045em;max-width:930px}
+    .lead{max-width:880px;color:#bcc7d2;font-size:1.08rem}
+    .links,.stats,.filters,.badges{display:flex;flex-wrap:wrap;gap:9px}
+    .links{margin-top:20px}.links a{padding:9px 13px;border:1px solid var(--line);border-radius:11px;text-decoration:none;background:var(--panel)}
+    .links a:hover{border-color:#4a5968}
+    .stats{margin-top:20px}.stat{padding:7px 10px;border-radius:999px;background:var(--panel2);color:#c6d0da;font-size:.86rem;border:1px solid var(--line)}
+    .workflow-note{margin:20px 0 0;padding:15px 17px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,#121820,#101318);color:#b7c3cf}
+    .controls{position:sticky;top:0;z-index:5;margin:12px 0 22px;padding:12px;background:rgba(11,13,16,.92);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:14px}
+    .filters{align-items:center}.filters input,.filters select{min-height:39px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:#0f1318;color:var(--text)}
+    .filters input{flex:1 1 270px}.filters select{flex:0 1 190px}
+    .count{margin-left:auto;color:var(--muted);font-size:.9rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;padding-bottom:48px}
+    .card{overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:0 16px 50px rgba(0,0,0,.17)}
+    .cover-wrap{aspect-ratio:1/1;background:radial-gradient(circle at 20% 20%,#263443,#11171d 55%,#0b0d10);position:relative;display:grid;place-items:center;overflow:hidden}
+    .cover-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+    .cover-fallback{padding:28px;text-align:center}.cover-fallback .album{font-size:.75rem;text-transform:uppercase;letter-spacing:.11em;color:#a7b4c2}.cover-fallback strong{display:block;margin-top:10px;font-size:1.6rem;line-height:1.12}
+    .body{padding:18px}.album-line{font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+    h2{font-size:1.5rem;line-height:1.13;letter-spacing:-.025em;margin:.35rem 0 .3rem}.artist{color:#c0cad4;font-size:.92rem}
+    .badges{margin:12px 0}.badge{border:1px solid #34404c;background:#151b21;color:#c8d3dd;padding:4px 8px;border-radius:999px;font-size:.77rem}
+    .desc{color:#acb8c4;min-height:4.5em}
+    iframe{display:block;width:100%;height:166px;border:0;border-radius:11px;margin-top:14px;background:#0d1014}
+    .soundcloud-placeholder{margin-top:14px;padding:13px;border:1px dashed #3a4652;border-radius:11px;color:#83909d;font-size:.88rem}
+    details{margin-top:13px;border-top:1px solid var(--line);padding-top:11px}summary{cursor:pointer;color:#c8d3dd;font-size:.9rem;font-weight:650}
+    .detail-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:12px 0;font-size:.85rem}.detail-grid dt{color:#7f8d9a}.detail-grid dd{margin:0;color:#b9c4ce;overflow-wrap:anywhere}
+    .prompt,.cover-concept{margin-top:12px;padding:11px 12px;border-radius:10px;background:#0d1115;color:#9eabb8;font-size:.83rem;white-space:pre-wrap}
+    footer{padding:0 0 52px;color:#82909d;font-size:.88rem}
+    @media(max-width:600px){header{padding-top:38px}.controls{position:static}.count{width:100%;margin-left:0}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">ComfyUI · MiniMax Music 3 · Open-source workflow</div>
+  <h1>Generated music, from a simple idea to a finished demo.</h1>
+  <p class="lead">These tracks were generated with the production workflow now published as the <strong>MiniMax Music Production Toolkit for ComfyUI</strong>. The workflow turns simple style prompts into structured MiniMax Music 3 captions, lyrics where needed, titles and cover concepts, then handles artwork, metadata and the final audio-processing chain.</p>
+  <div class="links">
+    <a id="repo-link" href="#">GitHub repository</a>
+    <a id="playlist-link" href="#" hidden>SoundCloud playlist</a>
+  </div>
+  <div id="stats" class="stats"></div>
+  <div class="workflow-note"><strong>Shared production settings for these demos:</strong> MiniMax Music 3 · up to 300 s · 40 sampling steps · CFG 1.7 · Euler / simple · PRE 12 kHz → FlashSR hybrid → gentle HF repair → POST 19 kHz · 44.1 kHz release preparation targeting −14 LUFS / −1 dBTP. Track-specific seeds, prompts and musical metadata are available under “Generation details”.</div>
+</header>
+<main>
+  <div class="controls">
+    <div class="filters">
+      <input id="search" type="search" placeholder="Search title, album, genre or description…" aria-label="Search demos">
+      <select id="album"><option value="">All collections</option></select>
+      <select id="genre"><option value="">All genres</option></select>
+      <select id="type"><option value="">Instrumental + vocal</option><option>Instrumental</option><option>Vocal</option></select>
+      <select id="sort"><option value="showcase">Showcase order</option><option value="album">Collection</option><option value="title">Title</option><option value="genre">Genre</option></select>
+      <div id="count" class="count"></div>
+    </div>
+  </div>
+  <section id="tracks" class="grid" aria-live="polite"></section>
+</main>
+<footer>
+  Audio is streamed from SoundCloud. Cover images can be stored in <code>docs/assets/demo-covers/</code>. Edit <code>docs/demo-tracks.js</code> only when you want to add, replace or update SoundCloud track/playlist URLs.
+</footer>
+<script src="demo-tracks.js"></script>
+<script>
+(() => {
+  const cfg=window.MINIMAX_DEMO_CONFIG||{};
+  const all=[...(window.MINIMAX_DEMO_TRACKS||[])];
+  document.title=(cfg.pageTitle||"MiniMax Music 3 — ComfyUI Workflow Demos");
+  const repo=document.getElementById('repo-link');repo.href=cfg.repositoryUrl||'#';
+  const pl=document.getElementById('playlist-link');if(cfg.soundcloudPlaylistUrl){pl.href=cfg.soundcloudPlaylistUrl;pl.hidden=false;}
+  const albums=[...new Set(all.map(x=>x.album).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const genres=[...new Set(all.map(x=>x.genre).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const albumSel=document.getElementById('album'),genreSel=document.getElementById('genre');
+  for(const v of albums){const o=document.createElement('option');o.value=o.textContent=v;albumSel.append(o)}
+  for(const v of genres){const o=document.createElement('option');o.value=o.textContent=v;genreSel.append(o)}
+  const vocalCount=all.filter(x=>x.type==='Vocal').length;
+  document.getElementById('stats').innerHTML=`<span class="stat">${all.length} demo tracks</span><span class="stat">${albums.length} collections</span><span class="stat">${genres.length} genres</span><span class="stat">${all.length-vocalCount} instrumental</span><span class="stat">${vocalCount} vocal</span>`;
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function card(t){
+    const a=document.createElement('article');a.className='card';
+    const cover=document.createElement('div');cover.className='cover-wrap';
+    cover.innerHTML=`<div class="cover-fallback"><div class="album">${esc(t.album)}</div><strong>${esc(t.title)}</strong></div>`;
+    let coverMissing=false;
+    let player=null;
+    if(t.cover){const img=new Image();img.alt=`Cover art for ${t.title}`;img.loading='lazy';img.src=t.cover;img.onerror=()=>{coverMissing=true;cover.hidden=true;if(player){player.style.height='300px';player.src=player.dataset.visualSrc;}};cover.append(img)}
+    const b=document.createElement('div');b.className='body';
+    const keyScale=[t.key,t.scale].filter(Boolean).join(' · ');
+    b.innerHTML=`<div class="album-line">${esc(t.album)}</div><h2>${esc(t.title)}</h2><div class="artist">${esc(t.artist)}</div><div class="badges"><span class="badge">${esc(t.genre)}</span><span class="badge">${esc(t.type)}</span>${t.language&&t.language!=='—'?`<span class="badge">${esc(t.language)}</span>`:''}${t.bpm?`<span class="badge">${esc(t.bpm)} BPM</span>`:''}${keyScale?`<span class="badge">${esc(keyScale)}</span>`:''}</div><p class="desc">${esc(t.description)}</p>`;
+    if(t.soundcloudUrl && /^https:\/\/(www\.)?soundcloud\.com\//i.test(t.soundcloudUrl.trim())){
+      const iframe=document.createElement('iframe');player=iframe;iframe.loading='lazy';iframe.allow='autoplay';iframe.title=`${t.title} — SoundCloud player`;const base='https://w.soundcloud.com/player/?url='+encodeURIComponent(t.soundcloudUrl.trim())+'&color=%233f5060&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false';iframe.dataset.visualSrc=base+'&visual=true';iframe.src=coverMissing?iframe.dataset.visualSrc:base;if(coverMissing)iframe.style.height='300px';b.append(iframe);
+    }else{const ph=document.createElement('div');ph.className='soundcloud-placeholder';ph.textContent='SoundCloud link will appear here after upload.';b.append(ph)}
+    const d=document.createElement('details');
+    d.innerHTML=`<summary>Generation details</summary><dl class="detail-grid"><dt>Collection</dt><dd>${esc(t.album)}</dd><dt>Style</dt><dd>${esc(t.style||t.genre)}</dd><dt>Seed</dt><dd>${esc(t.seed)}</dd><dt>MiniMax</dt><dd>${esc(t.steps)} steps · CFG ${esc(t.samplerCfg)} · ${esc(t.sampler)} / ${esc(t.scheduler)} · max ${esc(t.maxDurationSeconds)} s</dd><dt>Release</dt><dd>${esc(t.release?.sampleRate)} Hz · target ${esc(t.release?.targetLufs)} LUFS / ${esc(t.release?.targetTruePeakDbtp)} dBTP</dd></dl><div class="prompt"><strong>Starting prompt</strong>\n${esc(t.startingPrompt)}</div><div class="cover-concept"><strong>Cover concept</strong>\n${esc(t.coverConcept)}</div>`;
+    b.append(d);a.append(cover,b);return a;
+  }
+  const root=document.getElementById('tracks'),search=document.getElementById('search'),typeSel=document.getElementById('type'),sortSel=document.getElementById('sort'),count=document.getElementById('count');
+  function render(){
+    const q=search.value.trim().toLowerCase();
+    let list=all.filter(t=>(!albumSel.value||t.album===albumSel.value)&&(!genreSel.value||t.genre===genreSel.value)&&(!typeSel.value||t.type===typeSel.value)&&(!q||[t.title,t.album,t.genre,t.style,t.description,t.startingPrompt].join(' ').toLowerCase().includes(q)));
+    const cmp={showcase:(a,b)=>(a.showcaseOrder||999)-(b.showcaseOrder||999),album:(a,b)=>a.album.localeCompare(b.album)||a.title.localeCompare(b.title),title:(a,b)=>a.title.localeCompare(b.title),genre:(a,b)=>a.genre.localeCompare(b.genre)||a.title.localeCompare(b.title)}[sortSel.value];
+    list.sort(cmp);root.replaceChildren(...list.map(card));count.textContent=`${list.length} of ${all.length} tracks`;
+  }
+  for(const el of [search,albumSel,genreSel,typeSel,sortSel])el.addEventListener(el===search?'input':'change',render);
+  render();
+})();
+</script>
+</body>
+</html>

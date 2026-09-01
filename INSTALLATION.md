@@ -1,55 +1,58 @@
 # Installation
 
-## 1. Requirements
+This document separates **toolkit requirements** from the additional custom nodes and model files used by the full example workflow.
 
-Use a current ComfyUI installation. The full example workflow needs three groups of components: this toolkit, external custom nodes, and model files.
+## 1. Install the toolkit
 
-### This toolkit
-
-Clone into `ComfyUI/custom_nodes/` and install its Python dependencies using **the Python environment used by ComfyUI**.
-
-Typical virtual-environment installation:
+Clone into `ComfyUI/custom_nodes/`:
 
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit.git
 cd ComfyUI-MiniMax-Music-Production-Toolkit
-../../.venv/Scripts/python.exe -m pip install -r requirements.txt
 ```
 
-For a Windows portable installation, use its embedded Python instead. The included `install_requirements.bat` attempts to find a nearby ComfyUI `.venv` or portable embedded Python automatically.
+Install dependencies with the **same Python interpreter that runs ComfyUI**.
 
-The toolkit requirements are deliberately small:
+Typical venv installation on Windows:
 
-- SciPy — filtering and high-quality polyphase resampling.
-- SoundFile — lossless audio I/O.
-- imageio-ffmpeg — FFmpeg fallback for MP3 and loudness/true-peak measurement.
-- Mutagen — MP3/FLAC/WAV tags and cover artwork.
-- Pillow — cover resizing/encoding.
+```powershell
+..\..\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
-PyTorch/NumPy are expected from ComfyUI and are intentionally not installed or replaced by this package.
+If you use ComfyUI Portable, use its embedded Python. `install_requirements.bat` attempts to locate a nearby ComfyUI venv or portable Python automatically.
 
-## 2. External custom nodes used by the full example workflow
+### Toolkit Python dependencies
+
+- **SciPy** — filtering and high-quality polyphase resampling.
+- **SoundFile** — FLAC/WAV audio I/O.
+- **imageio-ffmpeg** — FFmpeg fallback for MP3 encoding and loudness/true-peak measurement.
+- **Mutagen** — FLAC/MP3/WAV metadata and cover embedding.
+- **Pillow** — cover-art resizing and JPEG encoding.
+
+PyTorch and NumPy are expected from ComfyUI and are deliberately not replaced by this package.
+
+## 2. External custom nodes used by the full workflow
 
 ### ComfyUI-Egregora-Audio-Super-Resolution
 
-Required only for the example workflow's FlashSR stage:
+Used for FlashSR:
 
 https://github.com/lucasgattas/ComfyUI-Egregora-Audio-Super-Resolution
 
-Follow that project's installation and model-weight instructions. FlashSR weights are not bundled here.
+Install it separately and follow its own model-weight instructions. FlashSR weights are not included here.
 
 ### ComfyUI-LLM-Session
 
-Required only for the example workflow's local GGUF LLM stage:
+The example workflow uses a local GGUF LLM through:
 
 https://github.com/kantan-kanto/ComfyUI-LLM-Session
 
-The toolkit's prompt-library/template and parser nodes are LLM-runtime agnostic: another ComfyUI node can be used if it accepts system/user text and returns the assistant text in the required format.
+The toolkit itself is LLM-runtime agnostic. You may replace that node with another ComfyUI LLM node if it accepts system/user prompt text and returns assistant text.
 
 ## 3. MiniMax Music 3 model files
 
-The example workflow uses ComfyUI's MiniMax Music 3 support and these filenames:
+The bundled example references:
 
 ```text
 ComfyUI/models/
@@ -61,11 +64,11 @@ ComfyUI/models/
     └── minimax_music3_dav.safetensors
 ```
 
-ComfyUI also provides an INT8 diffusion option for lower VRAM. Use official ComfyUI model links/workflows for current downloads and licensing information.
+Use official ComfyUI/MiniMax model sources for current downloads and licensing terms. Other compatible quantizations can be selected in the workflow.
 
 ## 4. FLUX.2 Klein cover models
 
-The example artwork branch uses:
+The example artwork branch references:
 
 ```text
 ComfyUI/models/
@@ -77,20 +80,67 @@ ComfyUI/models/
     └── flux2-vae.safetensors
 ```
 
-If you use a different official FLUX.2 Klein quantization/base variant, select the matching model in the workflow.
+Choose matching official model variants if your installation uses different filenames/quantizations.
 
-## 5. Local LLM model
+## 5. Local LLM
 
-Install any GGUF model supported by your LLM custom node and select it there. The example workflow may remember one example filename; it is not a required model. A 16k context is a practical starting point because the bundled system prompt is intentionally detailed.
+Install a GGUF model supported by your LLM node. The workflow includes one example filename only; that model is not bundled.
 
-## 6. Restart and verify
+The v1.0.5 example LLM settings use:
 
-1. Completely restart ComfyUI.
-2. Hard-refresh the browser (`Ctrl+F5`) once so the prompt-library and preset-sync JavaScript is refreshed.
-3. Confirm there are no `IMPORT FAILED` messages for this toolkit.
-4. Open **Workflow → Browse Templates** or load `example_workflows/MiniMax_Music3_Production_Toolkit.json` manually.
-5. Select your installed MiniMax, FLUX.2 and LLM model files.
+```text
+max_tokens = 16384
+n_ctx      = 32768
+```
 
-## 7. ComfyUI Manager / Registry
+The detailed bundled system prompt consumes a meaningful part of the context, so very small context windows are not recommended. If your chosen LLM needs more context, increase `n_ctx` only if your hardware/runtime can support it.
 
-After the project is published to the Comfy Registry, normal users should install it through ComfyUI Manager. Manager installs dependencies from `requirements.txt` automatically. External custom nodes and model weights remain separate dependencies of the full example workflow.
+## 6. FFmpeg
+
+For MP3 and loudness/true-peak measurement, the toolkit first searches for system `ffmpeg`. If none is available it tries the executable supplied by `imageio-ffmpeg`.
+
+If MP3 saving or loudness measurement fails, verify:
+
+```bash
+ffmpeg -version
+```
+
+or reinstall the toolkit requirements.
+
+## 7. Restart and verify
+
+1. Completely stop and restart ComfyUI.
+2. Hard-refresh the browser once (`Ctrl+F5`) so frontend JavaScript is reloaded.
+3. Check the console for `IMPORT FAILED` messages.
+4. Load `example_workflows/MiniMax_Music3_Production_Toolkit.json`.
+5. Select the model files that exist on your system.
+6. Run a short test generation before starting a large batch.
+
+## 8. Expected output folders
+
+`MiniMax Output Paths` defines a common base plus these subdirectories:
+
+```text
+original_subdir       = 32flac/
+sr_flac_subdir        = 44flac/
+sr_mp3_subdir         = 44mp3/
+artwork_subdir        = artwork/
+configuration_subdir  = json
+```
+
+All are configurable. The current example workflow writes one final JSON to `configuration_subdir` rather than one sidecar beside every audio file.
+
+## 9. ComfyUI Manager / Registry
+
+After publication in the Comfy Registry, users can install the toolkit through ComfyUI Manager. Manager can install this package's `requirements.txt`, but it does **not** automatically provide the external FlashSR custom node or large model weights used by the full example workflow.
+
+## 10. Updating
+
+For a Git checkout:
+
+```bash
+git pull
+python -m pip install -r requirements.txt
+```
+
+Then restart ComfyUI and hard-refresh the browser.

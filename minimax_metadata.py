@@ -86,7 +86,7 @@ class MiniMaxSongMetadata:
             declip = {"raw": declip_json}
 
         data = {
-            "schema": "minimax_music3_production_metadata_v5",
+            "schema": "minimax_music3_production_metadata_v6",
             "workflow": workflow_name,
             "llm": {
                 "system_prompt": llm_system_prompt or "",

@@ -64,6 +64,43 @@ class WorkflowTests(unittest.TestCase):
                 actual = [i.get("name") for i in node.get("inputs", [])]
                 self.assertEqual(actual, expected, node.get("id"))
 
+
+    def test_current_output_contract_and_llm_settings(self):
+        nodes = {n["id"]: n for n in self.wf["nodes"]}
+        types = {n["type"] for n in self.wf["nodes"]}
+        self.assertIn("MiniMaxSaveProductionJSON", types)
+
+        llm = nodes[81]
+        self.assertEqual(llm["widgets_values_named"]["max_tokens"], 16384)
+        self.assertEqual(llm["widgets_values_named"]["n_ctx"], 32768)
+
+        paths = nodes[54]
+        self.assertEqual(paths["widgets_values_named"]["configuration_subdir"], "json")
+        self.assertIn("configuration_prefix", [o["name"] for o in paths["outputs"]])
+
+        for nid in (35, 46, 52):
+            saver = nodes[nid]
+            self.assertFalse(saver["widgets_values_named"]["write_json_sidecar"])
+            metadata_input = next(i for i in saver["inputs"] if i["name"] == "metadata_json")
+            self.assertIsNone(metadata_input["link"])
+            self.assertIn("save_info_json", [o["name"] for o in saver["outputs"]])
+
+
+        artwork = nodes[77]
+        artwork_inputs = {i["name"]: i.get("link") for i in artwork["inputs"]}
+        self.assertIsNotNone(artwork_inputs["title"])
+        self.assertIsNotNone(artwork_inputs["audio_tags_json"])
+        self.assertEqual(artwork["widgets_values_named"]["filename_mode"], "album - title")
+
+        final_json = next(n for n in self.wf["nodes"] if n["type"] == "MiniMaxSaveProductionJSON")
+        linked_inputs = {i["name"]: i.get("link") for i in final_json["inputs"]}
+        for required in (
+            "metadata_json", "configuration_prefix", "audio_tags_json", "title",
+            "original_audio_save_json", "release_flac_save_json",
+            "release_mp3_save_json", "artwork_path",
+        ):
+            self.assertIsNotNone(linked_inputs[required], required)
+
     def test_public_metadata_is_generic(self):
         tags = next(n for n in self.wf["nodes"] if n["type"] == "MiniMaxStandardAudioTags")
         values = tags["widgets_values_named"]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .filename_utils import apply_filename_mode
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("save_audio_smart_prefix")
@@ -135,44 +136,6 @@ def _pick_path(prefix: str, ext: str, collision_mode: str) -> str:
             return p
     raise RuntimeError("Save Audio Smart Prefix: no free auto-increment filename found.")
 
-
-
-_FILENAME_INVALID_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
-
-
-def _safe_filename_component(value: str) -> str:
-    """Sanitize one filename component for Windows/macOS/Linux output."""
-    text = _FILENAME_INVALID_RE.sub("_", str(value or "").strip())
-    text = re.sub(r"\s+", " ", text).strip(" .")
-    return text or "song"
-
-
-def _apply_filename_mode(resolved_prefix: str, tags_meta: Dict[str, Any], title: str, filename_mode: str) -> str:
-    """Replace only the basename while keeping the directory from filename_prefix.
-
-    Metadata TITLE is never changed here; this only controls the filesystem name.
-    """
-    mode = str(filename_mode or "album - title").strip().lower()
-    directory = os.path.dirname(resolved_prefix)
-    fallback_base = os.path.basename(resolved_prefix)
-
-    tag_title = str(tags_meta.get("title", "") or title or fallback_base).strip()
-    album = str(tags_meta.get("album", "") or "").strip()
-
-    if mode == "prefix as provided":
-        base = fallback_base
-    elif mode == "title only":
-        base = _safe_filename_component(tag_title or fallback_base)
-    elif mode == "album - title":
-        clean_title = _safe_filename_component(tag_title or fallback_base)
-        clean_album = _safe_filename_component(album) if album else ""
-        base = f"{clean_album} - {clean_title}" if clean_album else clean_title
-    else:
-        raise ValueError(
-            "Save Audio Smart Prefix: filename_mode must be "
-            "'album - title', 'title only', or 'prefix as provided'."
-        )
-    return os.path.join(directory, base) if directory else base
 
 
 def _find_ffmpeg() -> str:
@@ -457,8 +420,8 @@ class SaveAudioSmartPrefix:
             },
         }
 
-    RETURN_TYPES = ("AUDIO", "STRING", "STRING")
-    RETURN_NAMES = ("audio", "saved_path", "metadata_path")
+    RETURN_TYPES = ("AUDIO", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("audio", "saved_path", "metadata_path", "save_info_json")
     FUNCTION = "save"
     CATEGORY = "MiniMax Music Production Toolkit/save"
     OUTPUT_NODE = True
@@ -484,6 +447,7 @@ class SaveAudioSmartPrefix:
         x = waveform.detach().to(device="cpu", dtype=torch.float32).numpy()
         saved: List[str] = []
         sidecars: List[str] = []
+        save_infos: List[Dict[str, Any]] = []
         fmt = format.lower()
         base_meta = _parse_json_maybe(metadata_json) if (metadata_json or "").strip() else {}
         tags_meta = _parse_json_maybe(audio_tags_json) if (audio_tags_json or "").strip() else {}
@@ -495,7 +459,9 @@ class SaveAudioSmartPrefix:
         # Filesystem naming is independent from metadata TITLE. In the default
         # mode the directory comes from filename_prefix while the basename is
         # rebuilt from standard Album + Title tags.
-        resolved_prefix = _apply_filename_mode(resolved_prefix, tags_meta, title, filename_mode)
+        resolved_prefix = apply_filename_mode(
+            resolved_prefix, tags_meta, title, filename_mode, error_prefix="Save Audio Smart Prefix"
+        )
         embedded_cover_size = max(64, min(4096, int(embedded_cover_size or 512)))
 
         for b in range(x.shape[0]):
@@ -524,12 +490,28 @@ class SaveAudioSmartPrefix:
                 sidecars.append(sidecar)
 
             saved.append(target)
+            save_infos.append({
+                "path": os.path.abspath(target),
+                "file": os.path.basename(target),
+                "format": fmt,
+                "sample_rate": int(sample_rate),
+                "peak_before_save": float(peak),
+                "applied_gain": float(gain),
+                "filename_mode": str(filename_mode),
+                "embedded_cover_size": int(embedded_cover_size),
+                "legacy_sidecar_path": os.path.abspath(sidecar) if sidecar else "",
+            })
             LOGGER.info(
                 "Saved %s | sr=%d | peak=%.4f | gain=%.6f%s",
                 target, sample_rate, peak, gain, f" | metadata={sidecar}" if sidecar else "",
             )
 
-        return (audio, "\n".join(saved), "\n".join(sidecars))
+        info_payload: Dict[str, Any]
+        if len(save_infos) == 1:
+            info_payload = save_infos[0]
+        else:
+            info_payload = {"batch": save_infos}
+        return (audio, "\n".join(saved), "\n".join(sidecars), json.dumps(info_payload, ensure_ascii=False, indent=2))
 
 
 NODE_CLASS_MAPPINGS = {"SaveAudioSmartPrefix": SaveAudioSmartPrefix}

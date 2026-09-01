@@ -4,3 +4,5 @@ scripts/
 *.log
 __pycache__/
 .pytest_cache/
+
+docs/

@@ -1,105 +1,50 @@
 # Maintainer publishing guide
 
-Repository target:
+Repository:
 
 https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit
 
-## GitHub first publication
-
-Create an **empty** public repository named:
-
-```text
-ComfyUI-MiniMax-Music-Production-Toolkit
-```
-
-Do not initialize it with another README, license or `.gitignore`, because those files already exist locally.
-
-From the extracted release folder:
-
-```bash
-git init
-git add .
-git commit -m "Release v1.0.3"
-git branch -M main
-git remote add origin https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit.git
-git push -u origin main
-```
-
-Alternatively, with GitHub CLI after authentication:
-
-```bash
-gh repo create jplenio/ComfyUI-MiniMax-Music-Production-Toolkit --public --source=. --remote=origin --push
-```
-
-## Comfy Registry publisher
-
-A Comfy Registry **Publisher ID** is created on the Comfy Registry website; it is not automatically the GitHub username. It is globally unique and cannot be changed later.
-
-Recommended publisher ID for this repository:
+Comfy Publisher ID configured in `pyproject.toml`:
 
 ```text
 jplenio
 ```
 
-The repository's `pyproject.toml` is already prepared with:
+## Release checklist
 
-```toml
-[tool.comfy]
-PublisherId = "jplenio"
-DisplayName = "MiniMax Music Production Toolkit"
-```
+Before every release:
 
-If `jplenio` is unavailable in the Registry, choose another permanent publisher ID and change `PublisherId` before the first Registry publish.
+1. Update `VERSION`.
+2. Update `[project].version` in `pyproject.toml`.
+3. Update `project_info.py`.
+4. Update `CITATION.cff`.
+5. Add a `CHANGELOG.md` entry.
+6. Add `RELEASE_NOTES_vX.Y.Z.md`.
+7. Make sure the example workflow contains the intended public/generic metadata and matching workflow version.
+8. Run validation/tests.
+9. Build release assets.
+10. Commit/push.
+11. Create the matching GitHub Release/tag.
+12. Let the GitHub Action publish the same immutable version to the Comfy Registry.
 
-After creating the publisher, create a **Registry Publishing API Key** for it.
+## Validation
 
-## GitHub Action secret
-
-In the GitHub repository:
-
-**Settings → Secrets and variables → Actions → New repository secret**
-
-Name:
-
-```text
-REGISTRY_ACCESS_TOKEN
-```
-
-Value: the Comfy Registry publishing API key.
-
-`.github/workflows/publish_action.yml` can then publish manually or when a GitHub Release is published.
-
-## Manual Registry publish
-
-Install Comfy CLI and run from the repository root:
+From the repository root:
 
 ```bash
-comfy node publish
+python scripts/validate_release.py
+python -m unittest discover -s tests -v
 ```
 
-The CLI prompts for the publisher API key.
-
-## Versioning
-
-Registry versions are immutable. Before each new release:
-
-1. update `VERSION`;
-2. update `project_info.py`;
-3. update `pyproject.toml` version;
-4. add a `CHANGELOG.md` entry;
-5. run `python scripts/validate_release.py` and tests;
-6. commit/tag/release;
-7. publish the matching Registry version.
+The release validator checks required files, Python syntax, version consistency, publisher metadata, example-workflow links including subgraph boundary links, prompt-library integrity, privacy/placeholders and node documentation.
 
 ## Build release assets
-
-Before creating a GitHub Release, build and validate the release files from the repository root:
 
 ```bash
 python scripts/package_release.py --output-dir dist
 ```
 
-The command runs the static release validator and unit tests, then creates:
+This runs validation/tests first and creates:
 
 ```text
 ComfyUI-MiniMax-Music-Production-Toolkit-vX.Y.Z.zip
@@ -107,4 +52,79 @@ MiniMax_Music3_Production_Toolkit_vX.Y.Z.json
 SHA256SUMS.txt
 ```
 
-Upload these files as GitHub Release assets. The ZIP contains a single top-level repository folder and excludes Python caches, VCS state and generated release archives.
+The ZIP excludes VCS state, Python caches and already-built ZIP files.
+
+## Commit v1.0.5
+
+For an existing checkout:
+
+```bash
+git add -A
+git commit -m "Release v1.0.5"
+git push
+```
+
+Do not re-run `git init` for an already existing repository.
+
+## GitHub Release
+
+Create a new GitHub Release with:
+
+```text
+Tag:   v1.0.5
+Title: MiniMax Music Production Toolkit 1.0.5
+```
+
+Use `RELEASE_NOTES_v1.0.5.md` as the release description and upload the three generated release assets.
+
+The Git tag uses a leading `v`; the package/Registry version remains `1.0.5` without the leading `v`.
+
+## Comfy Registry
+
+The project is configured with:
+
+```toml
+[tool.comfy]
+PublisherId = "jplenio"
+DisplayName = "MiniMax Music Production Toolkit"
+```
+
+Create a Registry Publishing API Key for the publisher and store it in GitHub:
+
+**Repository → Settings → Secrets and variables → Actions → New repository secret**
+
+Secret name:
+
+```text
+REGISTRY_ACCESS_TOKEN
+```
+
+`.github/workflows/publish_action.yml` runs on a published GitHub Release or manually through **Actions → Publish to Comfy Registry → Run workflow**.
+
+Registry versions are immutable. Never republish different contents under an already published version; bump the version instead.
+
+## Manual Registry publish
+
+If needed, use Comfy CLI from the repository root:
+
+```bash
+comfy node publish
+```
+
+## GitHub Pages audio demos
+
+The repository includes `docs/index.html` for SoundCloud-backed listening examples.
+
+After adding normal SoundCloud track URLs to the `tracks` array, enable Pages:
+
+**Settings → Pages → Build and deployment**
+
+- Source: `Deploy from a branch`
+- Branch: `main`
+- Folder: `/docs`
+
+Expected URL:
+
+https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/
+
+The demo HTML belongs in GitHub source control. Large MP3 catalogs should remain on SoundCloud rather than in Git history.

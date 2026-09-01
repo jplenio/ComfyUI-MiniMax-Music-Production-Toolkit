@@ -52,3 +52,24 @@ Do not assume that more reconstructed bandwidth sounds more natural.
 ## `No link found in parent graph ...`
 
 If ComfyUI reports a message such as `No link found in parent graph for id [37:6] slot [0] unet_name`, the workflow contains a broken serialized subgraph boundary link. Version 1.0.1 fixes the affected v1.0.0 example workflow. Use the v1.0.1 example workflow or later. This is a workflow-serialization issue, not a missing MiniMax model file.
+
+## No JSON appears beside the FLAC/MP3 files
+
+That is expected in the current workflow. Since v1.0.4, the example no longer writes duplicated per-audio sidecars. Look in the directory configured by **MiniMax Output Paths → configuration_subdir** (default `json/`).
+
+The final `Save Production JSON` node must be connected to the three audio savers' `save_info_json` outputs and the saved artwork path.
+
+## Final production JSON is not created
+
+Check the ComfyUI error log for the first failed upstream save. The central JSON intentionally runs only after the original audio, release FLAC, release MP3 and artwork save dependencies complete. If one of those files fails to save, the final JSON is not written, preventing a misleading configuration record that claims missing artifacts exist.
+
+Also verify that `configuration_subdir` is writable and that `create_directories` is enabled on `Save Production JSON`.
+
+## SoundCloud players do not show on the GitHub README
+
+Use the supplied GitHub Pages template instead of trying to embed an iframe directly in README Markdown. Add normal SoundCloud URLs to `docs/index.html`, then enable Pages from the repository's **Settings → Pages** using the `main` branch and `/docs` folder.
+
+
+## External LLM returns empty text after a native access violation
+
+If `ComfyUI-LLM-Session` logs a native `access violation` and the downstream parser then reports missing `[Caption]` / `[Lyrics]`, the parser error is secondary: it received an empty assistant response. First fully restart ComfyUI; if the native backend remains in a bad state, a full machine restart can clear stale CUDA/llama.cpp state. Only investigate the parser if the LLM node actually returns non-empty text.

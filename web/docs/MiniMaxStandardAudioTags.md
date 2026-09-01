@@ -15,7 +15,7 @@ Builds standard interoperable audio metadata tags such as Artist, Album, Year, G
 - **`year`** (`STRING`) — Release/copyright year tag. Use a four-digit year when possible for broad player compatibility.
 - **`track`** (`STRING`) — Track-number tag, for example 01 or 3/12. This value is metadata only and does not change filename ordering unless you include it separately in the filename.
 - **`genre`** (`STRING`) — Genre tag embedded in compatible audio files. Keep it reasonably concise for broad media-player compatibility.
-- **`comment`** (`STRING`) — Free-form standard comment tag. Suitable for copyright or short production notes; detailed generation configuration belongs in the JSON sidecar.
+- **`comment`** (`STRING`) — Free-form standard comment tag. Suitable for copyright or short production notes; detailed generation configuration belongs in the canonical production JSON.
 - **`album_artist`** (`STRING`) — Album Artist tag used to group tracks from the same release, especially useful when individual track artists differ.
 - **`composer`** (`STRING`) — Composer/songwriter metadata tag embedded in supported audio formats.
 

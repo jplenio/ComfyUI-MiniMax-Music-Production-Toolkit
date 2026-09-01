@@ -1,6 +1,6 @@
 # MiniMax Metadata Loader
 
-Loads compatible values from a previously saved MiniMax sidecar JSON for inspection or reconstruction of a generation setup.
+Loads compatible values from a previously saved MiniMax production JSON (or compatible legacy sidecar JSON) for inspection or reconstruction of a generation setup.
 
 **Node ID:** `MiniMaxMetadataLoader`  
 **Category:** `MiniMax Music Production Toolkit/metadata`
@@ -9,7 +9,7 @@ Loads compatible values from a previously saved MiniMax sidecar JSON for inspect
 
 ### Required
 
-- **`metadata_file`** (`STRING`) — Path to a previously saved song sidecar JSON. The loader reads compatible generation/settings fields from this file so a configuration can be inspected or reused.
+- **`metadata_file`** (`STRING`) — Path to a previously saved song production JSON. The loader reads compatible generation/settings fields from this file so a configuration can be inspected or reused.
 
 ## Outputs
 

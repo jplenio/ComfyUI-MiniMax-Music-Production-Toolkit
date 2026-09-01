@@ -1,53 +1,94 @@
 # Audio processing pipeline
 
-The audio nodes are designed for conservative batch processing. They cannot turn a poor source into a guaranteed professional master, and every restoration stage has limits.
+This document describes the restoration/release stages used by the example workflow.
 
-## 1. Declip / overload repair
+## Signal flow
 
-Hard digital clipping removes waveform information. `Audio Declip / Overload Repair` looks for short near-ceiling flat regions and estimates missing curvature using local boundary slopes and cubic-Hermite interpolation.
+```text
+MiniMax Music 3 source
+        ↓
+Source Declip / Overload Repair
+        ├────────────────────────────→ clean source branch
+        ↓
+PRE Low-pass
+        ↓
+FlashSR
+        ↓
+Hybrid Crossover ←────────────────── clean source branch
+        ↓
+HF Cymbal / Shimmer Repair
+        ↓
+POST Low-pass
+        ↓
+Release Prep (HQ SRC + static LUFS / true peak)
+        ↓
+44.1 kHz release FLAC + MP3
+```
 
-Recommended default: **Auto / conservative**.
+## 1. Source de-clipping
 
-Use stronger presets only after listening. Very long clipped regions are intentionally skipped because reconstruction becomes increasingly speculative.
+Hard clipping is different from simple level overload. Reducing gain after clipping does not recreate the missing peak shape. The de-clip node looks for near-ceiling flat regions and reconstructs short peaks conservatively.
+
+Recommended unattended mode: `Auto / conservative`.
+
+Long or ambiguous clipped regions may be skipped rather than aggressively invented.
 
 ## 2. PRE low-pass
 
-A controlled PRE low-pass can remove problematic source high-frequency content before FlashSR reconstructs the upper spectrum. Do not automatically choose the strongest filter: cutting too low discards real transient/cymbal information.
+The PRE low-pass controls how much original upper-frequency material FlashSR receives. Lower cutoffs force the SR model to reconstruct more of the upper spectrum, which can be useful for damaged source treble but can also increase hallucinated cymbal/air content.
 
-Recommended starting point: **PRE 12 kHz - recommended** for a 32 kHz MiniMax source, then A/B against lighter/bypass settings for acoustic or cymbal-rich material.
+Use stronger filtering only when the source actually needs it.
 
-## 3. FlashSR hybrid crossover
+## 3. FlashSR
 
-Pure FlashSR output can sound impressive spectrally while producing artificial/watery high-frequency transients. Hybrid mode keeps a cleanly resampled original and uses FlashSR only as a controlled high-frequency contribution.
+FlashSR performs audio super-resolution/bandwidth extension. Reconstructed high-frequency energy is not guaranteed to equal the original missing waveform, so the workflow does not assume that a full FlashSR replacement is always preferable.
 
-Key parameters:
+## 4. Hybrid crossover
 
-- `crossover_hz`: where FlashSR starts to matter;
-- `transition_hz`: how soft the crossover is;
-- `flashsr_hf_mix`: reconstructed HF amount.
+The hybrid node offers safer combinations of original and SR material.
 
-Lower HF mix values are safer when cymbals or reverbs sound smeared.
+Recommended starting mode:
 
-## 4. HF cymbal / shimmer repair
+`Original + FlashSR air`
 
-This stage works primarily on high-frequency sustained energy and uses separate fast/slow envelopes so attacks can be preserved better than diffuse tails.
+This keeps the cleanly resampled original and adds a controlled amount of FlashSR high band. Lower `flashsr_hf_mix` when cymbals, reverb or upper harmonics become watery or artificial.
 
-Start with **Gentle**. Use `Cymbal clarity` or `Reverb / shimmer control` only on material that actually needs it.
+## 5. HF cymbal / shimmer repair
 
-## 5. POST low-pass
+This stage works mainly in the high band. It distinguishes faster transient energy from sustained HF energy and can attenuate the latter more strongly.
 
-The POST filter can remove extreme reconstructed top-end energy after FlashSR/HF repair. It is a cleanup stage, not a replacement for good crossover settings.
+Use it for:
 
-## 6. Release preparation
+- watery hi-hat sustain;
+- smeared cymbal tails;
+- synthetic shimmer/reverb haze.
 
-The release-prep node performs HQ sample-rate conversion first, then measures integrated loudness/true peak at the final sample rate.
+Do not use strong settings automatically on clean material.
 
-For loudness modes it computes a **single constant gain for the whole program**. If the requested LUFS increase would exceed the configured true-peak ceiling, the gain is capped instead of invoking dynamic loudness processing.
+## 6. POST low-pass
 
-Consequences:
+A gentle POST low-pass can suppress extreme reconstructed top-end energy after hybrid/HF processing. Lower cutoffs are darker but may better hide artificial air.
 
-- no volume pumping from the node;
-- no compressor/AGC behavior;
-- some quiet masters may finish below the requested LUFS target when the peak ceiling prevents further gain — this is intentional.
+## 7. Release preparation
 
-`Resample only` is the safest choice when you want to preserve the source level/dynamics exactly.
+The release-prep node resamples first, then measures the audio at the final sample rate.
+
+For LUFS modes it calculates a single requested gain and compares it with the true-peak headroom. The applied gain is the lower of those two values.
+
+Therefore:
+
+- no time-varying gain;
+- no compressor;
+- no AGC;
+- no pumping introduced by this node;
+- the target LUFS may not be reached if the true-peak ceiling prevents more gain.
+
+`Resample only` preserves the source level/dynamics when you do not want loudness adjustment.
+
+## 8. File writing and centralized JSON
+
+The three audio savers emit a `save_info_json` output containing the actual saved path, format, sample rate, peak before final file writing, applied save gain, filename mode and embedded-cover size.
+
+The final `Save Production JSON` node consumes these outputs. This both records the final artifact information and ensures the canonical JSON is written after the documented audio files exist.
+
+The legacy `write_json_sidecar` option remains available on individual audio savers but is OFF in the current example workflow (centralized JSON was introduced in v1.0.4).
