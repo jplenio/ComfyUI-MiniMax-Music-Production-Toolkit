@@ -30,7 +30,7 @@ The parser is intentionally order-tolerant for resilience, but the system prompt
 
 The example uses `ComfyUI-LLM-Session` with a local GGUF model.
 
-The bundled v1.0.5 example uses the user-tested local-LLM settings:
+The bundled v1.0.6 example uses the user-tested local-LLM settings:
 
 ```text
 max_tokens = 16384

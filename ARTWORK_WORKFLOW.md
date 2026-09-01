@@ -54,3 +54,7 @@ The bundled system prompt tells the LLM to create a positive-only visual concept
 The JPG directory is controlled by `MiniMax Output Paths → artwork_subdir` (default `artwork/`). The final JPG basename is then rebuilt by `Save Image Smart Prefix` according to its `filename_mode`.
 
 The saved artwork path is recorded in the single canonical JSON created at the end of the workflow.
+
+### v1.0.6 workflow-serialization fix
+
+The first v1.0.5 example workflow had the newly added `title` and `audio_tags_json` sockets serialized ahead of the older widget-backed inputs. ComfyUI validates these slots positionally, which could make `collision_mode` and `jpeg_quality` appear invalid before execution. v1.0.6 keeps the node schema and saved workflow order aligned and validates the contract during release packaging.

@@ -163,11 +163,27 @@ def check_workflow() -> None:
     if not artwork_nodes:
         fail("Public workflow is missing Save Image Smart Prefix")
     artwork = artwork_nodes[0]
+    expected_artwork_inputs = [
+        "image", "filename_prefix", "collision_mode", "create_directories",
+        "jpeg_quality", "title", "audio_tags_json", "filename_mode",
+    ]
+    actual_artwork_inputs = [i.get("name") for i in artwork.get("inputs", [])]
+    if actual_artwork_inputs != expected_artwork_inputs:
+        fail(
+            "Artwork saver serialized input order does not match SaveImageSmartPrefix INPUT_TYPES: "
+            + repr(actual_artwork_inputs)
+        )
     artwork_inputs = {i.get("name"): i.get("link") for i in artwork.get("inputs", [])}
     if artwork_inputs.get("title") is None or artwork_inputs.get("audio_tags_json") is None:
         fail("Artwork saver must receive generated title and audio_tags_json")
-    if artwork.get("widgets_values_named", {}).get("filename_mode") != "album - title":
+    artwork_values = artwork.get("widgets_values_named", {})
+    if artwork_values.get("filename_mode") != "album - title":
         fail("Artwork saver must default to album - title naming")
+    if artwork_values.get("collision_mode") not in {"auto_increment", "overwrite", "error_if_exists"}:
+        fail("Artwork saver collision_mode is invalid")
+    jpeg_quality = artwork_values.get("jpeg_quality")
+    if not isinstance(jpeg_quality, int) or isinstance(jpeg_quality, bool) or not 50 <= jpeg_quality <= 100:
+        fail("Artwork saver jpeg_quality must be an integer from 50 to 100")
 
     expected_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     if (wf.get("extra") or {}).get("workflow_version") != expected_version:

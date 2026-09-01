@@ -73,3 +73,9 @@ Use the supplied GitHub Pages template instead of trying to embed an iframe dire
 ## External LLM returns empty text after a native access violation
 
 If `ComfyUI-LLM-Session` logs a native `access violation` and the downstream parser then reports missing `[Caption]` / `[Lyrics]`, the parser error is secondary: it received an empty assistant response. First fully restart ComfyUI; if the native backend remains in a bad state, a full machine restart can clear stale CUDA/llama.cpp state. Only investigate the parser if the LLM node actually returns non-empty text.
+
+## Save Cover JPG reports invalid `collision_mode` or wrong `jpeg_quality` type
+
+This was a workflow-serialization issue in the first v1.0.5 example workflow, not an image-quality or Pillow problem. The `title` and `audio_tags_json` sockets had been inserted ahead of the existing widget-backed inputs in the saved JSON, while the Python node schema still expected `collision_mode`, `create_directories`, and `jpeg_quality` first. ComfyUI therefore associated saved widget values with the wrong slots.
+
+Use the v1.0.6 example workflow or recreate the `Save Image Smart Prefix` node and reconnect `image`, `filename_prefix`, `title`, and `audio_tags_json`. In the corrected workflow the visible values are `collision_mode = auto_increment`, `jpeg_quality = 95`, and `filename_mode = album - title`.

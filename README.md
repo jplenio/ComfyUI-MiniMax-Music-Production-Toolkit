@@ -28,6 +28,13 @@ Hear music generated entirely with this ComfyUI workflow:
 - **FLUX.2 cover branch** — square artwork generation and JPEG saving; cover size also controls the embedded artwork size.
 - **Complete UI help** — every toolkit input has a tooltip and every toolkit node has Markdown help inside `web/docs/`.
 
+## v1.0.6 highlights
+
+- Fixes the bundled workflow validation error in **Save Cover JPG – same song name** caused by a serialized input-slot order mismatch (`collision_mode` / `jpeg_quality`).
+- Adds a packaging guard so artwork-saver input order and widget types are validated before release.
+- Includes the expanded **62-file user prompt library** and the existing SoundCloud-powered demo gallery.
+- Keeps unified release naming: audio, artwork and centralized JSON use the same `Album - Title` basename in the bundled workflow.
+
 ## v1.0.5 highlights
 
 1. **Artwork filename parity:** cover JPGs now use the exact same `Album - Title` basename as the FLAC, MP3 and canonical JSON outputs.

@@ -54,13 +54,13 @@ SHA256SUMS.txt
 
 The ZIP excludes VCS state, Python caches and already-built ZIP files.
 
-## Commit v1.0.5
+## Commit v1.0.6
 
 For an existing checkout:
 
 ```bash
 git add -A
-git commit -m "Release v1.0.5"
+git commit -m "Release v1.0.6"
 git push
 ```
 
@@ -71,13 +71,13 @@ Do not re-run `git init` for an already existing repository.
 Create a new GitHub Release with:
 
 ```text
-Tag:   v1.0.5
-Title: MiniMax Music Production Toolkit 1.0.5
+Tag:   v1.0.6
+Title: MiniMax Music Production Toolkit 1.0.6
 ```
 
-Use `RELEASE_NOTES_v1.0.5.md` as the release description and upload the three generated release assets.
+Use `RELEASE_NOTES_v1.0.6.md` as the release description and upload the three generated release assets.
 
-The Git tag uses a leading `v`; the package/Registry version remains `1.0.5` without the leading `v`.
+The Git tag uses a leading `v`; the package/Registry version remains `1.0.6` without the leading `v`.
 
 ## Comfy Registry
 

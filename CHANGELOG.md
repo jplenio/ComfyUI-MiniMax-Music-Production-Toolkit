@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [1.0.6] - 2026-09-01
+
+### Fixed
+- Fixed the serialized `Save Image Smart Prefix` input-slot order in the bundled workflow. The v1.0.5 workflow could map widget values to the wrong inputs after `title` and `audio_tags_json` were added, producing validation errors for `collision_mode` and `jpeg_quality`.
+- Added release validation and unit coverage for the artwork saver input order and widget types so this class of workflow-serialization regression is caught before packaging.
+- Hardened `scripts/build_public_workflow.py` to normalize artwork-saver slots and repair linked target-slot indices automatically.
+
+### Included
+- Preserves the expanded bundled prompt library supplied for this release (62 user prompt files across additional rock, metal, EDM, house, electronic and alternative styles).
+- Preserves the SoundCloud demo-page configuration and demo links already present in the repository.
+
 ## [1.0.5] - 2026-09-01
 
 ### Fixed

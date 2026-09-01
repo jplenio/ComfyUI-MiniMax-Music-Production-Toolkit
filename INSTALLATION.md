@@ -86,7 +86,7 @@ Choose matching official model variants if your installation uses different file
 
 Install a GGUF model supported by your LLM node. The workflow includes one example filename only; that model is not bundled.
 
-The v1.0.5 example LLM settings use:
+The v1.0.6 example LLM settings use:
 
 ```text
 max_tokens = 16384

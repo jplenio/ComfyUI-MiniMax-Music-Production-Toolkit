@@ -36,3 +36,7 @@ The audio saver, artwork saver and centralized JSON writer use the same shared f
 ## Output
 
 - **`saved_path`** (`STRING`) — Actual JPG path after collision handling. This path is used for cover embedding and stored in the canonical production JSON.
+
+### Workflow compatibility
+
+v1.0.6 corrects the saved input-slot order used by the bundled example workflow. If an older v1.0.5 workflow reports that `collision_mode` is unavailable or that `jpeg_quality` has the wrong type, load the v1.0.6 workflow or recreate this node and reconnect its inputs.

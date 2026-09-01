@@ -32,6 +32,38 @@ def widget_named(node: dict, values: dict) -> None:
     node["widgets_values_named"] = values
 
 
+
+
+def normalize_artwork_saver_inputs(workflow: dict) -> None:
+    """Keep SaveImageSmartPrefix serialized input slots aligned with INPUT_TYPES.
+
+    ComfyUI validates saved workflow input slots positionally.  The title and
+    audio_tags_json sockets were added in v1.0.5, and an incorrectly reordered
+    serialized node can make the subsequent widget values appear under the
+    wrong inputs (for example collision_mode=True and jpeg_quality='album - title').
+    Reorder by stable input name and repair every destination slot accordingly.
+    """
+    artwork = next((n for n in workflow.get("nodes", []) if n.get("type") == "SaveImageSmartPrefix"), None)
+    if artwork is None:
+        return
+
+    expected = [
+        "image", "filename_prefix", "collision_mode", "create_directories",
+        "jpeg_quality", "title", "audio_tags_json", "filename_mode",
+    ]
+    by_name = {item.get("name"): item for item in artwork.get("inputs", [])}
+    if any(name not in by_name for name in expected):
+        return
+
+    artwork["inputs"] = [by_name[name] for name in expected]
+    links = {link[0]: link for link in workflow.get("links", []) if isinstance(link, list) and len(link) >= 5}
+    for slot, item in enumerate(artwork["inputs"]):
+        link_id = item.get("link")
+        if link_id is not None and link_id in links:
+            links[link_id][3] = artwork["id"]
+            links[link_id][4] = slot
+
+
 def build(source: Path, destination: Path, system_prompt_file: Path) -> dict:
     wf = json.loads(source.read_text(encoding="utf-8"))
     system_prompt = system_prompt_file.read_text(encoding="utf-8-sig").strip()
@@ -40,6 +72,7 @@ def build(source: Path, destination: Path, system_prompt_file: Path) -> dict:
 
     wf["nodes"] = [n for n in wf["nodes"] if n["id"] not in REMOVE_NODE_IDS]
     wf["links"] = [l for l in wf["links"] if l[0] not in REMOVE_LINK_IDS]
+    normalize_artwork_saver_inputs(wf)
 
     # Generic output directory. Subdirectory defaults and all processing values stay unchanged.
     n54 = node_by_id(wf, 54)

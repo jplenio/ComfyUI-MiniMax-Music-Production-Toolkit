@@ -87,6 +87,16 @@ class WorkflowTests(unittest.TestCase):
 
 
         artwork = nodes[77]
+        self.assertEqual(
+            [i["name"] for i in artwork["inputs"]],
+            [
+                "image", "filename_prefix", "collision_mode", "create_directories",
+                "jpeg_quality", "title", "audio_tags_json", "filename_mode",
+            ],
+        )
+        self.assertEqual(artwork["widgets_values_named"]["collision_mode"], "auto_increment")
+        self.assertIsInstance(artwork["widgets_values_named"]["jpeg_quality"], int)
+        self.assertNotIsInstance(artwork["widgets_values_named"]["jpeg_quality"], bool)
         artwork_inputs = {i["name"]: i.get("link") for i in artwork["inputs"]}
         self.assertIsNotNone(artwork_inputs["title"])
         self.assertIsNotNone(artwork_inputs["audio_tags_json"])
