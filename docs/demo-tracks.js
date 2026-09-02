@@ -21,7 +21,7 @@ window.MINIMAX_DEMO_CONFIG = {
 window.MINIMAX_DEMO_TRACKS = [
   {
     "id": "strange-horizons-the-amber-frame",
-    "showcaseOrder": 1,
+    "showcaseOrder": 24,
     "title": "The Amber Frame",
     "artist": "Pelenio",
     "album": "Strange Horizons",
@@ -851,7 +851,7 @@ window.MINIMAX_DEMO_TRACKS = [
   },
   {
     "id": "future-rave-sparse-vocals-pulse-of-the-storm",
-    "showcaseOrder": 24,
+    "showcaseOrder": 1,
     "title": "Pulse of the Storm",
     "artist": "Pelenio",
     "album": "future-rave-sparse-vocals",
