@@ -110,6 +110,235 @@ def _import_llama_cpp():
     return llama_cpp
 
 
+def _free_comfyui_model_cache() -> None:
+    """Free ALL ComfyUI-managed GPU memory before allocating a llama.cpp model.
+
+    llama.cpp allocates CUDA memory outside PyTorch, so ComfyUI's memory
+    manager does not see those allocations and will not evict its own cached
+    models when the GGUF is loaded.  On a repeated run the MiniMax / FLUX
+    models of the previous run are still resident in VRAM; loading the LLM
+    on top overflows the GPU, which makes llama.cpp spill to CPU (generation
+    takes \"forever\") and leaves the CUDA context broken so the later
+    MiniMax CUDA graph capture fails with ``cudaErrorStreamCaptureInvalidated``.
+
+    ``unload_all_models()`` alone is NOT enough on dynamic-VRAM builds
+    (aimdo): their staged weight pages live in a VBAR and are only released
+    through ``ModelPatcher.partially_unload()`` -> ``vbar.free_memory()``,
+    the cast buffers (``VRAMBuffer`` / torch cast tensors) that grow
+    while weights stream are only destroyed by ``reset_cast_buffers()``,
+    and the MiniMax CUDA-graph/prefetch workspaces only by
+    ``cleanup_prefetch_queues()`` (ComfyUI itself never calls the last
+    two).  All of these are invisible to the torch allocator and survive
+    ``free_memory()``.  They are released explicitly here; the models
+    re-stage on demand later in the pipeline (dynamic VRAM loading), so
+    nothing is lost - this keeps a SINGLE-GPU machine working run after run.
+    A short diagnostic (aimdo usage + free VRAM per GPU) is logged at the
+    end so any remaining residency is visible instead of a mysterious hang.
+
+    Outside ComfyUI (unit tests) this is a no-op.
+    """
+    try:
+        import comfy.model_management as model_management  # type: ignore
+    except Exception:
+        return
+
+    # FlashSR runners cache torch models on the GPU outside ComfyUI's
+    # management; release them too so a previous run cannot squeeze the LLM.
+    try:
+        from .flashsr_audio import clear_flashsr_cache as _clear_flashsr
+        _clear_flashsr()
+    except Exception:
+        pass
+
+    # Collect dynamic (staged) models BEFORE unload_all_models(): unload
+    # detaches them and drops them from current_loaded_models, but their
+    # VBAR staging pages stay resident - we must release them afterwards.
+    dynamic_models = []
+    try:
+        for entry in list(getattr(model_management, "current_loaded_models", None) or []):
+            model = getattr(entry, "model", None)
+            if model is None:  # weakref already dead
+                continue
+            try:
+                if callable(getattr(model, "is_dynamic", None)) and model.is_dynamic():
+                    dynamic_models.append(model)
+            except Exception as exc:
+                LOGGER.debug("Could not inspect model dynamism before freeing cache: %s", exc)
+    except Exception as exc:
+        LOGGER.debug("Could not collect dynamic models before freeing cache: %s", exc)
+
+    # Diagnostic: list what is actually resident, so a leftover residency
+    # can be attributed to its model instead of guessed at.
+    try:
+        for entry in list(getattr(model_management, "current_loaded_models", None) or []):
+            model = getattr(entry, "model", None)
+            if model is None:
+                continue
+            try:
+                LOGGER.info(
+                    "Model resident before LLM cleanup: %s (dynamic=%s, loaded=%.2f GB)",
+                    type(getattr(model, "model", model)).__name__,
+                    bool(model.is_dynamic()),
+                    float(getattr(model, "loaded_size", lambda: 0.0)() or 0) / (2**30),
+                )
+            except Exception as exc:
+                LOGGER.debug("Could not describe resident model: %s", exc)
+    except Exception as exc:
+        LOGGER.debug("Could not list resident models: %s", exc)
+
+    # CUDA-graph / prefetch pools of the music models (model_prefetch.py)
+    # hold their workspace in VRAM after a run; ComfyUI never calls
+    # cleanup_prefetch_queues() itself, so the graphs stay resident.
+    # Release them first: the graphs reference the staged pages below.
+    try:
+        from comfy import model_prefetch as _model_prefetch  # type: ignore
+        cleanup_prefetch = getattr(_model_prefetch, "cleanup_prefetch_queues", None)
+        if cleanup_prefetch is None:
+            LOGGER.debug("comfy.model_prefetch has no cleanup_prefetch_queues(); skipping prefetch free.")
+        else:
+            cleanup_prefetch()
+            LOGGER.info("Released ComfyUI prefetch queues / CUDA graphs before LLM load.")
+    except Exception as exc:
+        LOGGER.debug("Could not clean ComfyUI prefetch queues: %s", exc)
+
+    # Cast buffers (aimdo VRAMBuffer + torch cast tensors) grow while the
+    # music models stream weights and are NEVER released by
+    # unload_all_models() or partially_unload() - they stay resident for the
+    # whole process (observed: ~5 GB left on the GPU after a run, which then
+    # overflows the card when the GGUF loads).  reset_cast_buffers() is the
+    # only path that destroys them; it also clears cross-step state and
+    # dirty mmaps.  Called BEFORE unload_all_models() so it can still reset
+    # the pin state of the loaded dynamic models.
+    try:
+        reset = getattr(model_management, "reset_cast_buffers", None)
+        if reset is None:
+            LOGGER.debug("comfy.model_management has no reset_cast_buffers(); skipping cast buffer free.")
+        else:
+            reset()
+            LOGGER.info("Released ComfyUI cast buffers before LLM load.")
+    except Exception as exc:
+        LOGGER.debug("Could not reset ComfyUI cast buffers: %s", exc)
+
+    try:
+        unload = getattr(model_management, "unload_all_models", None)
+        if unload is None:
+            unload = getattr(model_management, "unload_all", None)
+        if unload is None:
+            LOGGER.debug("comfy.model_management has no unload_all_models(); skipping cache free.")
+        else:
+            unload()
+            LOGGER.info("Freed ComfyUI model cache before LLM load.")
+    except Exception as exc:
+        LOGGER.debug("Could not free ComfyUI model cache before LLM load: %s", exc)
+
+    released_staging = 0
+    for model in dynamic_models:
+        try:
+            offload = getattr(model, "offload_device", None)
+            if offload is None:
+                import torch as _torch  # type: ignore
+                offload = _torch.device("cpu")
+            freed = model.partially_unload(offload, 1e32)
+            released_staging += int(freed or 0)
+            name = type(getattr(model, "model", model)).__name__
+            if freed:
+                LOGGER.info(
+                    "Released dynamic VRAM staging for %s: %.2f GB",
+                    name,
+                    freed / (2**30),
+                )
+            else:
+                LOGGER.warning(
+                    "partially_unload freed nothing for %s (loaded_size=%.2f GB).",
+                    name,
+                    float(getattr(model, "loaded_size", lambda: 0.0)() or 0) / (2**30),
+                )
+        except Exception as exc:
+            LOGGER.warning("Could not release dynamic VRAM staging: %s", exc)
+    if released_staging:
+        LOGGER.info("Total dynamic VRAM staging released before LLM load: %.2f GB", released_staging / (2**30))
+    elif dynamic_models:
+        LOGGER.warning("No dynamic VRAM staging could be released before LLM load.")
+
+    try:
+        import torch  # type: ignore
+        torch.cuda.empty_cache()
+        soft_empty = getattr(model_management, "soft_empty_cache", None)
+        if soft_empty is not None:
+            try:
+                soft_empty(force=True)
+            except TypeError:
+                soft_empty()
+    except Exception:
+        pass
+
+    # Diagnostic: report what still holds GPU memory after the cleanup, so a
+    # remaining residency is visible in the log instead of a mysterious hang.
+    aimdo_usage = 0
+    try:
+        import comfy_aimdo.control as _aimdo  # type: ignore
+        aimdo_usage = _aimdo.get_total_vram_usage()
+        if aimdo_usage:
+            LOGGER.info("Aimdo VRAM usage after cleanup: %.2f GB", aimdo_usage / (2**30))
+    except Exception:
+        pass
+    try:
+        import torch as _torch  # type: ignore
+        for index in range(_torch.cuda.device_count()):
+            free_bytes, total_bytes = _torch.cuda.mem_get_info(index)
+            LOGGER.info(
+                "GPU %d after cleanup: %.2f GB free of %.2f GB",
+                index,
+                free_bytes / (2**30),
+                total_bytes / (2**30),
+            )
+    except Exception:
+        pass
+    # If aimdo still holds a meaningful amount, find the live VBARs, name
+    # their owner models, and force-release their pages directly.  The pages
+    # re-fault on demand the next time the model runs, so this is safe.
+    if aimdo_usage > 200 * (2**20):
+        try:
+            import gc as _gc
+            import torch as _torch_mod  # type: ignore
+            for vbar in [obj for obj in _gc.get_objects() if type(obj).__name__ == "ModelVBAR"]:
+                owner = None
+                try:
+                    for ref in _gc.get_referrers(vbar):
+                        if isinstance(ref, dict):
+                            for holder in _gc.get_referrers(ref):
+                                if isinstance(holder, _torch_mod.nn.Module):
+                                    owner = type(holder).__name__
+                                    break
+                        if owner:
+                            break
+                except Exception:
+                    pass
+                try:
+                    deprioritize = getattr(vbar, "deprioritize", None)
+                    if deprioritize is not None:
+                        deprioritize()
+                    freed = vbar.free_memory(1e32)
+                except Exception as exc:
+                    freed = 0
+                    LOGGER.warning("Could not force-release orphan VBAR: %s", exc)
+                LOGGER.warning(
+                    "Live aimdo VBAR after cleanup: owner=%s device=%s loaded=%.2f GB watermark=%.2f GB force_freed=%.2f GB",
+                    owner or "unknown",
+                    getattr(vbar, "device", "?"),
+                    float(getattr(vbar, "loaded_size", lambda: 0)() or 0) / (2**30),
+                    float(getattr(vbar, "get_watermark", lambda: 0)() or 0) / (2**30),
+                    freed / (2**30),
+                )
+        except Exception:
+            pass
+        try:
+            import comfy_aimdo.control as _aimdo2  # type: ignore
+            LOGGER.info("Aimdo VRAM usage after force release: %.2f GB", _aimdo2.get_total_vram_usage() / (2**30))
+        except Exception:
+            pass
+
+
 def _llm_directories() -> List[Path]:
     """Directories that may contain llama.cpp GGUF models.
 
@@ -166,7 +395,6 @@ def list_llm_models() -> List[str]:
 
 _ENVIRONMENT_LOGGED = False
 
-
 def collect_llm_diagnostics() -> Dict[str, str]:
     """Collect version facts about the local LLM stack without importing models.
 
@@ -208,6 +436,14 @@ def log_llm_environment_once() -> None:
     _ENVIRONMENT_LOGGED = True
     import json as _json
     LOGGER.info("LLM environment: %s", _json.dumps(collect_llm_diagnostics(), ensure_ascii=False))
+    if _gpu_device_count() <= 1:
+        LOGGER.info(
+            "Single-GPU mode: ComfyUI models and the LLM share one GPU. "
+            "Before the LLM loads, all ComfyUI model VRAM (incl. dynamic staging) "
+            "is released and re-staged afterwards - repeated runs are supported. "
+            "If this machine has a second GPU, start ComfyUI with '--cuda-device all' "
+            "(Windows hides extra GPUs otherwise); the LLM is then auto-routed to its own GPU."
+        )
 
 
 def _find_model_path(name: str) -> Optional[Path]:
@@ -313,6 +549,70 @@ def _thinking_instruction(mode: str) -> str:
     return ""
 
 
+def _pick_llm_main_gpu(
+    main_gpu: int,
+    model_path: Path,
+    n_ctx: int,
+    device_count: int,
+    split_mode: int,
+    split: Optional[List[float]],
+) -> int:
+    """Choose the GPU that should hold the LLM.
+
+    The user's explicit choice always wins (``main_gpu != 0`` or any split
+    configuration).  With the default ``main_gpu=0``, ``split_mode=none`` and
+    no ``tensor_split``, a multi-GPU machine routes the model to the
+    non-default GPU with the most free VRAM.
+
+    Rationale: ComfyUI keeps its own models (MiniMax, FLUX, ...) on the
+    default CUDA device and its dynamic-VRAM staging buffers may not be
+    released by ``unload_all_models()``.  Loading the GGUF onto the same card
+    overflows a 16GB GPU on repeated runs (observed: hang in the llama.cpp
+    load and a later ``cudaErrorStreamCaptureInvalidated`` during the MiniMax
+    CUDA graph capture).  A second GPU solves this cleanly; ComfyUI models
+    never touch it.
+    """
+    if main_gpu != 0 or split_mode != 0 or split:
+        return int(main_gpu)
+    if device_count < 2:
+        return 0
+    try:
+        import torch  # type: ignore
+
+        current = int(torch.cuda.current_device()) if torch.cuda.is_available() else 0
+        free: Dict[int, int] = {}
+        for index in range(device_count):
+            try:
+                free_bytes, _total = torch.cuda.mem_get_info(index)
+                free[index] = int(free_bytes)
+            except Exception:
+                free[index] = -1
+        others = [index for index in range(device_count) if index != current]
+        if not others:
+            return 0
+        best = max(others, key=lambda index: free.get(index, -1))
+        try:
+            model_bytes = model_path.stat().st_size
+        except OSError:
+            model_bytes = 0
+        if model_bytes and free.get(best, -1) >= 0 and free[best] < model_bytes * 1.2 + (2 << 30):
+            LOGGER.warning(
+                "Auto-routed the LLM to GPU %d but it may not have enough VRAM "
+                "(%.1f GiB free, model file %.1f GiB). Set main_gpu explicitly if the load fails.",
+                best,
+                free[best] / (2**30),
+                model_bytes / (2**30),
+            )
+        LOGGER.info(
+            "Routing LLM to GPU %d (ComfyUI models stay on GPU %d; set main_gpu to override).",
+            best,
+            current,
+        )
+        return best
+    except Exception:
+        return 0
+
+
 def _get_model(
     model_name: str,
     auto_download: bool,
@@ -370,7 +670,9 @@ def _get_model(
     if split:
         options["tensor_split"] = split
     options["split_mode"] = int(_SPLIT_MODES.get((split_mode or "none").strip().lower(), 0))
-    options["main_gpu"] = int(main_gpu)
+    options["main_gpu"] = _pick_llm_main_gpu(
+        int(main_gpu), model_path, options["n_ctx"], device_count, options["split_mode"], split
+    )
     if tensor_parallel:
         if _accepts_kwarg(llama_cpp.Llama.__init__, "tensor_parallel"):
             options["tensor_parallel"] = True
@@ -388,14 +690,25 @@ def _get_model(
         return cached
 
     LOGGER.info(
-        "Loading LLM model: %s (n_ctx=%d, n_gpu_layers=%d, chat_format=%s, split_mode=%s, gpus=%d)",
+        "Loading LLM model: %s (n_ctx=%d, n_gpu_layers=%d, chat_format=%s, split_mode=%s, main_gpu=%d, gpus=%d)",
         model_path, options["n_ctx"], options["n_gpu_layers"],
-        options.get("chat_format", "none"), options["split_mode"], device_count,
+        options.get("chat_format", "none"), options["split_mode"], options["main_gpu"], device_count,
     )
     # verbose=False keeps llama.cpp's per-token debug output out of the log;
     # the chat format makes Qwen-style models emit their reasoning as <think>
     # tags so it can be split off from the real answer.
-    model = llama_cpp.Llama(model_path=str(model_path), verbose=False, **options)
+    _free_comfyui_model_cache()
+    try:
+        model = llama_cpp.Llama(model_path=str(model_path), verbose=False, **options)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to load LLM model '{model_path.name}' into llama.cpp "
+            f"(n_gpu_layers={options['n_gpu_layers']}, n_ctx={options['n_ctx']}, main_gpu={options['main_gpu']}). "
+            "If this happens on a repeated run, VRAM was likely exhausted by models "
+            "cached from the previous run; restart ComfyUI or free the cache first. "
+            "Otherwise reduce n_ctx or set n_gpu_layers to a positive number to keep "
+            "part of the model on CPU. Underlying error: {type(exc).__name__}: {exc}"
+        ) from exc
     # Keep only the most recently used model loaded to limit memory usage.
     for other_key, other_model in list(_loaded_models.items()):
         if other_key != cache_key:
@@ -498,6 +811,26 @@ def unload_llm_models() -> int:
             pass
         LOGGER.info("Unloaded LLM model: %s", path)
     _loaded_models.clear()
+    if count:
+        # Return the freed GPU memory to the allocator pools so the music
+        # stage (MiniMax TE, DAV, FLUX) can claim it without fragmentation.
+        try:
+            import gc
+            gc.collect()
+        except Exception:
+            pass
+        try:
+            import torch  # type: ignore
+            torch.cuda.empty_cache()
+        except Exception:
+            pass
+        try:
+            import comfy.model_management as model_management  # type: ignore
+            soft_empty = getattr(model_management, "soft_empty_cache", None)
+            if soft_empty is not None:
+                soft_empty()
+        except Exception:
+            pass
     return count
 
 

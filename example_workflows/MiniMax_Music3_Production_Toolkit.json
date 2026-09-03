@@ -7107,7 +7107,7 @@
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
     "workflow_name": "MiniMax Music Production Toolkit – Example Workflow",
-    "workflow_version": "2.0.0"
+    "workflow_version": "2.0.1"
   },
   "version": 0.4
 }

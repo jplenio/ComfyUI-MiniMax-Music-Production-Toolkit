@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.1] - 2026-09-03
+
+Bugfix release: the workflow can now be run repeatedly in the same ComfyUI session without VRAM exhaustion.
+
+### Added
+- Automatic LLM GPU routing on multi-GPU machines: with default settings the LLM goes to the non-default GPU with the most free VRAM; explicit `main_gpu`/split settings always win.
+- Diagnostic logging around the LLM load: resident models before cleanup, aimdo VRAM usage and free VRAM per GPU after cleanup, and the owner of any remaining dynamic-VRAM staging block (which is then force-released).
+
+### Changed
+- `MiniMaxLLMUnload` returns GPU memory to the allocator pools more aggressively after closing the model (`gc.collect()`, `torch.cuda.empty_cache()`, `soft_empty_cache`).
+- Clearer LLM load error message naming `n_ctx`, `n_gpu_layers`, `main_gpu` with concrete remedies.
+
+### Fixed
+- **Repeated runs hung in the integrated LLM chat and overflowed the GPU.** The previous run's dynamic-VRAM staging pages, cast buffers, CUDA-graph/prefetch workspaces and cached FlashSR runners were not released before the LLM loaded; the GGUF load then spilled into system memory and left the CUDA context broken (later MiniMax failure: `cudaErrorStreamCaptureInvalidated`). The node now frees all of these explicitly before every LLM load; models re-stage on demand. Single-GPU machines are fully supported again.
+
 ## [2.0.0] - 2026-09-02
 
 This major release makes the example workflow self-contained, gives the prompt stage structured control, and adds first-run model auto-download. The never-published v1.0.7 documentation/demo preparation is included in this release.

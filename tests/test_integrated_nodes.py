@@ -341,6 +341,109 @@ class LLMChatTests(unittest.TestCase):
         finally:
             llm_chat._loaded_models = saved
 
+    def test_free_comfyui_cache_is_safe_outside_comfyui(self):
+        # Outside ComfyUI the helper must be a silent no-op (import of
+        # comfy.model_management fails and is caught).
+        try:
+            llm_chat._free_comfyui_model_cache()
+        except Exception as exc:  # pragma: no cover
+            self.fail(f"_free_comfyui_model_cache raised outside ComfyUI: {exc}")
+
+    def test_free_comfyui_cache_releases_dynamic_staging(self):
+        # On dynamic-VRAM builds the staged weight pages must be released via
+        # partially_unload() because unload_all_models() alone keeps them
+        # resident in the VBAR.
+        import sys
+
+        class FakeModule:
+            pass
+
+        class FakeDynamicModel:
+            def __init__(self):
+                self.model = FakeModule()
+                self.offload_device = "cpu"
+                self.released = []
+
+            def is_dynamic(self):
+                return True
+
+            def partially_unload(self, device_to, memory_to_free):
+                self.released.append((device_to, memory_to_free))
+                return 3 * (2**30)
+
+        class FakeLoadedEntry:
+            def __init__(self, model):
+                self.model = model
+
+        dynamic = FakeDynamicModel()
+        state = {"unloaded": False, "soft_emptied": False, "cast_reset": False, "prefetch_cleaned": False}
+        model_management = types.SimpleNamespace(
+            current_loaded_models=[FakeLoadedEntry(dynamic)],
+            reset_cast_buffers=lambda: state.__setitem__("cast_reset", True),
+            unload_all_models=lambda: state.__setitem__("unloaded", True),
+            soft_empty_cache=lambda force=False: state.__setitem__("soft_emptied", True),
+        )
+        model_prefetch = types.SimpleNamespace(
+            cleanup_prefetch_queues=lambda: state.__setitem__("prefetch_cleaned", True)
+        )
+        fake_comfy = types.ModuleType("comfy")
+        fake_comfy.__path__ = []
+        fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(empty_cache=lambda: None))
+
+        saved = {name: sys.modules.get(name) for name in ("comfy", "comfy.model_management", "comfy.model_prefetch", "torch")}
+        sys.modules["comfy"] = fake_comfy
+        sys.modules["comfy.model_management"] = model_management
+        sys.modules["comfy.model_prefetch"] = model_prefetch
+        if "torch" not in sys.modules:
+            sys.modules["torch"] = fake_torch
+        try:
+            llm_chat._free_comfyui_model_cache()
+            self.assertTrue(state["prefetch_cleaned"])
+            self.assertTrue(state["cast_reset"])
+            self.assertTrue(state["unloaded"])
+            self.assertEqual(dynamic.released, [("cpu", 1e32)])
+        finally:
+            for name, value in saved.items():
+                if value is None:
+                    sys.modules.pop(name, None)
+                else:
+                    sys.modules[name] = value
+
+    def test_pick_llm_main_gpu_routing(self):
+        import sys
+
+        class FakeCuda:
+            @staticmethod
+            def is_available():
+                return True
+
+            @staticmethod
+            def current_device():
+                return 0
+
+            @staticmethod
+            def mem_get_info(index):
+                # GPU 0 busy (2 GiB free), GPU 1 free (12 GiB free).
+                return {0: (2 << 30, 16 << 30), 1: (12 << 30, 16 << 30)}[index]
+
+        fake_torch = types.SimpleNamespace(cuda=FakeCuda)
+        saved_torch = sys.modules.get("torch")
+        sys.modules["torch"] = fake_torch
+        try:
+            model_path = Path("missing.gguf")  # stat() fails -> size unknown
+            # Default config with 2 GPUs -> the freest non-default GPU (1).
+            self.assertEqual(llm_chat._pick_llm_main_gpu(0, model_path, 32768, 2, 0, None), 1)
+            # Single GPU -> 0.
+            self.assertEqual(llm_chat._pick_llm_main_gpu(0, model_path, 32768, 1, 0, None), 0)
+            # Explicit user choice wins.
+            self.assertEqual(llm_chat._pick_llm_main_gpu(0, model_path, 32768, 2, 1, [0.5, 0.5]), 0)
+            self.assertEqual(llm_chat._pick_llm_main_gpu(1, model_path, 32768, 2, 0, None), 1)
+        finally:
+            if saved_torch is None:
+                sys.modules.pop("torch", None)
+            else:
+                sys.modules["torch"] = saved_torch
+
     def test_unload_node_passthrough(self):
         node = llm_chat.MiniMaxLLMUnload()
         trigger, released = node.unload("marker", True, False)
