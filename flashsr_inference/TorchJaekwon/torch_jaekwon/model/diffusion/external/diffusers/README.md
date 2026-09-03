@@ -1,0 +1,1 @@
+Most of the code in the this folder is sourced from the [huggingface/diffusers](https://github.com/huggingface/diffusers).

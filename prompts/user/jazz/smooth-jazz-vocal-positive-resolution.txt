@@ -1,1 +1,7 @@
-Create a smooth jazz piece with female deep lyrics about a troublesome topic but finally with a positive ending. Add nice instrumental sections. Piano and guitar are lead instruments. Total length around 3:30-4:00 minutes.
+---
+Genre: Jazz
+Lyrics: yes
+Length: 3-4 minutes
+---
+
+Create a smooth jazz piece with female deep lyrics about a troublesome topic but finally with a positive ending. Add nice instrumental sections. Piano and guitar are lead instruments

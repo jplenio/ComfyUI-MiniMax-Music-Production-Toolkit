@@ -1,1 +1,7 @@
-Classic Rock — energetic, melodic and timeless, with crunchy electric guitars, driving bass, powerful acoustic drums and a strong charismatic lead vocal. Memorable guitar riffs, catchy chorus, tasteful solos and a natural live-band feel. Lyrics about freedom, taking risks and leaving the past behind. 4–5 minutes.
+---
+Genre: Rock
+Lyrics: yes
+Length: 4-5 minutes
+---
+
+Classic Rock — energetic, melodic and timeless, with crunchy electric guitars, driving bass, powerful acoustic drums and a strong charismatic lead vocal. Memorable guitar riffs, catchy chorus, tasteful solos and a natural live-band feel. Lyrics about freedom, taking risks and leaving the past behind

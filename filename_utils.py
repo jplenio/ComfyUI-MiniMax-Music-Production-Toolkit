@@ -6,12 +6,38 @@ from typing import Any, Mapping
 
 _FILENAME_INVALID_RE = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
+# Windows device names are reserved regardless of extension (CON.txt is just
+# as invalid as CON); a trailing underscore makes the component legal again.
+_WINDOWS_RESERVED_RE = re.compile(r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$", re.IGNORECASE)
+
+# Keep one filename component well below the Windows MAX_PATH component limit
+# (255 UTF-16 units) with headroom for suffixes such as "_001" or "_b001".
+MAX_COMPONENT_LENGTH = 180
+
 
 def safe_filename_component(value: str) -> str:
-    """Return one portable filename component for Windows/macOS/Linux."""
+    """Return one portable filename component for Windows/macOS/Linux.
+
+    Invalid characters are replaced, trailing dots/spaces removed, Windows
+    reserved device names neutralized and over-long titles truncated on a
+    character boundary.
+    """
     text = _FILENAME_INVALID_RE.sub("_", str(value or "").strip())
     text = re.sub(r"\s+", " ", text).strip(" .")
-    return text or "song"
+    if len(text) > MAX_COMPONENT_LENGTH:
+        text = text[:MAX_COMPONENT_LENGTH].rstrip(" .")
+        try:
+            text.encode("utf-8")
+        except UnicodeEncodeError:
+            # Never leave a lone surrogate behind after truncation.
+            text = text[:-1]
+    if not text or not text.strip("_"):
+        return "song"
+    if _WINDOWS_RESERVED_RE.match(text.split(".")[0]):
+        # Neutralize before the first extension: "CON.txt" -> "CON_.txt" so
+        # the base name is no longer the reserved device name.
+        text = text.replace(".", "_.", 1) if "." in text else text + "_"
+    return text
 
 
 def apply_filename_mode(

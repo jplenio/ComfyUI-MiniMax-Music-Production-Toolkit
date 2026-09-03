@@ -8,7 +8,9 @@ The included example workflow can reference these external components:
 
 - ComfyUI core MiniMax Music 3 nodes and model files.
 - FLUX.2 Klein model files.
-- ComfyUI-Egregora-Audio-Super-Resolution for FlashSR processing.
-- ComfyUI-LLM-Session for the optional local-GGUF LLM stage in the example workflow.
+- FlashSR inference code, **bundled** in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; attribution and per-component licenses are recorded in `flashsr_inference/NOTICE.md`). The FlashSR model **weights** are fetched on first use from the `jakeoneijk/FlashSR_weights` dataset (not redistributed).
+- A llama.cpp-compatible GGUF for the integrated `MiniMaxLLMChat` node (not redistributed).
 
-Each third-party project remains governed by its own license.
+Since v2.0.0 the example workflow no longer uses the external `ComfyUI-Egregora-Audio-Super-Resolution` or `ComfyUI-LLM-Session` custom nodes; they remain optional third-party alternatives.
+
+Each third-party project remains governed by its own license. The upstream FlashSR_Inference and TorchJaekwon repositories do not declare a root license (see `flashsr_inference/NOTICE.md` for the per-component license situation).

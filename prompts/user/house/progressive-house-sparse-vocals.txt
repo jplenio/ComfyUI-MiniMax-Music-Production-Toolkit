@@ -1,1 +1,7 @@
-Create a melodic progressive house instrumental with an emotional, memorable lead motif, spacious analog-style synths, a calm but clear development, and a total length around 4:30-5:00. Add sparse lyrics for some effects.
+---
+Genre: House
+Lyrics: sparse
+Length: 4-5 minutes
+---
+
+Create a melodic progressive house instrumental with an emotional, memorable lead motif, spacious analog-style synths, a calm but clear development, and add sparse lyrics for some effects

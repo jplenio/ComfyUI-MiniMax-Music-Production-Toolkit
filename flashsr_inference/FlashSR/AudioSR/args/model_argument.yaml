@@ -1,0 +1,25 @@
+batchsize: 4
+ddconfig:
+  attn_resolutions: []
+  ch: 128
+  ch_mult:
+  - 1
+  - 2
+  - 4
+  - 8
+  double_z: true
+  downsample_time: false
+  dropout: 0.1
+  in_channels: 1
+  mel_bins: 256
+  num_res_blocks: 2
+  out_ch: 1
+  resolution: 256
+  z_channels: 16
+embed_dim: 16
+image_key: fbank
+monitor: val/rec_loss
+reload_from_ckpt: /mnt/bn/lqhaoheliu/project/audio_generation_diffusion/log/vae/vae_48k_256/ds_8_kl_1/checkpoints/ckpt-checkpoint-484999.ckpt
+sampling_rate: 48000
+subband: 1
+time_shuffle: 1

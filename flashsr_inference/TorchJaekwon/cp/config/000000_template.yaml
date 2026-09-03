@@ -1,0 +1,117 @@
+# Environment interpolation (resolved at load time, so one config is portable across servers):
+#   ${oc.env:VAR}          -> value of $VAR (errors if $VAR is unset)
+#   ${oc.env:VAR,default}  -> $VAR if set, else 'default'
+# e.g.  data_dir: ${oc.env:PROJECT_ROOT}/data/gt
+#       output_dir: ${oc.env:ARTIFACTS_ROOT,./artifacts}/train   # uses $ARTIFACTS_ROOT, falls back to ./artifacts
+data:
+  config: # config for data
+    attr1: &attr1 10 # '&attr1' defines a YAML anchor; reuse its value elsewhere with '*attr1' (see dataset_manager_mnist below)
+  dataset_config_dict:
+    mnist: # change to your dataset name
+      dataset_manager_class_meta: &dataset_manager_mnist
+        path: data.dataset_manager.your_dataset_manager.YourDatasetManager # fully-qualified dotted import path '<module>.<ClassName>' from the project root; prefix with 'torch_jaekwon.' for shared package classes
+        args: {}
+  preprocessor_class_meta_list: 
+    - path: torch_jaekwon.data.preprocess.preprocessor.Preprocessor
+      args:
+        data_name: 'all_data'
+        dataset_manager_class_meta_dict: 
+          mnist: *dataset_manager_mnist
+#####################################################################################################
+dataloader:
+  train:
+    args:
+      batch_size: 16
+      num_workers: 4
+    dataset_class_meta:
+      path: data.dataset.your_dataset.YourDataset # project-relative dotted path (e.g. data.dataset.image.mnist.MNIST)
+      args: {}
+    #collater_class_meta:
+    #  path: data.dataset.your_collater.YourCollater
+    #  args: {}
+  valid:
+    args:
+      batch_size: 16
+      num_workers: 4
+      shuffle: False
+      drop_last: True
+    dataset_class_meta:
+      path: data.dataset.your_dataset.YourDataset
+      args: {}
+  #test:
+  #  args:
+  #    batch_size: 16
+  #    num_workers: 4
+  #    shuffle: False
+  #    drop_last: True
+  #  dataset_class_meta:
+  #    path: data.dataset.your_dataset.YourDataset
+  #    args: {}
+#####################################################################################################
+model:
+  class_meta:
+    path: model.your_model.YourModel
+    args: {}
+    #your_generator:
+      #path: model.your_generator.YourGenerator
+      #args: {}
+    #your_discriminator:
+      #path: model.your_discriminator.YourDiscriminator
+      #args: {}
+#####################################################################################################
+train:
+  class_meta:
+    path: torch_jaekwon.train.trainer.trainer.Trainer
+    args: {}
+      #model_ckpt_path: 'step.pth'
+      #use_ema: False
+
+      ## train paremeters
+      #total_step: .inf       # float('inf') — only compared, so infinity is fine
+      #total_epoch: 1000000   # must be a plain int (used in range()); .inf / 1e20 would break it
+
+  optimizer: 
+    class_meta: 
+      path : 'AdamW'
+      args :
+        lr: 0.0008
+        betas: [0.9,0.98]
+        weight_decay: 0.0
+    #your_generator:
+    #  path: AdamW
+    #  args: {'lr': 0.00005, betas: [0.8, 0.99]}
+    #  model_name_list: ['your_generator']
+    #your_discriminator:
+    #  path: AdamW
+    #  args: {'lr': 0.0001, betas: [0.8, 0.99]}
+    #  model_name_list: ['your_discriminator']
+
+  scheduler:
+    class_meta: 
+      path: "StepLR" #train.optimizer.scheduler.inverse_lr.InverseLR
+      args:
+        step_size: 20000
+        gamma: 0.5
+    interval: 'step' # Literal['step', 'epoch']
+    frequency: 1
+
+  loss:
+    your_loss_name: # for specifying loss
+      class_meta:
+        path : 'L1Loss'
+        args : {}
+      #pred_name: '' # if model's output is dict, you can specify the key
+      #target_name: '' # if target is dict, you can specify the key
+      weight: 1
+#####################################################################################################
+inference:
+  class_meta:
+    path: torch_jaekwon.inference.inferencer.Inferencer
+    args: {}
+#####################################################################################################
+evaluate:
+  eval_gt_dir_path: ''
+  eval_pred_dir_path: ''
+  class_meta:
+    path: torch_jaekwon.evaluate.evaluator.evaluator.Evaluator
+    args: {}

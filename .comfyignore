@@ -6,3 +6,8 @@ __pycache__/
 .pytest_cache/
 
 docs/
+
+KONTEXT.md
+
+PROJECT_STATE.md
+

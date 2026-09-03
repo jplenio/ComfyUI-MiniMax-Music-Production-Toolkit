@@ -1,10 +1,10 @@
 # MiniMax Music Production Toolkit for ComfyUI
 
-Production-focused ComfyUI custom nodes plus a complete example workflow for **MiniMax Music 3**. The toolkit combines LLM-assisted prompt preparation, reproducible generation settings, audio repair, FlashSR-assisted bandwidth extension, release preparation, album-cover generation, metadata/tagging and organized output handling.
+Production-focused ComfyUI custom nodes plus a complete example workflow for **MiniMax Music 3**. The toolkit combines structured LLM prompt preparation, reproducible generation settings, audio repair, integrated FlashSR bandwidth extension, release preparation, album-cover generation, metadata/tagging and organized output handling.
 
 Author: [Johannes Plenio](https://github.com/jplenio)
 
-> Independent community project. No MiniMax, FLUX, LLM or FlashSR model weights are included.
+> Independent community project. No MiniMax, FLUX, LLM or FlashSR model weights are included (they are downloaded or provided separately, see [Installation](INSTALLATION.md)).
 
 ## 🎧 Listen to Demo Tracks
 
@@ -14,11 +14,14 @@ Hear music generated entirely with this ComfyUI workflow:
 
 ## What the toolkit does
 
-- **LLM Prompt Library / Template** — use manual prompts, bundled prompt files or external prompt directories for both user prompts and system prompts.
-- **Structured LLM parsing** — extracts `[Caption]`, `[Lyrics]`, `[Title]` and `[Image_Prompt]` from an external LLM response.
+- **Structured Song Prompt control** — dedicated fields for Genre, Tempo, Key, Lyrics (yes/sparse/instrumental), Language, Voice, Lyrics theme and Target length plus a further-description area. Prompt files can prefill these fields via an optional metadata block; every field can be overridden and `custom` leaves the part out.
+- **Integrated LLM Chat (llama.cpp)** — self-contained GGUF chat node with optional session state; no external LLM custom node required. The LLM section can be switched off (`enabled = false` + manual parser fallbacks) without workflow errors.
+- **Structured LLM parsing** — extracts `[Caption]`, `[Lyrics]`, `[Title]` and `[Image_Prompt]` from the LLM response, with manual fallback fields for LLM-less runs.
 - **Production system prompt** — optimized for MiniMax Music 3, including long instrumental structure, imaginative lyrics and avoidance of smear-prone metallic/high-frequency textures.
-- **Bundled genre prompt library** — reusable examples covering house, EDM, electronic, ambient, jazz, folk, classical, funk, pop and more.
+- **Bundled genre prompt library** — reusable examples covering house, EDM, electronic, ambient, jazz, folk, classical, funk, pop and more, all with structured metadata.
 - **Reproducible generation controls** — consistent MiniMax text/sampler seeds and generation settings.
+- **Integrated Audio Super Resolution (FlashSR)** — self-contained FlashSR node replacing the external Egregora node, with identical processing behavior. The inference code is bundled with the toolkit (`flashsr_inference/`); only the weights are auto-downloaded on first use.
+- **Model auto-download / check** — declarative `models_config.json` plus a check node; needed files with a configured URL are downloaded with progress logging and the run continues.
 - **Audio Declip / Overload Repair** — conservative reconstruction of short hard-clipped flat tops before further enhancement.
 - **FlashSR processing tools** — pre/post filtering, hybrid original/FlashSR crossover and controlled reconstructed high-frequency blending.
 - **HF Cymbal / Shimmer Repair** — reduces watery or smeared upper-frequency sustain while preserving attacks.
@@ -27,6 +30,23 @@ Hear music generated entirely with this ComfyUI workflow:
 - **Centralized production JSON** — one canonical JSON per song is written into a configurable directory (default `json`) after all audio and artwork outputs are saved.
 - **FLUX.2 cover branch** — square artwork generation and JPEG saving; cover size also controls the embedded artwork size.
 - **Complete UI help** — every toolkit input has a tooltip and every toolkit node has Markdown help inside `web/docs/`.
+
+## v2.0.0 highlights
+
+- **Self-contained workflow**: the integrated `MiniMaxFlashSRAudio`, `MiniMaxLLMChat` and `MiniMaxLLMUnload` nodes replace the external Egregora FlashSR and ComfyUI-LLM-Session nodes. The example workflow uses only toolkit and ComfyUI core nodes.
+- **Structured prompt control**: `MiniMaxStructuredPromptV20` with metadata-prefilled fields and `custom` semantics; all 62 bundled prompt files carry metadata.
+- **Model auto-download**: `models_config.json` + `MiniMaxModelAutodownload` download the FlashSR weights (and any URL-configured model) on first use with logging, then the run continues. The FlashSR inference code is bundled with the toolkit.
+- **Switchable LLM section**: disable the LLM chat node and fill the parser's manual fallback fields — the rest of the workflow keeps running without errors.
+- **Workflow schema migration**: pre-2.0.0 saved workflows are repaired by input name (`workflow_schema.py` + a frontend hook).
+- The never-published v1.0.7 demo/documentation preparation is included (25-track demo catalog, development guide, demo-catalog maintenance script).
+
+## v1.0.7 highlights (included in 2.0.0)
+
+- Expands the GitHub Pages demo catalog to **25 tracks** while preserving existing SoundCloud URLs and cover artwork.
+- Adds `scripts/update_demo_catalog.py` so production JSON can be converted into safe public demo metadata without copying the full system prompt, raw LLM response or machine-specific paths.
+- Makes `scripts/prepare_demo_covers.py` read expected cover filenames dynamically from the demo catalog instead of a hard-coded list.
+- Adds a public `DEVELOPMENT.md` with workflow-schema, testing and release-maintenance rules.
+- Strengthens release validation around the demo catalog and refreshes maintainer/troubleshooting documentation.
 
 ## v1.0.6 highlights
 
@@ -46,9 +66,9 @@ Hear music generated entirely with this ComfyUI workflow:
 ## Example production chain
 
 ```text
-User prompt / prompt library
+Structured Song Prompt (Genre / Tempo / Key / Lyrics ...) + prompt library
         ↓
-External local LLM
+Integrated LLM Chat (llama.cpp)
 (max_tokens = 16384, n_ctx = 32768 in example)
         ↓
 Caption / Lyrics / Title / Image Prompt
@@ -58,7 +78,7 @@ MiniMax Music 3
 Source Declip Repair
         ├──────────────────→ clean original branch ─┐
         ↓                                           │
-PRE low-pass → FlashSR ─────────────────────────────┤
+PRE low-pass → Integrated FlashSR ─────────────────┤
                                                     ↓
                                            Hybrid crossover
                                                     ↓
@@ -81,13 +101,23 @@ Original FLAC + Release FLAC + Release MP3 + Cover
 
 The original MiniMax source is archived separately from the processed release files.
 
+## Switching the LLM section off
+
+- Set `LLM Chat (llama.cpp) → enabled` to false, or bypass the LLM nodes (the parser's LLM input is optional).
+- Fill `manual_caption` and `manual_lyrics` (optionally `manual_title`, `manual_image_prompt`) on the parser node.
+- The rest of the workflow keeps running without the LLM.
+
+## Model auto-download
+
+`models_config.json` lists every model file the example workflow references together with its target folder and, where available, its download URL. On first use, `MiniMaxModelAutodownload` (and the integrated FlashSR/LLM nodes) check these files, download missing ones with progress logging, and the run continues. Gated MiniMax / FLUX.2 weights have no public URL and are reported with guidance instead.
+
 ## Output structure
 
 The example workflow defaults to a structure like:
 
 ```text
 ComfyUI/output/
-└── audio/minimax3/2026-09-01/Example Album/
+└── audio/minimax3/<YYYY-MM-DD>/Example Album/
     ├── 32flac/
     │   └── Example Album - Song Title.flac
     ├── 44flac/
@@ -119,6 +149,14 @@ python -m pip install -r requirements.txt
 
 Use the Python interpreter that belongs to your ComfyUI installation. Restart ComfyUI afterward and hard-refresh the browser once (`Ctrl+F5`).
 
+For the integrated LLM chat node, additionally install `llama-cpp-python` in the same environment:
+
+```bash
+python -m pip install llama-cpp-python
+```
+
+and place a llama.cpp-compatible GGUF in `models/llm` (or configure a download URL in `models_config.json`).
+
 ## Prompt library
 
 Bundled prompts live under:
@@ -128,6 +166,7 @@ prompts/
 ├── system/
 │   └── minimax-music3-production.txt
 └── user/
+    ├── alternative/
     ├── ambient/
     ├── classical/
     ├── comedy/
@@ -137,7 +176,9 @@ prompts/
     ├── funk/
     ├── house/
     ├── jazz/
-    └── pop/
+    ├── metal/
+    ├── pop/
+    └── rock/
 ```
 
 For user and system prompts independently choose:
@@ -145,6 +186,17 @@ For user and system prompts independently choose:
 - `manual`
 - `bundled_library`
 - `external_directory`
+
+Prompt files can start with an optional metadata block that prefills the structured fields (Genre, Tempo, Key, Lyrics, Language, Voice, Theme, Length) when the file is selected:
+
+```text
+---
+Genre: Melodic Techno
+Tempo: 128 BPM
+Lyrics: sparse
+---
+Free text describing the track in more detail.
+```
 
 See [PROMPT_LIBRARY.md](PROMPT_LIBRARY.md).
 
@@ -158,7 +210,7 @@ The public workflow contains generic metadata and no machine-specific paths. It 
 
 ## Audio demos / SoundCloud
 
-A curated **17-track** GitHub Pages demo is included. It is driven by the supplied production metadata and supports cover art, SoundCloud playback, search/filtering, musical summaries and expandable generation details.
+A curated **25-track** GitHub Pages demo is included. It is driven by the supplied production metadata and supports cover art, SoundCloud playback, search/filtering, musical summaries and expandable generation details.
 
 - Listening page source: `docs/index.html`
 - Track/SoundCloud configuration: `docs/demo-tracks.js`
@@ -166,7 +218,7 @@ A curated **17-track** GitHub Pages demo is included. It is driven by the suppli
 - Setup instructions: [AUDIO_EXAMPLES.md](AUDIO_EXAMPLES.md)
 - Intended public page: `https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/`
 
-The current demo configuration already contains the prepared SoundCloud playlist/track URLs. For future additions, paste a normal public SoundCloud URL into the matching `soundcloudUrl` field in `docs/demo-tracks.js`; the page builds the embedded player automatically. Local cover JPGs can be copied directly or prepared with `scripts/prepare_demo_covers.py`. If no local JPG is present, the page can fall back to SoundCloud's visual player so the SoundCloud artwork remains visible.
+The demo configuration preserves existing SoundCloud playlist/track URLs; newly prepared tracks may intentionally keep an empty `soundcloudUrl` until they are uploaded. For future additions, prefer `scripts/update_demo_catalog.py` to extract safe public metadata from production JSON, then paste the normal public SoundCloud URL into the matching `soundcloudUrl` field. Local cover JPGs can be copied directly or prepared with `scripts/prepare_demo_covers.py`. If no local JPG is present, the page can fall back to SoundCloud's visual player so the SoundCloud artwork remains visible.
 
 ## Documentation
 
@@ -178,6 +230,7 @@ The current demo configuration already contains the prepared SoundCloud playlist
 - [Audio examples / SoundCloud](AUDIO_EXAMPLES.md)
 - [Troubleshooting](TROUBLESHOOTING.md)
 - [Publishing / maintainer guide](PUBLISHING.md)
+- [Development guide](DEVELOPMENT.md)
 - [Changelog](CHANGELOG.md)
 
 ## Logging

@@ -18,11 +18,11 @@ The toolkit fingerprints selected prompt-file contents, so the template node sho
 
 ## External LLM model is missing
 
-The example GGUF filename is not a bundled dependency. Install/select a compatible model supported by your LLM node.
+The example GGUF filename is not a bundled dependency. Install/select a compatible llama.cpp GGUF in `models/llm` (or configure a download URL in `models_config.json`). The integrated LLM node needs `llama-cpp-python` installed in the ComfyUI Python environment.
 
-## FlashSR node is missing
+## FlashSR code or weights are missing
 
-Install `ComfyUI-Egregora-Audio-Super-Resolution` and follow its own FlashSR weight instructions. The weights are not distributed by this toolkit.
+Since v2.0.0 FlashSR is integrated (`MiniMaxFlashSRAudio`). Missing code/weights are downloaded automatically on first use when `auto_download` is enabled; see `models_config.json`. With auto-download disabled, place the files under `models/audio/flashsr/` manually.
 
 ## FFmpeg/loudness error
 
@@ -67,15 +67,32 @@ Also verify that `configuration_subdir` is writable and that `create_directories
 
 ## SoundCloud players do not show on the GitHub README
 
-Use the supplied GitHub Pages template instead of trying to embed an iframe directly in README Markdown. Add normal SoundCloud URLs to `docs/index.html`, then enable Pages from the repository's **Settings → Pages** using the `main` branch and `/docs` folder.
+Use the supplied GitHub Pages template instead of trying to embed an iframe directly in README Markdown. Add normal SoundCloud URLs to `docs/demo-tracks.js`, then enable Pages from the repository's **Settings → Pages** using the `main` branch and `/docs` folder.
 
 
 ## External LLM returns empty text after a native access violation
 
-If `ComfyUI-LLM-Session` logs a native `access violation` and the downstream parser then reports missing `[Caption]` / `[Lyrics]`, the parser error is secondary: it received an empty assistant response. First fully restart ComfyUI; if the native backend remains in a bad state, a full machine restart can clear stale CUDA/llama.cpp state. Only investigate the parser if the LLM node actually returns non-empty text.
+If the LLM runtime (the legacy `ComfyUI-LLM-Session` node or any other backend) logs a native `access violation` and the downstream parser then reports missing `[Caption]` / `[Lyrics]`, the parser error is secondary: it received an empty assistant response. First fully restart ComfyUI; if the native backend remains in a bad state, a full machine restart can clear stale CUDA/llama.cpp state. Only investigate the parser if the LLM node actually returns non-empty text. The integrated `MiniMaxLLMChat` raises its own clear error on empty generation output, so an empty-string parser error cannot mask the upstream failure.
 
 ## Save Cover JPG reports invalid `collision_mode` or wrong `jpeg_quality` type
 
 This was a workflow-serialization issue in the first v1.0.5 example workflow, not an image-quality or Pillow problem. The `title` and `audio_tags_json` sockets had been inserted ahead of the existing widget-backed inputs in the saved JSON, while the Python node schema still expected `collision_mode`, `create_directories`, and `jpeg_quality` first. ComfyUI therefore associated saved widget values with the wrong slots.
 
-Use the v1.0.6 example workflow or recreate the `Save Image Smart Prefix` node and reconnect `image`, `filename_prefix`, `title`, and `audio_tags_json`. In the corrected workflow the visible values are `collision_mode = auto_increment`, `jpeg_quality = 95`, and `filename_mode = album - title`.
+Use the v1.0.6-or-newer example workflow or recreate the `Save Image Smart Prefix` node and reconnect `image`, `filename_prefix`, `title`, and `audio_tags_json`. In the corrected workflow the visible values are `collision_mode = auto_increment`, `jpeg_quality = 95`, and `filename_mode = album - title`.
+## I committed new demo tracks but GitHub Pages still shows the old page
+
+A local `git commit` does not update GitHub. Run `git push`, then check **GitHub → Actions** for the Pages deployment. If the deployment is green but the browser still shows the old catalog, hard-refresh (`Ctrl+F5`) or test in a private window because `demo-tracks.js` may still be cached. LF→CRLF warnings from Git on Windows are harmless.
+
+## I accidentally deleted the local `.git` folder
+
+If the project files are still intact and the remote repository contains the history, recreate only the local Git metadata:
+
+```powershell
+git init -b main
+git remote add origin https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit.git
+git fetch origin
+git reset --mixed origin/main
+```
+
+Use `--mixed`, not `--hard`, so current working files are preserved. Then inspect `git status`, commit the intended local differences and push normally.
+

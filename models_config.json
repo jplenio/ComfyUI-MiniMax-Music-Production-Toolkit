@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "auto_download": true,
+  "flashsr": {
+    "note": "Only the FlashSR weights are downloaded; the inference code is bundled with the toolkit in flashsr_inference/ (see flashsr_inference/NOTICE.md).",
+    "weights": {
+      "target": "models/audio/flashsr",
+      "files": [
+        {
+          "name": "student_ldm.pth",
+          "target": "models/audio/flashsr",
+          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/student_ldm.pth?download=true",
+          "timeout": 3600
+        },
+        {
+          "name": "sr_vocoder.pth",
+          "target": "models/audio/flashsr",
+          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/sr_vocoder.pth?download=true",
+          "timeout": 3600
+        },
+        {
+          "name": "vae.pth",
+          "target": "models/audio/flashsr",
+          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/vae.pth?download=true",
+          "timeout": 3600
+        }
+      ]
+    }
+  },
+  "minimax": {
+    "note": "MiniMax Music 3 model weights are distributed by MiniMax. Obtain the files from the official MiniMax channels and place them in the target folders.",
+    "files": [
+      {
+        "name": "minimax_music3_dit_fp16.safetensors",
+        "target": "models/diffusion_models",
+        "url": ""
+      },
+      {
+        "name": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+        "target": "models/text_encoders",
+        "url": ""
+      },
+      {
+        "name": "minimax_music3_dav.safetensors",
+        "target": "models/vae",
+        "url": ""
+      }
+    ]
+  },
+  "flux2": {
+    "note": "FLUX.2 Klein weights are hosted in a gated Hugging Face repository (black-forest-labs/FLUX.2-klein-dev). Set a HF_TOKEN environment variable and add the resolved URLs here, or download the files manually.",
+    "files": [
+      {
+        "name": "flux-2-klein-4b.safetensors",
+        "target": "models/diffusion_models",
+        "url": ""
+      },
+      {
+        "name": "qwen_3_4b.safetensors",
+        "target": "models/text_encoders",
+        "url": ""
+      },
+      {
+        "name": "flux2-vae.safetensors",
+        "target": "models/vae",
+        "url": ""
+      }
+    ]
+  },
+  "llm": {
+    "note": "Any llama.cpp-compatible GGUF placed in models/llm is offered by the integrated LLM chat node. The example name below matches the bundled workflow; provide the file yourself or set a URL here.",
+    "directory": "models/llm",
+    "example": {
+      "name": "Qwen3.8-27B-UD-IQ3_XXS.gguf",
+      "target": "models/llm",
+      "url": ""
+    }
+  }
+}

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "torch_jaekwon"
+version = "1.0"
+description = ""
+# If you have a license, you can specify it here:
+license = { text = "" }
+
+authors = [
+  { name = "Jaekwon Im", email = "jakeoneijk@kaist.ac.kr" }
+]
+
+dependencies = [
+  "av",
+  "ema-pytorch==0.2.3",
+  "librosa",
+  "matplotlib",
+  "moviepy==1.0.3",
+  "numpy",
+  "opencv-python",
+  "psutil",
+  "pyyaml",
+  "safetensors",
+  "tensorboardX",
+  "torchdiffeq",
+  "torchsde",
+  "tqdm",
+  "wandb",
+  "debugpy"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["torch_jaekwon*"]

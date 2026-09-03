@@ -67,5 +67,58 @@ class PromptLibraryTests(unittest.TestCase):
             self.assertNotEqual(a, b)
 
 
+class CustomPromptSaveTests(unittest.TestCase):
+    """The structured prompt node saves its values into the library's _custom/ folder."""
+
+    def setUp(self):
+        self.pl = load_prompt_library()
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _save(self, filename, fields=None, description="My description.", overwrite=False):
+        return self.pl.save_custom_prompt(
+            "external_directory", str(self.root), filename,
+            fields or {}, description, overwrite,
+        )
+
+    def test_saves_metadata_block_and_description(self):
+        relative = self._save("my-house", {"genre": "House", "length": "4-5 minutes", "lyrics": "custom"})
+        self.assertEqual(relative, "_custom/my-house.txt")
+        target = self.root / "_custom" / "my-house.txt"
+        self.assertTrue(target.is_file())
+        text = target.read_text(encoding="utf-8")
+        self.assertIn("Genre: House", text)
+        self.assertIn("Length: 4-5 minutes", text)
+        self.assertNotIn("Lyrics", text)  # custom values are omitted
+        self.assertTrue(text.endswith("My description.\n"))
+        # The new file appears in the library listing.
+        files = self.pl.list_prompt_files("user", "external_directory", str(self.root))
+        self.assertIn("_custom/my-house.txt", files)
+
+    def test_overwrite_is_refused_by_default(self):
+        self._save("dup")
+        with self.assertRaises(self.pl.PromptLibraryError):
+            self._save("dup")
+        # overwrite=True replaces the file.
+        relative = self._save("dup", description="New text.", overwrite=True)
+        self.assertEqual(relative, "_custom/dup.txt")
+        self.assertIn("New text.", (self.root / "_custom" / "dup.txt").read_text(encoding="utf-8"))
+
+    def test_invalid_names_are_rejected(self):
+        for bad in ("", "../evil", "sub/dir", ".", ".."):
+            with self.assertRaises((self.pl.PromptLibraryError, ValueError)):
+                self._save(bad)
+
+    def test_name_is_sanitized(self):
+        relative = self._save("my house: one.txt")
+        self.assertEqual(relative, "_custom/my house_ one.txt")
+        # Windows-reserved device names are neutralized instead of failing.
+        reserved = self._save("CON")
+        self.assertEqual(reserved, "_custom/CON_.txt")
+
+
 if __name__ == "__main__":
     unittest.main()

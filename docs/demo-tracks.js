@@ -5,12 +5,9 @@
 // 2. Paste the NORMAL SoundCloud track URL into soundcloudUrl below.
 // 3. Commit this file. No iframe code is required.
 //
-// COVERS:
-// Put the generated cover JPGs in docs/assets/demo-covers/ using the filenames
-// already listed in each `cover` field. The page falls back gracefully when an
-// image has not been added yet.
+// This file can also be maintained with scripts/update_demo_catalog.py.
+// That helper intentionally copies only public demo fields from production JSON.
 //
-
 window.MINIMAX_DEMO_CONFIG = {
   "artist": "Pelenio",
   "repositoryUrl": "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit",
@@ -21,7 +18,7 @@ window.MINIMAX_DEMO_CONFIG = {
 window.MINIMAX_DEMO_TRACKS = [
   {
     "id": "strange-horizons-the-amber-frame",
-    "showcaseOrder": 24,
+    "showcaseOrder": 1,
     "title": "The Amber Frame",
     "artist": "Pelenio",
     "album": "Strange Horizons",
@@ -636,8 +633,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 18,
     "title": "Staccato Run",
     "artist": "Pelenio",
-    "album": "breakbeat-instrumental",
-    "genre": "breakbeat-instrumental",
+    "album": "Breakbeat Instrumental",
+    "genre": "Breakbeat",
     "style": "Breakbeat / Modern Club Breakbeat",
     "type": "Instrumental",
     "language": "—",
@@ -672,8 +669,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 19,
     "title": "Undertow",
     "artist": "Pelenio",
-    "album": "liquid-drum-and-bass-sparse-vocals",
-    "genre": "liquid-drum-and-bass-sparse-vocals",
+    "album": "Liquid Drum & Bass – Sparse Vocals",
+    "genre": "Liquid Drum & Bass",
     "style": "Liquid Drum & Bass / Atmospheric Electronic",
     "type": "Vocal",
     "language": "English",
@@ -708,8 +705,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 20,
     "title": "Iron Pulse",
     "artist": "Pelenio",
-    "album": "hardgroove-techno-instrumental",
-    "genre": "hardgroove-techno-instrumental",
+    "album": "Hardgroove Techno Instrumental",
+    "genre": "Hardgroove Techno",
     "style": "Hardgroove Techno / Industrial Club",
     "type": "Instrumental",
     "language": "—",
@@ -745,8 +742,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 21,
     "title": "Iron Pulse",
     "artist": "Pelenio",
-    "album": "hardgroove-techno-instrumental",
-    "genre": "hardgroove-techno-instrumental",
+    "album": "Hardgroove Techno Instrumental",
+    "genre": "Hardgroove Techno",
     "style": "Hardgroove Techno / Peak-Time Club",
     "type": "Instrumental",
     "language": "—",
@@ -782,8 +779,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 22,
     "title": "Rupture",
     "artist": "Pelenio",
-    "album": "future-rave-sparse-vocals",
-    "genre": "future-rave-sparse-vocals",
+    "album": "Future Rave – Sparse Vocals",
+    "genre": "Future Rave",
     "style": "Future Rave / Festival Electronic",
     "type": "Vocal",
     "language": "English",
@@ -818,8 +815,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 23,
     "title": "Iron Pulse",
     "artist": "Pelenio",
-    "album": "future-rave-sparse-vocals",
-    "genre": "future-rave-sparse-vocals",
+    "album": "Future Rave – Sparse Vocals",
+    "genre": "Future Rave",
     "style": "Future Rave / Festival Electronic",
     "type": "Vocal",
     "language": "English",
@@ -851,11 +848,11 @@ window.MINIMAX_DEMO_TRACKS = [
   },
   {
     "id": "future-rave-sparse-vocals-pulse-of-the-storm",
-    "showcaseOrder": 1,
+    "showcaseOrder": 24,
     "title": "Pulse of the Storm",
     "artist": "Pelenio",
-    "album": "future-rave-sparse-vocals",
-    "genre": "future-rave-sparse-vocals",
+    "album": "Future Rave – Sparse Vocals",
+    "genre": "Future Rave",
     "style": "Future Rave / Dark Festival Electronic",
     "type": "Vocal",
     "language": "English",
@@ -890,8 +887,8 @@ window.MINIMAX_DEMO_TRACKS = [
     "showcaseOrder": 25,
     "title": "Undertow",
     "artist": "Pelenio",
-    "album": "drum-and-bass-instrumental",
-    "genre": "drum-and-bass-instrumental",
+    "album": "Drum & Bass Instrumental",
+    "genre": "Drum & Bass",
     "style": "Drum & Bass / Liquid-Intelligent DnB",
     "type": "Instrumental",
     "language": "—",

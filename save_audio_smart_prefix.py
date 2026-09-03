@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -512,6 +512,49 @@ class SaveAudioSmartPrefix:
         else:
             info_payload = {"batch": save_infos}
         return (audio, "\n".join(saved), "\n".join(sidecars), json.dumps(info_payload, ensure_ascii=False, indent=2))
+
+
+def preview_output_files(
+    filename_prefix: str,
+    format: str,
+    collision_mode: str = "auto_increment",
+    filename_mode: str = "album - title",
+    tags_meta: Optional[Dict[str, Any]] = None,
+    title: str = "",
+) -> Dict[str, Any]:
+    """Non-writing preview of the exact path the saver would produce.
+
+    Mirrors the naming pipeline (``_resolve_prefix`` -> ``apply_filename_mode``
+    -> ``_pick_path``) without creating directories or files, so a batch can
+    be checked for output collisions before anything is written.  Returns one
+    entry with the planned path, its existence state and whether the saver
+    would raise instead of writing.
+    """
+    resolved_prefix = _resolve_prefix(filename_prefix)
+    resolved_prefix = apply_filename_mode(
+        resolved_prefix, tags_meta, title, filename_mode, error_prefix="Save Audio Smart Prefix"
+    )
+    ext = str(format or "").strip().lower().lstrip(".") or "flac"
+    base_target = f"{resolved_prefix}.{ext}"
+    exists = os.path.exists(base_target)
+    planned = base_target
+    would_raise = False
+    if collision_mode == "auto_increment":
+        if exists:
+            planned = _pick_path(resolved_prefix, ext, collision_mode)
+            exists = os.path.exists(planned)
+    elif collision_mode == "error_if_exists":
+        would_raise = exists
+        if would_raise:
+            planned = ""
+    return {
+        "kind": ext,
+        "directory": os.path.dirname(resolved_prefix),
+        "basename": os.path.basename(planned or base_target),
+        "path": planned,
+        "exists": exists,
+        "would_raise": would_raise,
+    }
 
 
 NODE_CLASS_MAPPINGS = {"SaveAudioSmartPrefix": SaveAudioSmartPrefix}

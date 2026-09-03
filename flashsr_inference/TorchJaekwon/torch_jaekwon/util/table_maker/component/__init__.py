@@ -1,0 +1,1 @@
+from torch_jaekwon.util.table_maker.component.audio_player import WaveformAudioPlayer

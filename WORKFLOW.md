@@ -4,9 +4,9 @@ The included workflow is designed as an end-to-end MiniMax Music 3 production ex
 
 ## 1. Prompt preparation
 
-`LLM Prompt Library / Template` provides two independent prompt sources:
+`Structured Song Prompt` provides two independent prompt sources:
 
-- the **user prompt** describing the desired song;
+- the **user prompt** assembled from structured fields (Genre, Tempo, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description area;
 - the **system prompt** describing how the LLM must transform that request for MiniMax Music 3.
 
 Each can come from:
@@ -14,6 +14,8 @@ Each can come from:
 - manual text;
 - the bundled prompt library;
 - an external directory.
+
+Prompt files can start with an optional metadata block that prefills the structured fields when the file is selected (see [PROMPT_LIBRARY.md](PROMPT_LIBRARY.md)). Every field can be overridden; `custom` leaves that part out of the LLM prompt.
 
 The bundled production system prompt requires the LLM to return:
 
@@ -26,11 +28,11 @@ The bundled production system prompt requires the LLM to return:
 
 The parser is intentionally order-tolerant for resilience, but the system prompt asks for this exact order.
 
-## 2. External LLM
+## 2. Integrated LLM (llama.cpp)
 
-The example uses `ComfyUI-LLM-Session` with a local GGUF model.
+The example uses the integrated `LLM Chat (llama.cpp)` node with a local GGUF model — no external LLM custom node is required.
 
-The bundled v1.0.6 example uses the user-tested local-LLM settings:
+The bundled example uses the user-tested local-LLM settings:
 
 ```text
 max_tokens = 16384
@@ -39,18 +41,24 @@ n_ctx      = 32768
 
 This is intentionally generous because the model may need to produce a detailed Caption, long instrumental section structure, lyrics, title and cover prompt in one response. If your selected GGUF model or hardware needs less context, reduce these values together rather than assuming the example settings are universal.
 
-`LLM Session ID / Cache Buster` can randomize/increment the session ID so identical high-level genre prompts still trigger a fresh creative LLM pass in batch generation.
+`LLM Session ID / Cache Buster` can randomize/increment the session ID so identical high-level genre prompts still trigger a fresh creative LLM pass in batch generation. `Unload LLM (integrated)` runs after the chat and frees the model memory before music generation.
+
+### Switching the LLM section off
+
+- Set `LLM Chat (llama.cpp) → enabled` to false (or bypass the LLM nodes).
+- Fill `manual_caption` and `manual_lyrics` (optionally `manual_title`, `manual_image_prompt`) on the parser node.
+- The parser falls back to these manual values; the rest of the workflow keeps running.
 
 ## 3. Structured output parser
 
-`Parse Structured Music LLM Output` extracts:
+`Parse Structured LLM Output` extracts:
 
 - Caption
 - Lyrics / instrumental section map
 - Title
 - Image Prompt
 
-It also generates/provides per-song source/provenance information and the primary generation seed used downstream.
+Its LLM input is optional; without it, the manual fallback fields are used. It also generates/provides per-song source/provenance information and the primary generation seed used downstream.
 
 ## 4. MiniMax generation settings
 
@@ -70,9 +78,11 @@ The bundled workflow does **not** write its own JSON sidecar at this stage.
 
 This is not a limiter and cannot restore information that clipping destroyed exactly.
 
-## 7. PRE low-pass + FlashSR
+## 7. PRE low-pass + FlashSR (integrated)
 
-The explicit PRE low-pass can remove problematic source treble before FlashSR. FlashSR then reconstructs bandwidth at a higher sample rate.
+`Audio Super Resolution (FlashSR, integrated)` replaces the previously used external Egregora node with the same processing behavior (48 kHz inference, 5.12 s chunks, 0.50 s overlap, Hann overlap-add). Its inference code is bundled with the toolkit (`flashsr_inference/`); only the FlashSR weights are checked/downloaded automatically on first use (see [INSTALLATION.md](INSTALLATION.md)).
+
+The explicit PRE low-pass can remove problematic source treble before FlashSR. FlashSR then reconstructs bandwidth at a higher sample rate. Since 2.0.0 the PRE/POST low-pass values live directly on the two low-pass nodes (the former shared "FlashSR / Lowpass Settings" node was removed from the example workflow).
 
 The full workflow intentionally preserves an original branch as well so you are not forced to replace the whole source with generated high-frequency content.
 
@@ -163,9 +173,10 @@ It depends on:
 - the release FLAC saver's `save_info_json`;
 - the release MP3 saver's `save_info_json`;
 - the saved cover JPG path;
-- the generated reproducibility metadata;
 - standard audio tags;
 - the centralized `configuration_prefix`.
+
+Since 2.0.0 the separate "Reproducible Song Metadata" node is no longer part of the example workflow: `metadata_json` is an optional input, and the canonical JSON still records the standard tags, the title and the complete `outputs` section without it.
 
 Because those save-info/path inputs only become available after each file is saved, the final configuration writer naturally executes after the output artifacts it documents.
 

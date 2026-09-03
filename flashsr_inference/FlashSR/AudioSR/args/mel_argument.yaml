@@ -1,0 +1,6 @@
+nfft: 2048
+hop_size: 480
+sample_rate: 48000
+mel_size: 256
+frequency_min: 20
+frequency_max: 24000

@@ -36,7 +36,7 @@ python scripts/validate_release.py
 python -m unittest discover -s tests -v
 ```
 
-The release validator checks required files, Python syntax, version consistency, publisher metadata, example-workflow links including subgraph boundary links, prompt-library integrity, privacy/placeholders and node documentation.
+The release validator checks required files, Python syntax, version consistency, publisher metadata, example-workflow links including subgraph boundary links, prompt-library integrity, privacy/placeholders, node documentation and GitHub Pages demo catalog integrity.
 
 ## Build release assets
 
@@ -54,13 +54,13 @@ SHA256SUMS.txt
 
 The ZIP excludes VCS state, Python caches and already-built ZIP files.
 
-## Commit v1.0.6
+## Commit v2.0.0
 
 For an existing checkout:
 
 ```bash
 git add -A
-git commit -m "Release v1.0.6"
+git commit -m "Release v2.0.0"
 git push
 ```
 
@@ -71,13 +71,13 @@ Do not re-run `git init` for an already existing repository.
 Create a new GitHub Release with:
 
 ```text
-Tag:   v1.0.6
-Title: MiniMax Music Production Toolkit 1.0.6
+Tag:   v2.0.0
+Title: MiniMax Music Production Toolkit 2.0.0
 ```
 
-Use `RELEASE_NOTES_v1.0.6.md` as the release description and upload the three generated release assets.
+Use `RELEASE_NOTES_v2.0.0.md` as the release description and upload the three generated release assets.
 
-The Git tag uses a leading `v`; the package/Registry version remains `1.0.6` without the leading `v`.
+The Git tag uses a leading `v`; the package/Registry version remains `2.0.0` without the leading `v`.
 
 ## Comfy Registry
 
@@ -115,7 +115,7 @@ comfy node publish
 
 The repository includes `docs/index.html` for SoundCloud-backed listening examples.
 
-After adding normal SoundCloud track URLs to the `tracks` array, enable Pages:
+Maintain the demo catalog in `docs/demo-tracks.js` (prefer `scripts/update_demo_catalog.py` for metadata imports), then enable Pages:
 
 **Settings → Pages → Build and deployment**
 

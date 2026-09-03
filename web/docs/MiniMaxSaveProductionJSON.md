@@ -17,18 +17,20 @@ The node receives the save-information outputs from the original FLAC, release F
 
 ## What the JSON contains
 
-The base reproducibility metadata is produced by **MiniMax Song Metadata** and includes the LLM/system prompt, generated Caption/Lyrics/Title/Image Prompt, source provenance, seeds, MiniMax generation settings, FlashSR/filter settings, de-clipping, HF repair and release preparation settings.
+The node assembles the **complete generation record** from direct inputs (no separate metadata node is needed since 2.0.0):
 
-The final writer adds:
-
-- standard audio tags,
-- original-audio save information,
-- release FLAC save information,
-- release MP3 save information,
-- artwork path,
-- configuration-file path.
+- the full LLM stage: system prompt, user prompt, raw LLM output and status;
+- the structured-prompt summary (origin, resolved fields, overrides);
+- the parsed Caption / Lyrics / Title / Image_Prompt with source provenance, seeds, run/variant counters;
+- the MiniMax Music 3 generation settings (max duration, text seed/CFG/top-k, sampler seed/steps/CFG/denoise);
+- every audio-enhancement report: de-clipping, PRE/POST low-pass, FlashSR settings, hybrid crossover, HF cymbal/shimmer repair and release preparation;
+- the standard audio tags,
+- original-audio / release FLAC / release MP3 save information,
+- the artwork path and the configuration-file path.
 
 Audio save information includes format, sample rate, peak before final file writing, any constant safety gain applied by the saver, filename mode and embedded-cover size.
+
+Together with the `outputs` section this is enough to recreate a song (with modified settings) from the JSON file alone - the optional `MiniMaxMetadataLoader` node (used in a separate restore workflow) reads the same schema.
 
 ## File naming
 

@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.0] - 2026-09-02
+
+This major release makes the example workflow self-contained, gives the prompt stage structured control, and adds first-run model auto-download. The never-published v1.0.7 documentation/demo preparation is included in this release.
+
+### Added
+- **Integrated FlashSR node** `MiniMaxFlashSRAudio` (display: *Audio Super Resolution (FlashSR, integrated)*): replaces the external `ComfyUI-Egregora-Audio-Super-Resolution` node with an identical processing behavior (48 kHz, 5.12 s chunks, 0.50 s overlap, Hann overlap-add). Missing FlashSR code/weights are auto-downloaded on first use.
+- **Integrated LLM nodes** `MiniMaxLLMChat` and `MiniMaxLLMUnload`: self-contained llama-cpp-python chat (GGUF from `models/llm`, optional per-session state) replaces the external `ComfyUI-LLM-Session` nodes. No GPL code is used; failures raise clear errors instead of empty text.
+- **Structured prompt control** `MiniMaxStructuredPromptV20`: dedicated Genre / Tempo / Key / Lyrics (yes/sparse/instrumental) / Language / Voice / Lyrics theme / Target length fields plus a further-description area. Prompt library files can carry an optional metadata block that prefills the fields on selection; every field can be overridden and `custom` leaves the part out of the LLM prompt. All 62 bundled prompt files are annotated.
+- **Model auto-download** `MiniMaxModelAutodownload` plus declarative `models_config.json`: needed model files are checked on first use, downloaded when a URL is configured (with progress logging), and the run continues. Gated MiniMax / FLUX.2 weights without a public URL are reported with guidance.
+- **LLM section can be switched off without errors**: the parser's LLM input is now optional with manual caption/lyrics/title/image-prompt fallbacks, and `LLM Chat → enabled=false` skips model loading entirely.
+- **Workflow schema migration** (`workflow_schema.py` + frontend hook `web/workflow_migration.js`): pre-2.0.0 workflows that wired the parser's old input order are repaired by input name.
+- Add `scripts/annotate_prompt_metadata.py` to (re-)generate prompt front-matter metadata from file paths and prompt content.
+- Add `scripts/upgrade_workflow_to_v2.py` documenting the v1→v2 example workflow transformation.
+- Add `DEVELOPMENT.md` with public contributor/maintainer rules for node compatibility, serialized workflow safety, validation and releases.
+- Add `scripts/update_demo_catalog.py` to safely extract public GitHub Pages demo metadata from production JSON while preserving existing SoundCloud URLs.
+- Add demo-catalog regression tests and release validation for unique track IDs/orders, cover availability and SoundCloud URL shape.
+- Local-only `KONTEXT.md` hand-off context is excluded from Git, the Comfy Registry and release ZIPs by validator-guarded rules.
+
+### Changed
+- The bundled example workflow uses only toolkit and ComfyUI-core nodes (external LLM Session / Egregora nodes removed).
+- **FlashSR inference code is now bundled** in `flashsr_inference/` (vendored from FlashSR_Inference + TorchJaekwon, with attribution in `flashsr_inference/NOTICE.md`). No code is downloaded into the models directory anymore; only the three FlashSR weights are fetched on first use. `models_config.json` no longer contains code-download entries (config version 2).
+- **Example workflow simplified**: the shared `FlashSRProcessingSettings` node and the `MiniMaxSongMetadata` node were removed. The PRE/POST low-pass values live directly on the two low-pass nodes, and `metadata_json` became an optional input of `MiniMaxSaveProductionJSON` (old saved workflows are repaired by name via `workflow_schema.migrate_workflow` and the frontend migration hook).
+- **Complete generation record in the production JSON** (schema `minimax_music3_production_metadata_v7`, auto-migrated from v6): the canonical JSON now contains the LLM system/user prompt, the raw LLM output and status, the structured-prompt summary, the parsed Caption/Lyrics/Title/Image_Prompt with provenance and seeds, the MiniMax generation settings and every audio-enhancement report (declip, PRE/POST low-pass, FlashSR, hybrid crossover, HF repair, release prep) plus the written files - enough to recreate a song from the JSON alone.
+- **Prompt library fully normalized**: every description follows the new structure; song lengths and BPM values no longer appear in the free text (they live in the metadata block), the missing `Length` entries were added, and `scripts/normalize_prompt_descriptions.py` keeps the library consistent (idempotent).
+- **Consistent logging**: the integrated LLM node logs model load, environment and the full assistant output while llama.cpp runs with `verbose=False`; FlashSR's vendored import noise and per-chunk tqdm bars are suppressed in favor of the toolkit's own log lines.
+- **Cover-prompt fix**: leaked LLM planning text no longer pollutes the FLUX cover prompt - the parser restarts a section on every repeated top-level header (last occurrence wins), the system prompt forbids any output outside the four sections, and the parser appends the standard text-free prohibition whenever the image prompt lacks it.
+- **Full LM Studio-style LLM node**: `MiniMaxLLMChat` now exposes temperature, top_k, top_p, min_p, repeat/presence/frequency penalty, seed, a chat-format selector (auto = verified per model family: chatml for Qwen-style, embedded template for Gemma), a thinking toggle (reasoning is split off, logged and recorded separately in `llm.thinking`) and multi-GPU controls (split_mode layer/row, tensor_split including `even`, main_gpu, tensor_parallel when the backend supports it). Verified end-to-end with Qwen3.8-27B and Gemma 4; parameter passing is gated by API introspection so older llama-cpp-python versions keep working.
+- **Save as custom prompt**: a button on `MiniMaxStructuredPromptV20` stores the current field values + description into the prompt library's `_custom/` folder (name prompt included); manual mode saves into the bundled library and switches to it. `custom` fields now always mean "no specification" - they no longer fall back to the file's metadata.
+- **Workflow documentation**: six MarkdownNote nodes explain every section (Prompt & LLM, FLUX.2, MiniMax, Audio Enhancement, Save & Release) plus a Models & Folders note with the required model files and their directory structure.
+- **`MiniMaxMetadataLoader` removed from the example workflow** (it belongs in a future separate song-restore workflow; the node class stays registered and reads the same schema).
+- **Song length limited to 5 minutes**: the Length combo offers shorter options (`30 seconds` up to `4-5 minutes`), two prompt files with longer metadata were corrected, and the bundled system prompt now caps every request at 5:00 (the MiniMax generation settings already used `max_duration` 300 s).
+- **Artwork size presets** now include `1536x1536`, `2048x2048`, `3072x3072` and `3096x3096` (the FLUX.2 latent stage quantizes to multiples of 16, so 3096 renders as 3088 - prefer 3072).
+- `MiniMaxParseExternalLLMOutputV16` now accepts an optional LLM output plus manual fallback fields and an `llm_status` input (wired to the LLM chat node's status output); provenance records whether LLM or manual values were used. A decorated `[Count]` value no longer fails the run - the first integer is extracted, clamped to 1-100 and warned about instead.
+- Selecting a prompt file in `MiniMaxStructuredPromptV20` copies the file's body text into `description_override`, which is authoritative from then on; editing it invalidates the cache even in file mode. Combo option lists ship with a curated vocabulary merged with library values.
+- Windows filename hardening: reserved device names (`CON`, `NUL`, `COM1`, …) are neutralized, trailing dots/spaces stripped and over-long titles truncated.
+- Expand the GitHub Pages demo catalog from 17 to 25 tracks and include the eight new supplied cover images.
+- Improve display labels for prompt-slug-based new demo collections/genres.
+- Make `scripts/prepare_demo_covers.py` derive its expected cover list dynamically from `docs/demo-tracks.js`.
+- Refresh README, audio examples, troubleshooting, development and publishing documentation.
+- Remove transient `Refresh prompt lists` UI state from the bundled example workflow metadata.
+
+### Maintainer tooling
+- `scripts/toolkit_diagnostics.py` — self-diagnostics report (Python, FFmpeg, packages, LLM stack, model targets, prompt library).
+- `scripts/preview_output_paths.py` — non-writing preview of the five output paths a run would produce, including collision resolution.
+- `scripts/bump_version.py` — version bump across VERSION / `pyproject.toml` / `project_info.py` / `CITATION.cff` / example workflow metadata, with a release-notes skeleton.
+- `scripts/package_release.py --dry-run` — release contents summary without creating assets.
+- New regression suites: node schema snapshot for every toolkit node in the bundled workflow, Windows filename edge tests, LLM failure-propagation tests, release-tooling tests (129 unit tests total).
+- LLM environment facts (llama-cpp-python version, GGUF inventory, model directories) are logged once per run for failure diagnostics.
+
+### Maintainer notes
+- Runtime node behavior of the audio chain (declip, low-pass, hybrid crossover, HF repair, release prep) remains unchanged; only the FlashSR/LLM node wrappers were replaced, with identical processing parameters.
+- New demo entries may keep an empty `soundcloudUrl` until their SoundCloud uploads are published.
+- v1.0.7 was never published; its prepared changes are released as part of 2.0.0.
+
 ## [1.0.6] - 2026-09-01
 
 ### Fixed

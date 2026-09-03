@@ -1,0 +1,33 @@
+# TableMaker config example. See README.md in this folder for the full guide.
+# Rows = data_name samples, columns = model_meta_list entries.
+
+#title: 'task title'           # page <h1> (defaults to the yaml file name)
+#sub_title: 'sub task title'   # page <h2>
+#transpose: true               # default: row = data_name, col = model_meta_list
+
+## ----- audio / media options (applies to ext: wav, and passed to get_item) -----
+#audio_config:
+#  audio_sr: 24000             # sample rate used for spectrograms / loudness
+#  spec_type: null             # null | 'x' (off) | 'stft' | 'mel'  -> show a spectrogram (stereo => one per channel)
+#  audio_player: 'html'        # 'html' = plain <audio> tag | 'waveform' = waveform player (play-head, per-channel, offline)
+#  media_width: '80%'          # audio + spectrogram width: int px (e.g. 300) or css percent of the cell (e.g. '80%')
+#  waveform_height: 250        # per-channel waveform height in px (waveform player only)
+#  max_audio_second: 120       # cap audio/spec/waveform length in seconds; null = full audio
+
+## ----- which samples become rows (choose ONE of the three) -----
+#data_name_list:               # List, or Dict[str, List] to group into named sections
+#  - singer/wav/song_name
+#data_name_list_ref_dir: 'path/to/ref_dir'   # or: auto-discover .wav/.mp4 files in a dir
+# (or pass get_data_name_list=... in code)
+
+## ----- which columns to show -----
+model_meta_list:
+  - name: 'model_name'         # column header (defaults to the dir name if omitted)
+    dir: 'output_dir'          # directory the cell's file is loaded from
+    #ext: 'wav'                # 'wav' | 'mp4' | 'function'
+    #                            'function' => define get_item(model_meta, data_name, case_name, html_util, **kwargs)
+    #                                          -> {'item': html_str | [html_str, ...], 'type': None}
+    #file_name: null | 'pred'  # if the file lives under dir/data_name/, name it here
+    #file_name_pre_post_fix: ['prefix', 'postfix']   # -> prefix{data_name}postfix.ext
+    #use_only_name: false      # if true, use data_name.split('/')[-1]
+    #file_strict: false        # default true => raise on a missing file; false => render a blank cell

@@ -125,7 +125,7 @@ class MiniMaxSquareImageSize:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "size_preset": (["256x256", "512x512", "1024x1024", "custom"], {"default": "512x512"}),
+                "size_preset": (["256x256", "512x512", "1024x1024", "1536x1536", "2048x2048", "3072x3072", "3096x3096", "custom"], {"default": "512x512"}),
                 "custom_size": ("INT", {"default": 768, "min": 64, "max": 4096, "step": 64}),
             }
         }
@@ -136,15 +136,19 @@ class MiniMaxSquareImageSize:
     CATEGORY = "MiniMax Music Production Toolkit/artwork"
 
     def build(self, size_preset, custom_size):
-        if size_preset == '256x256':
-            s = 256
-        elif size_preset == '512x512':
-            s = 512
-        elif size_preset == '1024x1024':
-            s = 1024
-        else:
-            s = int(custom_size)
-        return (s, s)
+        presets = {
+            "256x256": 256,
+            "512x512": 512,
+            "1024x1024": 1024,
+            "1536x1536": 1536,
+            "2048x2048": 2048,
+            "3072x3072": 3072,
+            "3096x3096": 3096,
+        }
+        if size_preset in presets:
+            return (presets[size_preset], presets[size_preset])
+        # custom
+        return (int(custom_size), int(custom_size))
 
 
 class SaveImageSmartPrefix:

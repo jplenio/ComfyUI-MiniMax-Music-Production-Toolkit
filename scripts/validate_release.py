@@ -10,12 +10,14 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 REQUIRED = [
     "README.md", "INSTALLATION.md", "WORKFLOW.md", "PROMPT_LIBRARY.md",
     "AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
     "NOTICE.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md",
-    "AUDIO_EXAMPLES.md", "docs/index.html", "CITATION.cff", "VERSION",
-    "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py",
+    "AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "CITATION.cff", "VERSION",
+    "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py", "scripts/update_demo_catalog.py",
     "example_workflows/MiniMax_Music3_Production_Toolkit.json",
     "prompts/system/minimax-music3-production.txt",
 ]
@@ -147,7 +149,21 @@ def check_workflow() -> None:
         nodes_by_type.setdefault(node.get("type"), []).append(node)
     if "MiniMaxSaveProductionJSON" not in nodes_by_type:
         fail("Public workflow is missing centralized Save Production JSON")
-    llm_nodes = nodes_by_type.get("LLMSessionChatNode", [])
+
+    # Since 2.0.0 the public workflow must be self-contained: integrated LLM /
+    # FlashSR nodes only, no external custom-node dependencies.
+    from workflow_schema import find_external_node_dependencies
+    external = find_external_node_dependencies(wf)
+    if external:
+        fail(
+            "Public workflow still depends on external custom nodes: "
+            + "; ".join(f"node {node_id} ({node_type})" for node_id, node_type in external)
+        )
+    for required_type in ("MiniMaxLLMChat", "MiniMaxLLMUnload", "MiniMaxFlashSRAudio", "MiniMaxStructuredPromptV20", "MiniMaxModelAutodownload"):
+        if required_type not in nodes_by_type:
+            fail(f"Public workflow is missing integrated node {required_type}")
+
+    llm_nodes = nodes_by_type.get("MiniMaxLLMChat", [])
     if llm_nodes:
         llm_values = llm_nodes[0].get("widgets_values_named", {})
         if llm_values.get("max_tokens") != 16384 or llm_values.get("n_ctx") != 32768:
@@ -167,8 +183,20 @@ def check_workflow() -> None:
         "image", "filename_prefix", "collision_mode", "create_directories",
         "jpeg_quality", "title", "audio_tags_json", "filename_mode",
     ]
-    actual_artwork_inputs = [i.get("name") for i in artwork.get("inputs", [])]
-    if actual_artwork_inputs != expected_artwork_inputs:
+    artwork_entries = artwork.get("inputs", [])
+    actual_artwork_inputs = [i.get("name") for i in artwork_entries]
+    # Accept both serializations ComfyUI produces: the canonical definition
+    # order and the frontend's socket-first order.  Within each group the
+    # definition order must be preserved, and the name set must match exactly.
+    sockets_actual = [i.get("name") for i in artwork_entries if "widget" not in i]
+    widgets_actual = [i.get("name") for i in artwork_entries if "widget" in i]
+    expected_sockets = [n for n in expected_artwork_inputs if n in sockets_actual]
+    expected_widgets = [n for n in expected_artwork_inputs if n in widgets_actual]
+    if (
+        sorted(actual_artwork_inputs) != sorted(expected_artwork_inputs)
+        or sockets_actual != expected_sockets
+        or widgets_actual != expected_widgets
+    ):
         fail(
             "Artwork saver serialized input order does not match SaveImageSmartPrefix INPUT_TYPES: "
             + repr(actual_artwork_inputs)
@@ -203,6 +231,22 @@ def check_prompt_library() -> None:
 
 
 def check_privacy_and_placeholders() -> None:
+    # Local-only handoff files must never be published.  If one exists on this
+    # machine, the ignore/exclusion guards must all be present, otherwise a
+    # release ZIP or Comfy Registry package would leak it.
+    for local_name in ("KONTEXT.md", "PROJECT_STATE.md"):
+        local_file = ROOT / local_name
+        if not local_file.exists():
+            continue
+        gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8", errors="replace")
+        comfyignore = (ROOT / ".comfyignore").read_text(encoding="utf-8", errors="replace")
+        if local_name not in gitignore:
+            fail(f"{local_name} exists but is not listed in .gitignore (local-only file must never be pushed)")
+        if local_name not in comfyignore:
+            fail(f"{local_name} exists but is not listed in .comfyignore (local-only file must never be published to the Comfy Registry)")
+        package_script = (ROOT / "scripts" / "package_release.py").read_text(encoding="utf-8", errors="replace")
+        if f'"{local_name}"' not in package_script:
+            fail(f"{local_name} exists but scripts/package_release.py no longer excludes it from release ZIPs")
     # Generic leak patterns only: the repository deliberately contains the public
     # author name/GitHub URL, so those are not treated as privacy violations.
     bad_patterns = [
@@ -220,6 +264,50 @@ def check_privacy_and_placeholders() -> None:
         for pattern in bad_patterns:
             if pattern.search(text):
                 fail(f"Potential private/placeholder data in {path.relative_to(ROOT)} matching {pattern.pattern}")
+
+
+
+def check_demo_catalog() -> None:
+    path = ROOT / "docs" / "demo-tracks.js"
+    text = path.read_text(encoding="utf-8")
+    cfg_match = re.search(
+        r"window\.MINIMAX_DEMO_CONFIG\s*=\s*(\{.*?\});\s*window\.MINIMAX_DEMO_TRACKS",
+        text,
+        re.S,
+    )
+    tracks_match = re.search(r"window\.MINIMAX_DEMO_TRACKS\s*=\s*(\[.*\]);\s*$", text, re.S)
+    if not cfg_match or not tracks_match:
+        fail("Could not parse docs/demo-tracks.js")
+    try:
+        config = json.loads(cfg_match.group(1))
+        tracks = json.loads(tracks_match.group(1))
+    except json.JSONDecodeError as exc:
+        fail(f"Invalid JSON payload in docs/demo-tracks.js: {exc}")
+    if len(tracks) < 25:
+        fail(f"Expected at least 25 public demo tracks, found {len(tracks)}")
+    ids = [str(t.get("id", "")) for t in tracks]
+    if any(not item for item in ids) or len(ids) != len(set(ids)):
+        fail("Demo track IDs must be present and unique")
+    orders = [t.get("showcaseOrder") for t in tracks]
+    if any(not isinstance(item, int) for item in orders) or len(orders) != len(set(orders)):
+        fail("Demo showcaseOrder values must be unique integers")
+    playlist_url = str(config.get("soundcloudPlaylistUrl") or "")
+    if playlist_url and not re.match(r"^https://(?:www\.)?soundcloud\.com/", playlist_url, re.I):
+        fail("Demo playlist URL is not a normal SoundCloud URL")
+    keys = set()
+    for track in tracks:
+        key = (str(track.get("album", "")), str(track.get("title", "")), str(track.get("seed", "")))
+        if key in keys:
+            fail(f"Duplicate demo metadata identity: {key}")
+        keys.add(key)
+        url = str(track.get("soundcloudUrl") or "")
+        if url and not re.match(r"^https://(?:www\.)?soundcloud\.com/", url, re.I):
+            fail(f"Invalid SoundCloud URL for demo track {track.get('title')}")
+        cover = str(track.get("cover") or "")
+        if cover:
+            cover_path = ROOT / "docs" / cover
+            if not cover_path.is_file():
+                fail(f"Missing demo cover for {track.get('title')}: {cover}")
 
 
 def check_node_docs() -> None:
@@ -244,6 +332,28 @@ def check_node_docs() -> None:
         fail(f"Unexpectedly low registered node count discovered statically: {len(keys)}")
 
 
+def check_migration_logic() -> None:
+    """Run the pure-JS migration decision tests when Node.js is available.
+
+    The frontend migration must never move 2.0.0 parser links such as
+    model_check_report onto structured_llm_output; this regression test keeps
+    that guarantee mechanical instead of review-only.
+    """
+    import shutil
+    import subprocess
+
+    node = shutil.which("node")
+    if not node:
+        print("Skipping Node migration tests: 'node' not available")
+        return
+    test_file = ROOT / "tests" / "test_workflow_migration.mjs"
+    if not test_file.exists():
+        fail("Missing tests/test_workflow_migration.mjs")
+    result = subprocess.run([node, str(test_file)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0:
+        fail("Node migration tests failed:\n" + result.stdout + result.stderr)
+
+
 def main() -> None:
     check_required()
     check_python_syntax()
@@ -251,7 +361,9 @@ def main() -> None:
     check_workflow()
     check_prompt_library()
     check_privacy_and_placeholders()
+    check_demo_catalog()
     check_node_docs()
+    check_migration_logic()
     print("Release validation OK")
 
 

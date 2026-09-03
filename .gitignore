@@ -19,3 +19,9 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Local-only hand-off context (developer machine). Never pushed, never packaged.
+KONTEXT.md
+
+PROJECT_STATE.md
+

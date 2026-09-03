@@ -1,6 +1,6 @@
 # Installation
 
-This document separates **toolkit requirements** from the additional custom nodes and model files used by the full example workflow.
+This document separates **toolkit requirements** from the model files used by the full example workflow. Since v2.0.0 the example workflow no longer needs any external custom nodes: FlashSR and the LLM chat are integrated into this toolkit.
 
 ## 1. Install the toolkit
 
@@ -32,23 +32,30 @@ If you use ComfyUI Portable, use its embedded Python. `install_requirements.bat`
 
 PyTorch and NumPy are expected from ComfyUI and are deliberately not replaced by this package.
 
-## 2. External custom nodes used by the full workflow
+### Optional: integrated LLM chat
 
-### ComfyUI-Egregora-Audio-Super-Resolution
+`MiniMaxLLMChat` uses the public `llama-cpp-python` API:
 
-Used for FlashSR:
+```bash
+python -m pip install llama-cpp-python
+```
 
-https://github.com/lucasgattas/ComfyUI-Egregora-Audio-Super-Resolution
+When it is missing, the node still registers and explains the dependency at execution time. Provide a llama.cpp-compatible GGUF in `ComfyUI/models/llm/` (or configure a download URL in `models_config.json`).
 
-Install it separately and follow its own model-weight instructions. FlashSR weights are not included here.
+## 2. Model files and auto-download
 
-### ComfyUI-LLM-Session
+`models_config.json` in the toolkit folder lists every model file the example workflow references, its target folder and (where available) its download URL. `MiniMaxModelAutodownload` and the integrated FlashSR/LLM nodes check these files on first use:
 
-The example workflow uses a local GGUF LLM through:
+- Files with a configured URL are downloaded automatically (progress is logged) and the run continues.
+- Gated MiniMax / FLUX.2 weights have no public URL and are reported with guidance; obtain them from the official channels.
+- The FlashSR **inference code is bundled** with the toolkit in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; see `flashsr_inference/NOTICE.md`). Nothing is downloaded into the models directory except the three **weights** from the `jakeoneijk/FlashSR_weights` dataset (`student_ldm.pth`, `sr_vocoder.pth`, `vae.pth` → `models/audio/flashsr/`).
+- Set the per-node `auto_download` toggle to OFF to fail fast instead of downloading.
 
-https://github.com/kantan-kanto/ComfyUI-LLM-Session
+**All model paths follow ComfyUI's own configuration.** The toolkit resolves targets through `folder_paths.models_dir`, so a ComfyUI started with `--models-directory "F:\ComfyUI\models"` looks for FlashSR under `F:\ComfyUI\models\audio\flashsr` and for GGUFs under `F:\ComfyUI\models\llm` — never under the default base directory. Verify the resolution on any machine with:
 
-The toolkit itself is LLM-runtime agnostic. You may replace that node with another ComfyUI LLM node if it accepts system/user prompt text and returns assistant text.
+```bash
+<comfyui-venv-python> scripts/check_model_paths.py --comfy-dir D:/ComfyUI --models-directory F:/ComfyUI/models
+```
 
 ## 3. MiniMax Music 3 model files
 
@@ -86,7 +93,7 @@ Choose matching official model variants if your installation uses different file
 
 Install a GGUF model supported by your LLM node. The workflow includes one example filename only; that model is not bundled.
 
-The v1.0.6 example LLM settings use:
+The v1.0.7 example LLM settings use:
 
 ```text
 max_tokens = 16384

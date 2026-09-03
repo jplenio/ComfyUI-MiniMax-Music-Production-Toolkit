@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .metadata_schema import CURRENT_PRODUCTION_METADATA_SCHEMA
+
 
 class MiniMaxSongMetadata:
     @classmethod
@@ -86,7 +88,7 @@ class MiniMaxSongMetadata:
             declip = {"raw": declip_json}
 
         data = {
-            "schema": "minimax_music3_production_metadata_v6",
+            "schema": CURRENT_PRODUCTION_METADATA_SCHEMA,
             "workflow": workflow_name,
             "llm": {
                 "system_prompt": llm_system_prompt or "",
