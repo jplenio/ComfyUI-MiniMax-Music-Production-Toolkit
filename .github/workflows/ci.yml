@@ -24,5 +24,8 @@ jobs:
       - name: Validate release structure
         run: python scripts/validate_release.py
 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       - name: Run tests
         run: python -m unittest discover -s tests -v
