@@ -249,6 +249,30 @@ class LLMChatTests(unittest.TestCase):
         self.assertEqual(thinking, "")
         self.assertIs(model.received, True)
 
+    def test_run_chat_streams_when_supported(self):
+        # A model whose create_chat_completion accepts stream=True yields
+        # token deltas; content and reasoning deltas are collected and split.
+        class StreamFakeLlama:
+            def __init__(self):
+                self.streamed = None
+
+            def create_chat_completion(self, messages, max_tokens, temperature, top_p, stream=False, **extra):
+                self.streamed = stream
+
+                def gen():
+                    yield {"choices": [{"delta": {"content": "[Caption]"}}]}
+                    yield {"choices": [{"delta": {"content": " moody"}}]}
+                    yield {"choices": [{"delta": {"reasoning_content": "I picked moody."}}]}
+                    yield {"choices": [{"delta": {"content": "."}}]}
+
+                return gen() if stream else {"choices": [{"message": {"content": "fallback"}}]}
+
+        model = StreamFakeLlama()
+        text, thinking = llm_chat._run_chat(model, "sys", "user", 8, 0.7, 0.8)
+        self.assertIs(model.streamed, True)
+        self.assertEqual(text, "[Caption] moody.")
+        self.assertEqual(thinking, "I picked moody.")
+
     def test_split_thinking_tags(self):
         clean, thinking = llm_chat._split_thinking_tags(
             "<think>\nThe user wants one word.\n</think>\n\nOK"

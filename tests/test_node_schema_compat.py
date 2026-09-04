@@ -36,6 +36,7 @@ NODE_MODULE = {
     "MiniMaxLLMSessionId": "session_utils",
     "MiniMaxSaveProductionJSON": "minimax_json_output",
     "MiniMaxModelAutodownload": "minimax_autodownload",
+    "MiniMaxPromptReport": "minimax_prompt_report",
 }
 
 # ComfyUI core nodes legitimately used by the public workflow; their schema is
@@ -59,6 +60,7 @@ MODULE_NAMES = (
     "llm_chat",
     "flashsr_audio",
     "minimax_autodownload",
+    "minimax_prompt_report",
     "save_audio_smart_prefix",
     "minimax_json_output",
     "minimax_artwork",

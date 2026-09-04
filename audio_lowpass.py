@@ -28,7 +28,10 @@ LOGGER = get_logger("audio_lowpass")
 from typing import Dict, Any, Tuple
 import json
 import numpy as np
-import torch
+try:
+    import torch  # type: ignore
+except ImportError:  # torch ships with ComfyUI; absent only in bare CI/test environments
+    torch = None  # type: ignore[assignment]
 
 try:
     from scipy import signal

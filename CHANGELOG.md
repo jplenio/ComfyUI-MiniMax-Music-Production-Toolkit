@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.2] - 2026-09-04
+
+Usability and transparency release: exact MiniMax prompt report in the workflow, progress bars for FlashSR and LLM chat, and a rebuilt play-first demo page with 10 new tracks.
+
+### Added
+- **`MiniMaxPromptReport`** node: Markdown report of exactly what MiniMax Music 3 received (cleaned caption, normalized lyrics, verbatim final prompt) plus the FLUX.2 image prompt, rendered as formatted Markdown in the node; wired into the example workflow's Save Audio section.
+- Progress bar for `MiniMaxFlashSRAudio` (per-chunk) and token-streaming progress for `MiniMaxLLMChat` (per-token progress bar + log heartbeat every 64 tokens, with non-streaming fallback).
+- 10 new demo tracks (35 total) with covers and SoundCloud links on the GitHub Pages demo page.
+
+### Changed
+- Demo page rebuilt: single-column play-first list, small cover thumbnails, details behind "Generation details"; placeholder tags of the new batch replaced by album names (Unbreakable, System Override, Symphonic Metal, Night Maps).
+
+### Fixed
+- CI green: torch imports in the six audio modules are now tolerant (torch lives only in ComfyUI), numpy is an explicit dependency, and the CI installs the requirements before testing.
+- Complete link serialization for the new node (no workflow-validation warnings on load).
+
 ## [2.0.1] - 2026-09-03
 
 Bugfix release: the workflow can now be run repeatedly in the same ComfyUI session without VRAM exhaustion.

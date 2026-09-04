@@ -32,6 +32,7 @@ from .model_downloader import (
     load_models_config,
     resolve_target,
 )
+from .progress_utils import make_progress_bar
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("flashsr")
@@ -288,8 +289,12 @@ class MiniMaxFlashSRAudio:
             hop = window // 2
 
         total = in_cs.shape[1]
+        total_chunks = len(_iter_chunks(total, window, hop))
+        pbar = make_progress_bar(total_chunks)
+        LOGGER.info("FlashSR upscaling: %d chunks (%d samples @ %d Hz)", total_chunks, total, REQ_SR)
+        log_every = max(1, total_chunks // 10)
         predictions: List[Tuple[np.ndarray, int, int]] = []
-        for start, length in _iter_chunks(total, window, hop):
+        for chunk_index, (start, length) in enumerate(_iter_chunks(total, window, hop)):
             chunk = in_cs[:, start:start + length]
             if length < window:
                 chunk = np.concatenate([chunk, np.zeros((in_cs.shape[0], window - length), np.float32)], axis=1)
@@ -299,7 +304,10 @@ class MiniMaxFlashSRAudio:
             with torch.inference_mode(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 y = model(x, lowpass_input=bool(lowpass_input))
             predictions.append((y.detach().to("cpu").float().numpy(), start, length))
-            LOGGER.debug("FlashSR chunk %d/%d done", len(predictions), len(_iter_chunks(total, window, hop)))
+            pbar.update_absolute(chunk_index + 1)
+            done = chunk_index + 1
+            if done % log_every == 0 or done == total_chunks:
+                LOGGER.info("FlashSR chunk %d/%d done", done, total_chunks)
 
         out_48k = _wola_stitch(predictions, total_len=total, window=window)
 

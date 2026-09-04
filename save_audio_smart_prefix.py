@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import torch
+try:
+    import torch  # type: ignore
+except ImportError:  # torch ships with ComfyUI; absent only in bare CI/test environments
+    torch = None  # type: ignore[assignment]
 
 try:
     import soundfile as sf

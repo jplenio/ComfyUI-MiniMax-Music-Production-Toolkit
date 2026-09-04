@@ -10,7 +10,10 @@ from fractions import Fraction
 from typing import Any, Dict, Tuple
 
 import numpy as np
-import torch
+try:
+    import torch  # type: ignore
+except ImportError:  # torch ships with ComfyUI; absent only in bare CI/test environments
+    torch = None  # type: ignore[assignment]
 
 try:
     from scipy.signal import butter, firwin, kaiserord, lfilter, oaconvolve, resample_poly, sosfiltfilt

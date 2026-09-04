@@ -1,7 +1,7 @@
 {
   "id": "56ba4af8-75d2-41a6-a2ed-c08c8d894978",
   "revision": 26,
-  "last_node_id": 107,
+  "last_node_id": 108,
   "last_link_id": 254,
   "nodes": [
     {
@@ -16,7 +16,7 @@
         466
       ],
       "flags": {},
-      "order": 35,
+      "order": 36,
       "mode": 0,
       "inputs": [
         {
@@ -234,7 +234,7 @@
         866.5
       ],
       "flags": {},
-      "order": 26,
+      "order": 27,
       "mode": 0,
       "inputs": [
         {
@@ -448,7 +448,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 32,
+      "order": 33,
       "mode": 0,
       "inputs": [
         {
@@ -533,7 +533,7 @@
         466
       ],
       "flags": {},
-      "order": 39,
+      "order": 40,
       "mode": 0,
       "inputs": [
         {
@@ -751,7 +751,7 @@
         298
       ],
       "flags": {},
-      "order": 30,
+      "order": 31,
       "mode": 0,
       "inputs": [
         {
@@ -906,7 +906,7 @@
         298
       ],
       "flags": {},
-      "order": 37,
+      "order": 38,
       "mode": 0,
       "inputs": [
         {
@@ -1061,7 +1061,7 @@
         466
       ],
       "flags": {},
-      "order": 40,
+      "order": 41,
       "mode": 0,
       "inputs": [
         {
@@ -1432,7 +1432,8 @@
           "type": "STRING",
           "links": [
             83,
-            227
+            227,
+            255
           ]
         },
         {
@@ -1442,7 +1443,8 @@
           "type": "STRING",
           "links": [
             84,
-            228
+            228,
+            256
           ]
         },
         {
@@ -1456,7 +1458,8 @@
             102,
             150,
             213,
-            218
+            218,
+            257
           ]
         },
         {
@@ -1466,7 +1469,8 @@
           "type": "STRING",
           "links": [
             229,
-            151
+            151,
+            258
           ]
         },
         {
@@ -1589,7 +1593,7 @@
         410
       ],
       "flags": {},
-      "order": 24,
+      "order": 25,
       "mode": 0,
       "inputs": [
         {
@@ -1766,7 +1770,7 @@
         394
       ],
       "flags": {},
-      "order": 22,
+      "order": 23,
       "mode": 0,
       "inputs": [
         {
@@ -2385,7 +2389,7 @@
         45
       ],
       "flags": {},
-      "order": 25,
+      "order": 26,
       "mode": 0,
       "inputs": [
         {
@@ -2424,7 +2428,7 @@
         102
       ],
       "flags": {},
-      "order": 27,
+      "order": 28,
       "mode": 0,
       "inputs": [
         {
@@ -2489,7 +2493,7 @@
         110
       ],
       "flags": {},
-      "order": 23,
+      "order": 24,
       "mode": 0,
       "inputs": [
         {
@@ -2725,7 +2729,7 @@
         120
       ],
       "flags": {},
-      "order": 29,
+      "order": 30,
       "mode": 0,
       "inputs": [
         {
@@ -2793,7 +2797,7 @@
         60
       ],
       "flags": {},
-      "order": 31,
+      "order": 32,
       "mode": 0,
       "inputs": [
         {
@@ -2837,7 +2841,7 @@
         300
       ],
       "flags": {},
-      "order": 33,
+      "order": 34,
       "mode": 0,
       "inputs": [
         {
@@ -3162,7 +3166,9 @@
         "manual",
         "",
         "<select a prompt>",
-        ""
+        "",
+        null,
+        null
       ],
       "widgets_values_named": {
         "user_prompt_source": "bundled_library",
@@ -3181,7 +3187,9 @@
         "system_prompt_source": "manual",
         "system_prompt_directory": "",
         "system_prompt_file": "<select a prompt>",
-        "source_name_override": ""
+        "source_name_override": "",
+        "Refresh prompt lists": null,
+        "Save as custom prompt": null
       },
       "color": "#432",
       "bgcolor": "#653"
@@ -3461,6 +3469,7 @@
         0,
         -1,
         "none",
+        "none",
         "",
         0,
         false
@@ -3483,6 +3492,7 @@
         "presence_penalty": 0,
         "frequency_penalty": 0,
         "seed": -1,
+        "control_after_generate": "none",
         "split_mode": "none",
         "tensor_split": "",
         "main_gpu": 0,
@@ -3575,7 +3585,7 @@
         272.125
       ],
       "flags": {},
-      "order": 38,
+      "order": 39,
       "mode": 0,
       "inputs": [
         {
@@ -3677,7 +3687,7 @@
         219.875
       ],
       "flags": {},
-      "order": 34,
+      "order": 35,
       "mode": 0,
       "inputs": [
         {
@@ -3784,7 +3794,7 @@
         378
       ],
       "flags": {},
-      "order": 36,
+      "order": 37,
       "mode": 0,
       "inputs": [
         {
@@ -3950,7 +3960,7 @@
         384.25
       ],
       "flags": {},
-      "order": 28,
+      "order": 29,
       "mode": 0,
       "inputs": [
         {
@@ -4222,7 +4232,8 @@
       ],
       "widgets_values_named": {
         "seed": 536965508700326,
-        "prefix": "randomize"
+        "control_after_generate": "randomize",
+        "prefix": "song_"
       },
       "color": "#233",
       "bgcolor": "#355"
@@ -4231,15 +4242,15 @@
       "id": 99,
       "type": "MiniMaxSaveProductionJSON",
       "pos": [
-        4572.897612707233,
-        1287.1317688529139
+        4405.552507400544,
+        1282.688965698133
       ],
       "size": [
-        520,
+        387.65625,
         978
       ],
       "flags": {},
-      "order": 41,
+      "order": 42,
       "mode": 0,
       "inputs": [
         {
@@ -4691,7 +4702,7 @@
       ],
       "size": [
         500.125,
-        500.4375
+        500.40625
       ],
       "flags": {},
       "order": 9,
@@ -4748,8 +4759,8 @@
         204.90347574430746
       ],
       "size": [
-        304.578125,
-        341.046875
+        304.546875,
+        341.015625
       ],
       "flags": {},
       "order": 11,
@@ -4777,7 +4788,7 @@
         642.5109632285523
       ],
       "size": [
-        433.015625,
+        433,
         255.5
       ],
       "flags": {},
@@ -4806,8 +4817,8 @@
         210.54746062470423
       ],
       "size": [
-        368.421875,
-        401.046875
+        368.390625,
+        401.015625
       ],
       "flags": {},
       "order": 13,
@@ -4835,7 +4846,7 @@
         -933.269996936554
       ],
       "size": [
-        512.765625,
+        512.75,
         318.75
       ],
       "flags": {},
@@ -4855,6 +4866,62 @@
       },
       "color": "#432",
       "bgcolor": "#653"
+    },
+    {
+      "id": 108,
+      "type": "MiniMaxPromptReport",
+      "pos": [
+        4832.416176277944,
+        1286.6054046709655
+      ],
+      "size": [
+        463.703125,
+        968.015625
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "caption",
+          "name": "caption",
+          "type": "STRING",
+          "link": 255
+        },
+        {
+          "localized_name": "lyrics",
+          "name": "lyrics",
+          "type": "STRING",
+          "link": 256
+        },
+        {
+          "localized_name": "title",
+          "name": "title",
+          "type": "STRING",
+          "link": 257
+        },
+        {
+          "localized_name": "image_prompt",
+          "name": "image_prompt",
+          "type": "STRING",
+          "link": 258
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "markdown",
+          "name": "markdown",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MiniMaxPromptReport"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {},
+      "color": "#332922",
+      "bgcolor": "#593930"
     }
   ],
   "links": [
@@ -5753,6 +5820,38 @@
       99,
       12,
       "STRING"
+    ],
+    [
+      255,
+      53,
+      0,
+      108,
+      0,
+      "STRING"
+    ],
+    [
+      256,
+      53,
+      1,
+      108,
+      1,
+      "STRING"
+    ],
+    [
+      257,
+      53,
+      2,
+      108,
+      2,
+      "STRING"
+    ],
+    [
+      258,
+      53,
+      3,
+      108,
+      3,
+      "STRING"
     ]
   ],
   "groups": [
@@ -5821,8 +5920,8 @@
       "bounding": [
         4338.977934315388,
         93.83867908831714,
-        957.2220972712848,
-        2204.2601785211186
+        998.6881470633443,
+        2208.7028969364774
       ],
       "color": "#8A8",
       "flags": {}
@@ -5835,7 +5934,7 @@
         "version": 1,
         "state": {
           "lastGroupId": 6,
-          "lastNodeId": 107,
+          "lastNodeId": 108,
           "lastLinkId": 254,
           "lastRerouteId": 0
         },
@@ -7095,10 +7194,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.8491780000000096,
+      "scale": 0.36013436737431404,
       "offset": [
-        400.59071259659225,
-        10.161420233374674
+        -2335.5604957029886,
+        -120.23857927635939
       ]
     },
     "frontendVersion": "1.48.7",
@@ -7107,7 +7206,7 @@
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
     "workflow_name": "MiniMax Music Production Toolkit – Example Workflow",
-    "workflow_version": "2.0.1"
+    "workflow_version": "2.0.2"
   },
   "version": 0.4
 }

@@ -67,7 +67,7 @@ class ReleaseDryRunSummaryTests(unittest.TestCase):
         user, system = PACKAGE.count_prompts()
         self.assertGreaterEqual(user, 62)
         self.assertGreaterEqual(system, 1)
-        self.assertEqual(PACKAGE.count_demo_tracks(), 25)
+        self.assertGreaterEqual(PACKAGE.count_demo_tracks(), 35)
 
     def test_privacy_scan_is_clean(self):
         self.assertEqual(PACKAGE.privacy_scan_summary(), [])

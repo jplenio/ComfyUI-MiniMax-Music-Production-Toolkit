@@ -9,7 +9,10 @@ import math
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
-import torch
+try:
+    import torch  # type: ignore
+except ImportError:  # torch ships with ComfyUI; absent only in bare CI/test environments
+    torch = None  # type: ignore[assignment]
 
 
 def _validate_audio(audio: Any, label: str = "audio") -> Tuple[torch.Tensor, int]:
