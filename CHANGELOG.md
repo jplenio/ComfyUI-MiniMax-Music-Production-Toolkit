@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.3] - 2026-09-05
+
+Full-freedom prompt release: a `custom` choice in the Structured Song Prompt's file dropdown, refined audio presets in the example workflow, and a rewritten, welcoming README.
+
+### Added
+- **`custom` free mode in `MiniMaxStructuredPromptV20`**: the `user_prompt_file` dropdown now starts with `custom`, which loads no prompt file and leaves every structured field exactly as the user set it (equivalent to manual mode in the backend; no file named `custom` is ever resolved).
+
+### Changed
+- Example workflow audio presets: PRE low-pass `PRE 10 kHz - strong`, FlashSR hybrid `FlashSR only`, HF Cymbal / Shimmer `Cymbal clarity` (7000 Hz start, 2.25 dB sustain reduction, -0.5 dB static HF trim).
+- README rewritten as an attractive, non-technical introduction that explains the few-fields-in / finished-track-out experience and the new custom mode.
+
+### Fixed
+- None (additive, backward-compatible release).
+
 ## [2.0.2] - 2026-09-04
 
 Usability and transparency release: exact MiniMax prompt report in the workflow, progress bars for FlashSR and LLM chat, and a rebuilt play-first demo page with 10 new tracks.

@@ -9,6 +9,8 @@ Structured prompt control for the integrated LLM. Instead of one free-form user 
 
 Bundled or external prompt files may start with a metadata block. When such a file is selected, the structured fields are prefilled and the file's body text (the "further description") is copied into the `description_override` field; every field can still be overridden afterwards.
 
+Select **`custom`** (the first choice in the prompt-file dropdown) for the **free mode**: no prompt file is loaded, nothing is prefilled and nothing is cleared. You compose the structured fields and the description yourself, exactly as if you were in manual mode.
+
 ```text
 ---
 Genre: Melodic Techno
@@ -47,7 +49,7 @@ Every structured field offers a curated list of common options (genres, tempos, 
 
 - **`user_prompt_source`** — `manual`, `bundled_library` or `external_directory`.
 - **`user_prompt_directory`** — Folder for `external_directory` mode (on the machine running ComfyUI).
-- **`user_prompt_file`** — Selected prompt file. The frontend refreshes this list and prefills the fields below from the file's metadata.
+- **`user_prompt_file`** — Selected prompt file, or **`custom`** (the first choice) for the free mode: no file is loaded and the fields stay untouched. The frontend refreshes this list and prefills the fields below from the file's metadata.
 - **`genre`**, **`tempo`**, **`key`**, **`lyrics`**, **`language`**, **`voice`**, **`theme`**, **`length`** — Structured fields. Select **`custom`** to leave that part out of the LLM prompt entirely. The option lists contain a curated vocabulary plus all values found in the prompt library.
 - **`description_override`** — Further description appended to the structured brief. Selecting a prompt file copies its body text here; only this field's content is used from then on.
 - **`system_prompt`** / **`system_prompt_source`** / **`system_prompt_directory`** / **`system_prompt_file`** — System prompt selection, identical in behavior to the LLM Prompt Library / Template node.

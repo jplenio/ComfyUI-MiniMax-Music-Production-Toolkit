@@ -90,11 +90,16 @@ class MiniMaxStructuredPromptV20:
 
     @classmethod
     def INPUT_TYPES(cls):
+        # "custom" as the first real choice of the prompt-file dropdown selects
+        # the free mode: no prompt file is loaded and nothing is prefilled, so
+        # the user composes every field themselves.  It must stay distinct from
+        # the per-field "custom" sentinel (which omits a single field).
+        user_file_options = [CUSTOM, *default_combo_values("user")]
         return {
             "required": {
                 "user_prompt_source": (_SOURCES, {"default": "bundled_library"}),
                 "user_prompt_directory": ("STRING", {"default": "", "multiline": False}),
-                "user_prompt_file": (default_combo_values("user"), {"default": PLACEHOLDER}),
+                "user_prompt_file": (user_file_options, {"default": PLACEHOLDER}),
                 "genre": (_safe_choices(_combo("genre")), {"default": CUSTOM}),
                 "tempo": (_safe_choices(_combo("tempo")), {"default": CUSTOM}),
                 "key": (_safe_choices(_combo("key")), {"default": CUSTOM}),
@@ -147,9 +152,14 @@ class MiniMaxStructuredPromptV20:
         source_name_override="",
         **kwargs,
     ):
-        user_fp = prompt_selection_fingerprint(
-            "user", user_prompt_source, user_prompt_directory, user_prompt_file, description_override
-        )
+        # "custom" selects free mode (no file is loaded); fingerprint it as such
+        # instead of attempting to resolve a file literally named "custom".
+        if (user_prompt_file or "").strip() == CUSTOM:
+            user_fp = f"user:{CUSTOM}"
+        else:
+            user_fp = prompt_selection_fingerprint(
+                "user", user_prompt_source, user_prompt_directory, user_prompt_file, description_override
+            )
         # description_override is authoritative in file mode too, so editing it
         # must invalidate the cache even though the file fingerprint is unchanged.
         description_fp = hashlib.sha256((description_override or "").encode("utf-8", errors="replace")).hexdigest()[:16]
@@ -195,6 +205,10 @@ class MiniMaxStructuredPromptV20:
         }
 
         source = (user_prompt_source or "manual").strip().lower()
+        # Free mode: the prompt-file dropdown is set to "custom", which means no
+        # file is loaded and no fields are touched - the user fills them freely.
+        if source != "manual" and (user_prompt_file or "").strip() == CUSTOM:
+            source = "manual"
         if source == "manual":
             file_fields = {}
             description = (description_override or "").strip()

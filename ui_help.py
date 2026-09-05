@@ -251,7 +251,7 @@ NODE_INPUT_TOOLTIPS = {
     "MiniMaxStructuredPromptV20": {
         "user_prompt_source": "Where the structured song prompt comes from. manual uses only the fields and description below; bundled_library loads a bundled prompt file; external_directory loads from a folder on the machine running ComfyUI.",
         "user_prompt_directory": "Folder containing prompt files when user_prompt_source is external_directory. Environment variables and ~ are expanded. Files stay inside this folder.",
-        "user_prompt_file": "Selected prompt file. Files may optionally start with a metadata block that prefills Genre/Tempo/Key/Lyrics/Language/Voice/Theme/Length; the file's body text is copied into description_override on selection.",
+        "user_prompt_file": "Selected prompt file. 'custom' (the first choice) is the free mode: no file is loaded and the fields stay exactly as you set them, so you compose the prompt yourself. Files may optionally start with a metadata block that prefills Genre/Tempo/Key/Lyrics/Language/Voice/Theme/Length; the file's body text is copied into description_override on selection.",
         "genre": "Music genre. Select 'custom' to leave this part out of the LLM prompt. Selecting a prompt file prefills this field, but you can override it.",
         "tempo": "Tempo (BPM). Select 'custom' to leave this part out of the LLM prompt.",
         "key": "Musical key / scale (for example 'A minor'). Select 'custom' to leave this part out of the LLM prompt.",

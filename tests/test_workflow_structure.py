@@ -137,7 +137,7 @@ class WorkflowTests(unittest.TestCase):
             for entry in node["inputs"]:
                 if entry["name"].endswith("_override"):
                     self.assertIsNone(entry["link"])
-        self.assertEqual(lowpasses[0]["widgets_values"][0], "PRE 12 kHz - recommended")
+        self.assertEqual(lowpasses[0]["widgets_values"][0], "PRE 10 kHz - strong")
         self.assertEqual(lowpasses[1]["widgets_values"][0], "POST 19 kHz - slightly stronger")
         # FlashSR lowpass_input is a plain widget.
         flashsr = next(n for n in self.wf["nodes"] if n["type"] == "MiniMaxFlashSRAudio")

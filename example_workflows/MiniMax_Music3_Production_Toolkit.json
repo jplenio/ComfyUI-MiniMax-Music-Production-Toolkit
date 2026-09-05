@@ -878,15 +878,15 @@
         "Node name for S&R": "FlashSRLowpassLab"
       },
       "widgets_values": [
-        "PRE 12 kHz - recommended",
-        12000,
+        "PRE 10 kHz - strong",
+        10000,
         2,
         "zero_phase",
         false
       ],
       "widgets_values_named": {
-        "preset": "PRE 12 kHz - recommended",
-        "custom_cutoff_hz": 12000,
+        "preset": "PRE 10 kHz - strong",
+        "custom_cutoff_hz": 10000,
         "custom_order": 2,
         "custom_phase_mode": "zero_phase",
         "bypass": false
@@ -3768,13 +3768,13 @@
         "Node name for S&R": "FlashSRHybridCrossover"
       },
       "widgets_values": [
-        "Original + FlashSR air",
+        "FlashSR only",
         13500,
         2000,
         0.45
       ],
       "widgets_values_named": {
-        "mode": "Original + FlashSR air",
+        "mode": "FlashSR only",
         "crossover_hz": 13500,
         "transition_hz": 2000,
         "flashsr_hf_mix": 0.45
@@ -3922,26 +3922,26 @@
         "Node name for S&R": "HFCymbalShimmerRepair"
       },
       "widgets_values": [
-        "Gentle",
-        8000,
-        1.25,
-        8,
+        "Cymbal clarity",
+        7000,
+        2.25,
+        5,
         180,
-        0.35,
-        0.75,
-        -0.4,
+        0.3,
+        1,
+        -0.5,
         -58,
         1
       ],
       "widgets_values_named": {
-        "mode": "Gentle",
-        "start_frequency_hz": 8000,
-        "sustain_reduction_db": 1.25,
-        "fast_envelope_ms": 8,
+        "mode": "Cymbal clarity",
+        "start_frequency_hz": 7000,
+        "sustain_reduction_db": 2.25,
+        "fast_envelope_ms": 5,
         "slow_envelope_ms": 180,
-        "transient_sensitivity": 0.35,
-        "side_hf_reduction_db": 0.75,
-        "static_hf_trim_db": -0.4,
+        "transient_sensitivity": 0.3,
+        "side_hf_reduction_db": 1,
+        "static_hf_trim_db": -0.5,
         "min_hf_level_dbfs": -58,
         "mix": 1
       },
@@ -4702,7 +4702,7 @@
       ],
       "size": [
         500.125,
-        500.40625
+        500.390625
       ],
       "flags": {},
       "order": 9,
@@ -4759,8 +4759,8 @@
         204.90347574430746
       ],
       "size": [
-        304.546875,
-        341.015625
+        304.53125,
+        341
       ],
       "flags": {},
       "order": 11,
@@ -4817,8 +4817,8 @@
         210.54746062470423
       ],
       "size": [
-        368.390625,
-        401.015625
+        368.375,
+        401
       ],
       "flags": {},
       "order": 13,
@@ -4875,8 +4875,8 @@
         1286.6054046709655
       ],
       "size": [
-        463.703125,
-        968.015625
+        463.6875,
+        968
       ],
       "flags": {},
       "order": 22,
@@ -7194,10 +7194,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.36013436737431404,
+      "scale": 0.6380000000000076,
       "offset": [
-        -2335.5604957029886,
-        -120.23857927635939
+        -2221.2693511876446,
+        283.44375457068145
       ]
     },
     "frontendVersion": "1.48.7",
@@ -7206,7 +7206,7 @@
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
     "workflow_name": "MiniMax Music Production Toolkit – Example Workflow",
-    "workflow_version": "2.0.2"
+    "workflow_version": "2.0.3"
   },
   "version": 0.4
 }

@@ -8,9 +8,11 @@ import { api } from "../../scripts/api.js";
 // into the description_override field, which is authoritative from then on.
 //
 // The user can always override any prefilled value afterwards; "custom" means
-// the field is left out of the LLM prompt.  Loading a workflow never wipes
-// widget values: on graph load only an empty description_override is filled,
-// so serialized user edits survive.
+// the field is left out of the LLM prompt.  In the prompt-file dropdown,
+// "custom" is the first real choice and selects the free mode: no file is
+// loaded and the structured fields are left exactly as the user set them.
+// Loading a workflow never wipes widget values: on graph load only an empty
+// description_override is filled, so serialized user edits survive.
 
 const NODE_TYPES = new Set(["MiniMaxStructuredPromptV20"]);
 const PLACEHOLDER = "<select a prompt>";
@@ -85,8 +87,11 @@ async function refreshFiles(node) {
     try {
         const files = await fetchPromptFiles(source, directory);
         const oldValue = fileWidget.value;
-        setComboValues(fileWidget, files, PLACEHOLDER);
+        // "custom" is always the first real choice and selects the free mode:
+        // no prompt file is loaded and the structured fields stay untouched.
+        setComboValues(fileWidget, [CUSTOM, ...files], PLACEHOLDER);
         if (files.includes(oldValue)) fileWidget.value = oldValue;
+        else if (oldValue === CUSTOM) fileWidget.value = CUSTOM;
         else if (files.length === 1) fileWidget.value = files[0];
         node.__minimaxStructuredPromptError = null;
     } catch (error) {
@@ -116,7 +121,17 @@ function resetStructuredFields(node, { clearDescription = false } = {}) {
 async function prefillStructuredFields(node, file, { onlyDescription = false } = {}) {
     const source = widget(node, "user_prompt_source")?.value ?? "bundled_library";
     const directory = widget(node, "user_prompt_directory")?.value ?? "";
-    if (!file || file === PLACEHOLDER || source === "manual") {
+    // "custom" is the free mode: it behaves like no file selected, except it
+    // deliberately does NOT clear anything - the user composes the fields freely.
+    if (!file || file === PLACEHOLDER || file === CUSTOM || source === "manual") {
+        if (file === CUSTOM) {
+            // Free mode: no file is loaded, nothing is cleared.  Keep the
+            // structured option lists fresh so the user can still pick from
+            // the curated vocabulary while filling the fields by hand.
+            node.__minimaxStructuredPromptError = null;
+            await refreshOptionLists(node);
+            return;
+        }
         // The user unselected the prompt file: clear the file-derived state.
         resetStructuredFields(node, { clearDescription: true });
         markDirty(node);

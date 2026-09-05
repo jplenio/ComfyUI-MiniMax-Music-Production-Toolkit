@@ -343,6 +343,37 @@ class StructuredPromptNodeTests(unittest.TestCase):
             self.assertIn(field, required)
             self.assertEqual(required[field][0][0], CUSTOM)
         self.assertEqual(data["optional"]["source_name_override"][1].get("default"), "")
+        # The prompt-file dropdown exposes the free mode as its first real choice.
+        file_options = required["user_prompt_file"][0]
+        self.assertIn(CUSTOM, file_options)
+        self.assertIn(PLACEHOLDER, file_options)
+
+    def test_custom_prompt_file_acts_as_free_manual_mode(self):
+        # "custom" in the prompt-file dropdown means: load no file, touch no
+        # fields, and use only what the user typed themselves.
+        system, user, source_name, summary = self._build(
+            user_prompt_source="bundled_library",
+            user_prompt_file=CUSTOM,
+            genre="Funk",
+            lyrics="yes",
+            description_override="Upbeat bassline and horns.",
+        )
+        self.assertEqual(system, "You are a music assistant.")
+        self.assertIn("Genre: Funk", user)
+        self.assertIn("Lyrics: yes", user)
+        self.assertTrue(user.endswith("Upbeat bassline and horns."))
+        self.assertEqual(source_name, "")
+        summary_data = json.loads(summary)
+        self.assertEqual(summary_data["user_prompt_origin"], "<manual>")
+        self.assertEqual(summary_data["fields"]["genre"], "Funk")
+
+    def test_custom_prompt_file_requires_something(self):
+        with self.assertRaises(ValueError):
+            self._build(
+                user_prompt_source="bundled_library",
+                user_prompt_file=CUSTOM,
+            )
+
 
     def test_is_changed_includes_field_state(self):
         fp1 = structured_node.IS_CHANGED(
@@ -360,6 +391,18 @@ class StructuredPromptNodeTests(unittest.TestCase):
             system_prompt_file=PLACEHOLDER, source_name_override="",
         )
         self.assertNotEqual(fp1, fp2)
+
+    def test_is_changed_handles_custom_prompt_file(self):
+        # Free mode must not try to resolve a file literally named "custom".
+        fp = structured_node.IS_CHANGED(
+            user_prompt_source="bundled_library", user_prompt_directory="", user_prompt_file=CUSTOM,
+            genre="House", tempo=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
+            voice=CUSTOM, theme=CUSTOM, length=CUSTOM, description_override="",
+            system_prompt="SYS", system_prompt_source="manual", system_prompt_directory="",
+            system_prompt_file=PLACEHOLDER, source_name_override="",
+        )
+        self.assertIn(f"user:{CUSTOM}", fp)
+
 
     def test_is_changed_includes_description_override_in_file_mode(self):
         def fingerprint(description):
