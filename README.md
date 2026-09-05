@@ -1,189 +1,190 @@
-# MiniMax Music Production Toolkit für ComfyUI
+# MiniMax Music Production Toolkit for ComfyUI
 
-**Ein paar Felder ausfüllen – fertigen Song bekommen.**
+**Fill in a few fields — get a finished song.**
 
-Beschreibe einfach, was du hören willst. Ein Genre, eine Stimmung, ein paar
-Worte zum Thema. Den Rest übernimmt der Workflow: Er schreibt daraus einen
-ausgereiften Produktionsplan, erzeugt den Song mit **MiniMax Music 3**, repariert
-und verfeinert den Klang, gestaltet ein passendes Cover und legt alles sauber
-benannt, getaggt und release-fertig in deinen Ausgabeordner.
+Just describe what you want to hear. A genre, a mood, a few words about the
+theme. The workflow does the rest: it turns your input into a polished
+production plan, generates the song with **MiniMax Music 3**, repairs and
+refines the audio, creates a matching cover, and saves everything — cleanly
+named, tagged, and release-ready — into your output folder.
 
-Du musst kein Audio-Ingenieur sein und keine Kette aus zwanzig Knoten verstehen.
-Dieses Toolkit bündelt genau dieses Wissen in **einem** Workflow – so, dass am
-Ende ein Ergebnis herauskommt, das du direkt veröffentlichen kannst.
+You don't need to be an audio engineer or understand a chain of twenty nodes.
+This toolkit bundles that knowledge into **one** workflow, so the result you
+get at the end is something you can publish right away.
 
-Autor: [Johannes Plenio](https://github.com/jplenio)
+Author: [Johannes Plenio](https://github.com/jplenio)
 
-> Unabhängiges Community-Projekt. Es werden keine MiniMax-, FLUX-, LLM- oder
-> FlashSR-Modellgewichte mitgeliefert – sie werden separat heruntergeladen oder
-> bereitgestellt (siehe [Installation](INSTALLATION.md)).
+> Independent community project. No MiniMax, FLUX, LLM or FlashSR model weights
+> are included — they are downloaded or provided separately (see
+> [Installation](INSTALLATION.md)).
 
-## 🎧 Erst hören, dann ausprobieren
+## 🎧 Listen first, then try it
 
-Die Musik auf dieser Seite wurde komplett mit diesem Workflow erzeugt:
+The music on this page was generated entirely with this workflow:
 
-👉 [Demo-Galerie öffnen](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/)
+👉 [Open the demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/)
 
-Wenn dir gefällt, was du hörst: Genau dafür ist dieses Projekt da.
+If you like what you hear — that is exactly what this project is for.
 
-## Warum es sich so einfach anfühlt
+## Why it feels so easy
 
-Der Workflow ist so aufgebaut, dass **du kreativ bleibst und er die Technik
-macht**:
+The workflow is built so that **you stay creative and it handles the
+technology**:
 
-- **Wenige Felder.** Genre, Tempo, Tonart, Stimme, Sprache, Stimmung, Länge –
-  mehr braucht es nicht. Jedes Feld hat außerdem eine „custom“-Option, wenn du
-  etwas offen lassen willst.
-- **Ein Textfeld für alles Weitere.** Was nicht in die Felder passt, schreibst du
-  einfach als Beschreibung dazu – so frei, wie du möchtest.
-- **Das Modell denkt mit.** Ein lokales Sprachmodell formt aus deinen Angaben den
-  präzisen Plan, den MiniMax Music 3 braucht, inklusive passendem Songtitel und
-  Cover-Idee.
-- **Der Klang wird aufgeräumt.** Clipping wird repariert, die Höhen werden
-  erweitert (FlashSR), störende Zisch- und Schimmer-Anteile werden gezähmt und
-  die Lautstärke streaming-tauglich gemacht.
-- **Alles ist am Ende benannt und getaggt.** `Album - Titel`, FLAC + MP3,
-  Cover-JPG und eine zentrale Produktions-JSON – ein Song, ein sauberer Ordner.
+- **Just a few fields.** Genre, tempo, key, voice, language, mood, length —
+  that's all it takes. Every field also has a `custom` option when you want to
+  leave something open.
+- **One text field for everything else.** Whatever doesn't fit into the fields,
+  you simply write as a description — as freely as you like.
+- **The model thinks along.** A local language model shapes your input into the
+  precise plan MiniMax Music 3 needs, including a fitting song title and cover
+  idea.
+- **The audio gets cleaned up.** Clipping is repaired, the high frequencies are
+  extended (FlashSR), harsh cymbal/shimmer tails are tamed, and the loudness is
+  made streaming-safe.
+- **Everything is named and tagged at the end.** `Album - Title`, FLAC + MP3,
+  cover JPG, and one central production JSON — one song, one tidy folder.
 
-## So läuft ein Song durch
+## How a song travels through the workflow
 
 ```text
-Du füllst ein paar Felder aus
+You fill in a few fields
         ↓
-Lokales LLM schreibt Caption, Lyrics, Titel & Cover-Idee
+Local LLM writes Caption, Lyrics, Title & cover idea
         ↓
-MiniMax Music 3 erzeugt den Song
+MiniMax Music 3 generates the song
         ↓
-Klang wird repariert & verfeinert (Declip → FlashSR → HF-Repair → Release-Prep)
+Audio is repaired & refined (Declip → FlashSR → HF Repair → Release Prep)
         ↓
-FLUX.2 erzeugt das Cover
+FLUX.2 creates the cover
         ↓
-FLAC + MP3 + Cover + Produktions-JSON werden gespeichert
+FLAC + MP3 + Cover + Production JSON are saved
 ```
 
-Den genauen technischen Ablauf findest du in [AUDIO_PIPELINE.md](AUDIO_PIPELINE.md)
-und [WORKFLOW.md](WORKFLOW.md).
+The exact technical pipeline is documented in
+[AUDIO_PIPELINE.md](AUDIO_PIPELINE.md) and [WORKFLOW.md](WORKFLOW.md).
 
-## Das Beste daran: der Custom Mode
+## The best part: the Custom Mode
 
-Beim Prompt kannst du ganz am Anfang **`custom`** wählen. Dann lädt der Workflow
-keinerlei Vorlage – er lässt deine Felder exakt so, wie du sie ausgefüllt hast,
-und nutzt nur das, was du selbst hineingeschrieben hast.
+At the very top of the prompt you can choose **`custom`**. The workflow then
+loads no template at all — it leaves your fields exactly as you filled them in
+and uses only what you wrote yourself.
 
-Warum ist das so großartig?
+Why is that so great?
 
-- **Volle Freiheit, null Überraschungen.** Kein Prompt, der heimlich Felder
-  überschreibt. Was du einträgst, ist genau das, was ankommt.
-- **Trotzdem kein leeres Blatt.** Die Auswahllisten für Genre, Tempo, Key und
-  Co. bleiben erhalten – du kannst dich von Vorschlägen inspirieren lassen,
-  ohne sie benutzen zu müssen.
-- **Schnellstmöglich starten.** Du musst keine Bibliothek durchsuchen. Einfach
-  `custom` wählen, ein paar Felder füllen, eine Beschreibung schreiben – fertig.
-- **Beste aus beiden Welten.** Du kannst jederzeit wieder eine Vorlage wählen,
-  die dir die Felder vorausfüllt, und danach trotzdem alles überarbeiten.
+- **Full freedom, zero surprises.** No prompt that silently overwrites your
+  fields. What you type is exactly what goes in.
+- **Still not a blank page.** The option lists for genre, tempo, key and the
+  rest stay available — you can take inspiration from them without having to use
+  them.
+- **The fastest way to start.** No library to search. Just pick `custom`, fill
+  a few fields, write a description — done.
+- **The best of both worlds.** You can switch back to a template at any time,
+  which prefills the fields for you — and you can still edit everything
+  afterwards.
 
-So wird aus einem „vorgefertigten Werkzeug“ ein echtes Instrument: dein
-Geschmack bestimmt den Song, die Maschine sorgt fürs Handwerk.
+That turns a "pre-made tool" into a real instrument: your taste decides the
+song, the machine takes care of the craft.
 
-## Das Toolkit im Überblick
+## What the toolkit does
 
-- **Structured Song Prompt** – strukturierte Felder für Genre, Tempo, Tonart,
-  Lyrics, Sprache, Stimme, Thema und Länge plus freie Beschreibung. Prompt-Dateien
-  können die Felder vorausfüllen; jedes Feld lässt sich überschreiben und
-  `custom` lässt es ganz weg.
-- **Integrierter LLM-Chat (llama.cpp)** – lokales GGUF-Sprachmodell, kein
-  externer LLM-Knoten nötig. Die LLM-Stufe lässt sich auch komplett abschalten.
-- **Strukturiertes Parsing** – extrahiert `[Caption]`, `[Lyrics]`, `[Title]` und
-  `[Image_Prompt]` aus der Antwort, mit manuellen Fallbacks.
-- **Produktions-Systemprompt** – auf MiniMax Music 3 abgestimmt: lange
-  Instrumentalstrukturen, einfallsreiche Lyrics und Vermeidung matschiger
-  Höhen.
-- **Prompt-Bibliothek** – über 60 fertige Genre-Vorlagen mit Metadaten.
-- **Reproduzierbare Einstellungen** – konsistente Seeds und Sampling-Werte.
-- **Integriertes Audio Super Resolution (FlashSR)** – der Inferenz-Code ist
-  gebündelt; nur die Gewichte werden beim ersten Lauf geladen.
-- **Modell-Auto-Download / Prüfung** – `models_config.json` plus Prüf-Knoten mit
-  Fortschrittsanzeige.
-- **Declip / Overload-Repair** – rekonstruiert kurzzeitig hart beschnittene Peaks.
-- **FlashSR-Werkzeuge** – Pre-/Post-Filter und kontrollierte Höhen-Mischung.
-- **HF Cymbal / Shimmer Repair** – reduziert verwaschene obere Frequenzen, ohne
-  die Transienten zu zerstören.
-- **Statische LUFS / True-Peak Release-Prep** – konstante Lautheit ohne AGC,
-  Kompressor oder zeitabhängiges Lautheits-Riding.
-- **Release-Dateien** – FLAC/MP3/WAV, `Album - Titel`-Benennung, Standard-Tags,
-  einstellbare Cover-Auflösung.
-- **Zentrale Produktions-JSON** – ein kanonisches JSON pro Song nach allen
-  Ausgaben.
-- **FLUX.2-Cover-Zweig** – quadratisches Artwork und JPEG-Speicherung.
-- **Komplette UI-Hilfe** – Tooltips für jeden Eingang und Markdown-Hilfe für
-  jeden Knoten.
+- **Structured Song Prompt** — dedicated fields for Genre, Tempo, Key, Lyrics,
+  Language, Voice, Theme and Length plus a free description. Prompt files can
+  prefill the fields; every field can be overridden and `custom` leaves it out.
+- **Integrated LLM Chat (llama.cpp)** — self-contained GGUF chat node; no
+  external LLM custom node required. The LLM stage can also be switched off
+  completely.
+- **Structured LLM parsing** — extracts `[Caption]`, `[Lyrics]`, `[Title]` and
+  `[Image_Prompt]` from the response, with manual fallbacks.
+- **Production system prompt** — tuned for MiniMax Music 3: long instrumental
+  structures, imaginative lyrics, and avoidance of smeared high frequencies.
+- **Bundled genre prompt library** — 60+ ready-made genre templates with
+  metadata.
+- **Reproducible generation controls** — consistent seeds and sampling values.
+- **Integrated Audio Super Resolution (FlashSR)** — the inference code is
+  bundled; only the weights are fetched on first use.
+- **Model auto-download / check** — `models_config.json` plus a check node with
+  progress logging.
+- **Audio Declip / Overload Repair** — reconstructs short hard-clipped peaks.
+- **FlashSR processing tools** — pre/post filtering and controlled
+  high-frequency blending.
+- **HF Cymbal / Shimmer Repair** — reduces watery upper-frequency sustain
+  without destroying transients.
+- **Static LUFS / True-Peak Release Prep** — constant loudness with no AGC,
+  compressor, or time-varying loudness riding.
+- **Release file handling** — FLAC/MP3/WAV, `Album - Title` naming, standard
+  tags, configurable cover resolution.
+- **Centralized production JSON** — one canonical JSON per song after all
+  outputs.
+- **FLUX.2 cover branch** — square artwork generation and JPEG saving.
+- **Complete UI help** — tooltips for every input and Markdown help for every
+  node.
 
 ## Installation
 
-Installiere das Paket in das `custom_nodes`-Verzeichnis deiner ComfyUI-
-Installation und installiere die Abhängigkeiten mit dem Python-Interpreter, der
-zu deiner ComfyUI-Installation gehört. Danach ComfyUI neu starten und den
-Browser einmal hart neu laden (`Ctrl+F5`).
+Install the package into the `custom_nodes` directory of your ComfyUI
+installation and install the dependencies with the Python interpreter that
+belongs to your ComfyUI installation. Then restart ComfyUI and hard-refresh the
+browser once (`Ctrl+F5`).
 
-Für den integrierten LLM-Chat zusätzlich in derselben Umgebung installieren:
+For the integrated LLM chat node, additionally install in the same environment:
 
 ```bash
 python -m pip install llama-cpp-python
 ```
 
-und eine llama.cpp-kompatible GGUF nach `models/llm` legen (oder eine
-Download-URL in `models_config.json` konfigurieren).
+and place a llama.cpp-compatible GGUF in `models/llm` (or configure a download
+URL in `models_config.json`).
 
-Die vollständige Anleitung: [INSTALLATION.md](INSTALLATION.md).
+Full instructions: [INSTALLATION.md](INSTALLATION.md).
 
-## Beispiel-Workflow
+## Example workflow
 
-Lade:
+Load:
 
 `example_workflows/MiniMax_Music3_Production_Toolkit.json`
 
-Der öffentliche Workflow enthält nur generische Metadaten und keine
-maschinenbezogenen Pfade. Er ist als vollständiger Referenz-Workflow gedacht;
-jeder einzelne Knoten lässt sich auch unabhängig verwenden.
+The public workflow contains only generic metadata and no machine-specific
+paths. It is intended as a complete reference workflow; each individual node can
+also be used independently.
 
 ## Demo & SoundCloud
 
-Die eingebaute **35-Track**-GitHub-Pages-Demo wird aus den erzeugten
-Produktionsdaten gespeist und zeigt Cover, SoundCloud-Player, Suche/Filter,
-musikalische Kurzbeschreibungen und aufklappbare Generierungsdetails.
+The included **35-track** GitHub Pages demo is driven by the generated
+production data and shows covers, a SoundCloud player, search/filter, musical
+summaries, and expandable generation details.
 
-- Player-Seite: `docs/index.html`
-- Track-/SoundCloud-Konfiguration: `docs/demo-tracks.js`
-- Cover: `docs/assets/demo-covers/`
-- Anleitung: [AUDIO_EXAMPLES.md](AUDIO_EXAMPLES.md)
-- Öffentliche Seite: `https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/`
+- Listening page: `docs/index.html`
+- Track/SoundCloud configuration: `docs/demo-tracks.js`
+- Covers: `docs/assets/demo-covers/`
+- Setup instructions: [AUDIO_EXAMPLES.md](AUDIO_EXAMPLES.md)
+- Public page: `https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/`
 
-## Dokumentation
+## Documentation
 
-- [Installation & Abhängigkeiten](INSTALLATION.md)
-- [Komplette Workflow-Anleitung](WORKFLOW.md)
-- [Prompt-Bibliothek](PROMPT_LIBRARY.md)
-- [Audio-Verarbeitung](AUDIO_PIPELINE.md)
-- [Artwork-Workflow](ARTWORK_WORKFLOW.md)
-- [Audio-Beispiele / SoundCloud](AUDIO_EXAMPLES.md)
-- [Fehlerbehebung](TROUBLESHOOTING.md)
-- [Publishing / Maintainer-Guide](PUBLISHING.md)
-- [Entwicklungs-Guide](DEVELOPMENT.md)
+- [Installation & dependencies](INSTALLATION.md)
+- [Complete workflow guide](WORKFLOW.md)
+- [Prompt library](PROMPT_LIBRARY.md)
+- [Audio processing pipeline](AUDIO_PIPELINE.md)
+- [Artwork workflow](ARTWORK_WORKFLOW.md)
+- [Audio examples / SoundCloud](AUDIO_EXAMPLES.md)
+- [Troubleshooting](TROUBLESHOOTING.md)
+- [Publishing / maintainer guide](PUBLISHING.md)
+- [Development guide](DEVELOPMENT.md)
 - [Changelog](CHANGELOG.md)
 
-## Einschränkungen
+## Limitations
 
-- De-Clipping kann plausible Peak-Krümmung rekonstruieren, aber keine
-  Information wiederherstellen, die durch Clipping zerstört wurde.
-- FlashSR kann Hochfrequenz-Inhalte „erfinden“. Hybrid-Crossover und HF-Repair
-  sind Sicherheitsnetze, keine Garantien.
-- Statische LUFS-Normalisierung erhält die Dynamik und kann bewusst unter einem
-  angefragten Ziel bleiben, wenn das True-Peak-Limit keine weitere Anhebung
-  zulässt.
-- Die LLM-Qualität hängt vom gewählten lokalen Modell ab.
-- GitHub-README-Seiten können keinen nativen SoundCloud-Player zuverlässig
-  einbetten; dafür ist die GitHub-Pages-Demo gedacht.
+- De-clipping can reconstruct plausible peak curvature, but it cannot recover
+  information that was destroyed by clipping.
+- FlashSR can "invent" high-frequency content. Hybrid crossover and HF repair
+  are safeguards, not guarantees.
+- Static LUFS normalization preserves dynamics and may intentionally finish
+  below a requested target when the true-peak ceiling prevents more gain.
+- LLM output quality depends on the selected local model.
+- GitHub README pages cannot reliably host a native SoundCloud player; the
+  included GitHub Pages template is the intended embedded-player solution.
 
-## Lizenz
+## License
 
-MIT. Siehe [LICENSE](LICENSE) und [NOTICE.md](NOTICE.md).
+MIT. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).

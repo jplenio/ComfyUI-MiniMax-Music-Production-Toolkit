@@ -11,7 +11,7 @@ Full-freedom prompt release: a `custom` choice in the Structured Song Prompt's f
 
 ### Changed
 - Example workflow audio presets: PRE low-pass `PRE 10 kHz - strong`, FlashSR hybrid `FlashSR only`, HF Cymbal / Shimmer `Cymbal clarity` (7000 Hz start, 2.25 dB sustain reduction, -0.5 dB static HF trim).
-- README rewritten as an attractive, non-technical introduction that explains the few-fields-in / finished-track-out experience and the new custom mode.
+- README rewritten in English as an attractive, non-technical introduction that explains the few-fields-in / finished-track-out experience and the new custom mode.
 
 ### Fixed
 - None (additive, backward-compatible release).

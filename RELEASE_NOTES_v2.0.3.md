@@ -13,7 +13,7 @@ A "full freedom" release for the prompt stage: the prompt-file dropdown of the *
 ## Changed
 
 - **Refined audio presets in the example workflow**: the PRE low-pass preset moved from `PRE 12 kHz - recommended` to `PRE 10 kHz - strong`, the FlashSR hybrid crossover now uses the `FlashSR only` mode, and the HF Cymbal / Shimmer Repair stage switched from `Gentle` to `Cymbal clarity` (start frequency 7000 Hz, sustain reduction 2.25 dB, static HF trim -0.5 dB).
-- **README rewritten**: a concise, appealing overview for newcomers that leads with the "fill a few fields, get a finished track" experience and explains at the end how the pipeline and the new custom mode actually work.
+- **README rewritten in English**: a concise, appealing overview for newcomers that leads with the "fill a few fields, get a finished track" experience and explains at the end how the pipeline and the new custom mode actually work.
 
 ## Fixed
 
