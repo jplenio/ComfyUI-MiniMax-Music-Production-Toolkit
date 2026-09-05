@@ -19,6 +19,7 @@ REQUIRED = [
     "AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "CITATION.cff", "VERSION",
     "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py", "scripts/update_demo_catalog.py",
     "example_workflows/MiniMax_Music3_Production_Toolkit.json",
+    "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
     "prompts/system/minimax-music3-production.txt",
 ]
 TEXT_EXTENSIONS = {".py", ".js", ".md", ".txt", ".toml", ".json", ".yml", ".yaml", ".bat"}
@@ -107,9 +108,9 @@ def _validate_subgraph(subgraph: dict, errors: list[str], label: str) -> None:
                 errors.append(f"{label} link {lid}: invalid destination slot {target_slot}")
 
 
-def check_workflow() -> None:
-    path = ROOT / "example_workflows/MiniMax_Music3_Production_Toolkit.json"
-    wf = json.loads(path.read_text(encoding="utf-8"))
+def _check_workflow_graph(wf: dict, label: str) -> None:
+    """Validate the generic graph structure of one public workflow: link
+    endpoints, dangling links and embedded subgraphs."""
     node_map = {n["id"]: n for n in wf.get("nodes", [])}
     links = {l[0]: l for l in wf.get("links", [])}
     errors: list[str] = []
@@ -136,6 +137,63 @@ def check_workflow() -> None:
         if isinstance(subgraph, dict):
             _validate_subgraph(subgraph, errors, f"subgraph[{idx}] {subgraph.get('name', subgraph.get('id', 'unnamed'))}")
 
+    if errors:
+        fail(f"Invalid {label} workflow: " + "; ".join(errors[:10]))
+    expected_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    if (wf.get("extra") or {}).get("workflow_version") != expected_version:
+        fail(f"{label} workflow version metadata does not match VERSION")
+
+
+def check_audio_enhance_workflow() -> None:
+    """Validate the public audio-enhancement example workflow.
+
+    This workflow skips the production stage: it enhances an already-finished
+    song (LoadAudio -> declip -> FlashSR chain -> release prep -> save).  It
+    must stay self-contained (toolkit + ComfyUI core nodes only) and generic
+    (no personal audio file pre-selected).
+    """
+    path = ROOT / "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
+    wf = json.loads(path.read_text(encoding="utf-8"))
+    _check_workflow_graph(wf, "audio-enhancement example")
+
+    nodes_by_type = {}
+    for node in wf.get("nodes", []):
+        nodes_by_type.setdefault(node.get("type"), []).append(node)
+    for required_type in (
+        "LoadAudio", "AudioDeclipRepair", "FlashSRLowpassLab", "MiniMaxFlashSRAudio",
+        "FlashSRHybridCrossover", "HFCymbalShimmerRepair", "AudioReleasePrep",
+        "SaveAudioSmartPrefix", "MiniMaxOutputPaths", "MiniMaxStandardAudioTags",
+    ):
+        if required_type not in nodes_by_type:
+            fail(f"Audio-enhancement workflow is missing node {required_type}")
+
+    from workflow_schema import find_external_node_dependencies
+    external = find_external_node_dependencies(wf)
+    if external:
+        fail(
+            "Audio-enhancement workflow depends on external custom nodes: "
+            + "; ".join(f"node {node_id} ({node_type})" for node_id, node_type in external)
+        )
+
+    loader = nodes_by_type.get("LoadAudio", [{}])[0]
+    audio_value = (loader.get("widgets_values_named") or {}).get("audio")
+    positional = loader.get("widgets_values") or []
+    positional_audio = positional[0] if positional else None
+    if (audio_value or positional_audio or "").strip():
+        fail("Audio-enhancement workflow must not pre-select a personal audio file in LoadAudio")
+
+    save_nodes = nodes_by_type.get("SaveAudioSmartPrefix", [])
+    if not save_nodes or (save_nodes[0].get("widgets_values_named") or {}).get("filename_mode") != "album - title":
+        fail("Audio-enhancement workflow saver must default to album - title naming")
+
+
+def check_workflow() -> None:
+    path = ROOT / "example_workflows/MiniMax_Music3_Production_Toolkit.json"
+    wf = json.loads(path.read_text(encoding="utf-8"))
+    _check_workflow_graph(wf, "example")
+    node_map = {n["id"]: n for n in wf.get("nodes", [])}
+    links = {l[0]: l for l in wf.get("links", [])}
+    errors: list[str] = []
     if errors:
         fail("Invalid example workflow: " + "; ".join(errors[:10]))
     if "MiniMaxLLMSessionId" not in {n.get("type") for n in wf.get("nodes", [])}:
@@ -212,10 +270,6 @@ def check_workflow() -> None:
     jpeg_quality = artwork_values.get("jpeg_quality")
     if not isinstance(jpeg_quality, int) or isinstance(jpeg_quality, bool) or not 50 <= jpeg_quality <= 100:
         fail("Artwork saver jpeg_quality must be an integer from 50 to 100")
-
-    expected_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    if (wf.get("extra") or {}).get("workflow_version") != expected_version:
-        fail("Example workflow version metadata does not match VERSION")
 
 
 def check_prompt_library() -> None:
@@ -359,6 +413,7 @@ def main() -> None:
     check_python_syntax()
     check_pyproject()
     check_workflow()
+    check_audio_enhance_workflow()
     check_prompt_library()
     check_privacy_and_placeholders()
     check_demo_catalog()

@@ -1,8 +1,0 @@
----
-Genre: Electronic
-Lyrics: yes
-Language: Deutsch
-Length: 4-5 minutes
----
-
-Electronic der 80er, mit knappen deutschen Lyrics und einem kühlen, minimalistischen, rhythmischen Synthesizer-Sound. Themen: dystopische Zukunft, Technologie, KI, Roboter oder gesellschaftliche Veränderung durch Technologie. Entwickle daraus kurze, wiederkehrende, leicht variierte Lyrics. Wenig Hall, präzise Maschinenrhythmen, klar erkennbare wiederholte Riffs und Motive. Deutscher Titel

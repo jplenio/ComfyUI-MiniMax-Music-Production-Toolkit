@@ -1,7 +1,8 @@
 ---
 Genre: House
 Lyrics: sparse
+Language: English
 Length: 4-5 minutes
 ---
 
-Create a melodic progressive house instrumental with an emotional, memorable lead motif, spacious analog-style synths, a calm but clear development, and add sparse lyrics for some effects
+Melodic progressive house with an emotional, memorable lead motif, spacious analog-style synths and a calm but clear development. Add only vocal phrases for effect, not full verses.

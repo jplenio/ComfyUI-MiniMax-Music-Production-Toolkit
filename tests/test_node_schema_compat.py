@@ -8,7 +8,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
+WORKFLOWS = [
+    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json",
+    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
+]
 
 # Toolkit node type -> defining module, for every toolkit node in the bundled
 # workflow.  ComfyUI-core types (loaders, samplers, ...) and the embedded
@@ -39,12 +42,13 @@ NODE_MODULE = {
     "MiniMaxPromptReport": "minimax_prompt_report",
 }
 
-# ComfyUI core nodes legitimately used by the public workflow; their schema is
+# ComfyUI core nodes legitimately used by the public workflows; their schema is
 # owned by ComfyUI, not this toolkit.
 CORE_NODE_TYPES = {
     "UNETLoader", "CLIPLoader", "VAELoader", "CLIPTextEncode", "ConditioningZeroOut",
     "CFGGuider", "RandomNoise", "KSamplerSelect", "Flux2Scheduler",
     "EmptyFlux2LatentImage", "SamplerCustomAdvanced", "VAEDecode", "MarkdownNote",
+    "LoadAudio", "PrimitiveString", "PrimitiveInt",
 }
 
 # Order dependencies: toolkit_logging first, then anything using it.
@@ -107,22 +111,24 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.wf = json.loads(WORKFLOW.read_text(encoding="utf-8"))
-        cls.workflow_nodes = cls.wf["nodes"]
-        cls.subgraph_types = {
-            subgraph.get("id") for subgraph in (cls.wf.get("definitions") or {}).get("subgraphs", []) or []
+        cls.workflows = {
+            path.name: json.loads(path.read_text(encoding="utf-8")) for path in WORKFLOWS
         }
 
     def test_every_workflow_node_has_a_known_owner(self):
-        for node in self.workflow_nodes:
-            node_type = node.get("type")
-            if node_type in NODE_MODULE or node_type in CORE_NODE_TYPES or node_type in self.subgraph_types:
-                continue
-            self.fail(
-                f"Workflow node type '{node_type}' (id {node.get('id')}) is neither a toolkit "
-                "node (add it to NODE_MODULE), a documented ComfyUI core type "
-                "(add it to CORE_NODE_TYPES), nor an embedded subgraph instance."
-            )
+        for name, wf in self.workflows.items():
+            subgraph_types = {
+                subgraph.get("id") for subgraph in (wf.get("definitions") or {}).get("subgraphs", []) or []
+            }
+            for node in wf["nodes"]:
+                node_type = node.get("type")
+                if node_type in NODE_MODULE or node_type in CORE_NODE_TYPES or node_type in subgraph_types:
+                    continue
+                self.fail(
+                    f"Workflow '{name}' node type '{node_type}' (id {node.get('id')}) is neither a toolkit "
+                    "node (add it to NODE_MODULE), a documented ComfyUI core type "
+                    "(add it to CORE_NODE_TYPES), nor an embedded subgraph instance."
+                )
 
     def test_serialized_input_order_matches_input_types(self):
         # The frontend serializes inputs as two ordered groups: socket-only
@@ -130,32 +136,33 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
         # Within each group the definition order must be preserved, and the
         # name set must match INPUT_TYPES exactly - otherwise link slot
         # indexes in older saved workflows land on the wrong inputs.
-        for node in self.workflow_nodes:
-            node_type = node.get("type")
-            if node_type not in NODE_MODULE:
-                continue
-            module = MODULES[NODE_MODULE[node_type]]
-            cls = module.NODE_CLASS_MAPPINGS[node_type]
-            data = cls.INPUT_TYPES()
-            expected = list(data.get("required", {}).keys()) + list(data.get("optional", {}).keys())
-            entries = node.get("inputs", [])
-            actual = [item.get("name") for item in entries]
-            self.assertEqual(
-                sorted(actual), sorted(expected),
-                f"{node_type} (id {node.get('id')}): serialized input names drifted from INPUT_TYPES.",
-            )
-            sockets_actual = [item.get("name") for item in entries if "widget" not in item]
-            widgets_actual = [item.get("name") for item in entries if "widget" in item]
-            expected_sockets = [name for name in expected if name in sockets_actual]
-            expected_widgets = [name for name in expected if name in widgets_actual]
-            self.assertEqual(
-                sockets_actual, expected_sockets,
-                f"{node_type} (id {node.get('id')}): socket-input order drifted from INPUT_TYPES.",
-            )
-            self.assertEqual(
-                widgets_actual, expected_widgets,
-                f"{node_type} (id {node.get('id')}): widget-input order drifted from INPUT_TYPES.",
-            )
+        for name, wf in self.workflows.items():
+            for node in wf["nodes"]:
+                node_type = node.get("type")
+                if node_type not in NODE_MODULE:
+                    continue
+                module = MODULES[NODE_MODULE[node_type]]
+                cls = module.NODE_CLASS_MAPPINGS[node_type]
+                data = cls.INPUT_TYPES()
+                expected = list(data.get("required", {}).keys()) + list(data.get("optional", {}).keys())
+                entries = node.get("inputs", [])
+                actual = [item.get("name") for item in entries]
+                self.assertEqual(
+                    sorted(actual), sorted(expected),
+                    f"{name}: {node_type} (id {node.get('id')}): serialized input names drifted from INPUT_TYPES.",
+                )
+                sockets_actual = [item.get("name") for item in entries if "widget" not in item]
+                widgets_actual = [item.get("name") for item in entries if "widget" in item]
+                expected_sockets = [n for n in expected if n in sockets_actual]
+                expected_widgets = [n for n in expected if n in widgets_actual]
+                self.assertEqual(
+                    sockets_actual, expected_sockets,
+                    f"{name}: {node_type} (id {node.get('id')}): socket-input order drifted from INPUT_TYPES.",
+                )
+                self.assertEqual(
+                    widgets_actual, expected_widgets,
+                    f"{name}: {node_type} (id {node.get('id')}): widget-input order drifted from INPUT_TYPES.",
+                )
 
     def test_return_names_count_matches_return_types(self):
         for module in set(NODE_MODULE.values()):

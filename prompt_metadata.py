@@ -10,7 +10,7 @@ Example::
 
     ---
     Genre: Melodic Techno
-    Tempo: 128 BPM
+    Tempo: Midtempo (100-120 BPM)
     Key: A minor
     Lyrics: sparse
     Language: English
@@ -41,7 +41,9 @@ STRUCTURED_FIELDS = ("genre", "tempo", "key", "lyrics", "language", "voice", "th
 CUSTOM = "custom"
 
 # Canonical lyrics vocabulary the UI and the assembled prompt understand.
-LYRICS_CHOICES = ("yes", "sparse", "instrumental")
+# "only voice - no words" means wordless vocalization (humming, syllables,
+# vocalise) - a vocal track without real words.
+LYRICS_CHOICES = ("yes", "sparse", "only voice - no words", "instrumental")
 
 # Curated vocabulary shown in every combo list, independent of what the
 # bundled prompt library happens to contain.  File-derived values are merged
@@ -54,22 +56,52 @@ CURATED_FIELD_OPTIONS = {
         "Blues", "Folk", "Country", "Classical", "Neoclassical", "Cinematic / Film Score",
         "Ambient", "Chillout / Downtempo", "Lo-Fi", "Synthwave / Retro", "Trip-Hop",
         "Reggae / Dub", "Latin", "World Music", "Comedy / Novelty",
+        # Contemporary & electronic subgenres
+        "Synth-Pop", "Psytrance", "Jungle", "Trap", "Punk Rock", "Indie Rock", "Power Metal",
+        "Opera", "Afrobeats", "Amapiano", "Dancehall", "Dub", "Reggae",
+        # African styles
+        "Ethio-Jazz", "Highlife", "Desert Blues",
+        # Asian styles
+        "K-Pop", "J-Pop / City Pop", "Anime / Game Music", "Chinese Traditional",
+        "Indian Classical", "Bollywood",
+        # Latin American styles
+        "Bossa Nova", "Samba", "Salsa", "Cumbia", "Tango", "Reggaeton", "Bachata",
+        # European styles
+        "Flamenco", "Fado", "Chanson", "Schlager", "Klezmer", "Balkan Folk",
     ),
     "tempo": (
-        "Slow (60-90 BPM)", "70 BPM", "80 BPM", "90 BPM", "Midtempo (100-120 BPM)", "100 BPM",
-        "110 BPM", "120 BPM", "124 BPM", "128 BPM", "130 BPM", "Uptempo (125-140 BPM)",
-        "134 BPM", "138 BPM", "140 BPM", "Fast (>140 BPM)", "150 BPM", "160 BPM", "174 BPM",
+        # Curated BPM ranges (not fixed values) so a selection always leaves
+        # the LLM a comfortable musical window; "custom" comes first in the UI.
+        "Slow (40-70 BPM)",
+        "Laid-back (70-100 BPM)",
+        "Midtempo (100-120 BPM)",
+        "Dancefloor (120-130 BPM)",
+        "Uptempo (130-145 BPM)",
+        "Fast (145-175 BPM)",
+        "Very fast (175-200 BPM)",
     ),
     "key": (
-        "A minor", "D minor", "E minor", "B minor", "F# minor", "G minor", "C minor",
-        "F minor", "C# minor", "C major", "G major", "D major", "A major", "E major",
-        "F major", "Bb major", "Eb major", "Ab major",
+        # Circle of fifths: major keys first, then minor keys.
+        "C major", "G major", "D major", "A major", "E major", "B major",
+        "F# major", "Db major", "Ab major", "Eb major", "Bb major", "F major",
+        "A minor", "E minor", "B minor", "F# minor", "C# minor", "G# minor",
+        "D# minor", "Bb minor", "F minor", "C minor", "G minor", "D minor",
     ),
     "lyrics": LYRICS_CHOICES,
     "language": (
+        # Most important languages first (same order as before), then more
+        # languages in alphabetical order.
         "English", "Deutsch (German)", "Español (Spanish)", "Français (French)",
         "Italiano (Italian)", "Português (Portuguese)", "日本語 (Japanese)", "한국어 (Korean)",
-        "中文 (Chinese)", "Русский (Russian)", "No lyrics / n/a",
+        "中文 (Chinese)", "हिन्दी (Hindi)", "Русский (Russian)",
+        "العربية (Arabic)", "বাংলা (Bengali)", "Български (Bulgarian)", "Čeština (Czech)",
+        "Dansk (Danish)", "Nederlands (Dutch)", "Suomi (Finnish)", "Ελληνικά (Greek)",
+        "עברית (Hebrew)", "Magyar (Hungarian)", "Bahasa Indonesia (Indonesian)",
+        "Bahasa Melayu (Malay)", "Norsk (Norwegian)", "فارسی (Persian)", "Polski (Polish)",
+        "Română (Romanian)", "Српски (Serbian)", "Kiswahili (Swahili)", "Svenska (Swedish)",
+        "Tagalog", "ไทย (Thai)", "Türkçe (Turkish)", "Українська (Ukrainian)",
+        "اردو (Urdu)", "Tiếng Việt (Vietnamese)",
+        "No lyrics / n/a",
     ),
     "voice": (
         "female vocal", "male vocal", "female lead + male backing", "male lead + female backing",
@@ -127,6 +159,10 @@ _ALIASES = {
 _LYRICS_NORMALIZATION = {
     "yes": "yes", "ja": "yes", "y": "yes", "vocals": "yes", "gesang": "yes",
     "sparse": "sparse", "wenig": "sparse", "minimal": "sparse", "few": "sparse",
+    "only voice - no words": "only voice - no words", "no words": "only voice - no words",
+    "wordless": "only voice - no words", "vocalise": "only voice - no words",
+    "vocalese": "only voice - no words", "scat": "only voice - no words",
+    "humming": "only voice - no words",
     "instrumental": "instrumental", "no": "instrumental", "nein": "instrumental",
     "none": "instrumental", "ohne": "instrumental", "instrumentals": "instrumental",
 }
@@ -208,11 +244,14 @@ def assemble_structured_user_prompt(fields: Dict[str, str], description: str) ->
     """Build the LLM user prompt from resolved structured fields plus description.
 
     Fields with empty values or the value ``custom`` are left out entirely.
-    The description (the "further description" part) is appended verbatim.
+    Tempo values are curated BPM ranges (e.g. ``Uptempo (130-145 BPM)``) that
+    are passed through verbatim.  The description (the "further description"
+    part) is appended verbatim.
     """
     parts: list[str] = []
     for field in STRUCTURED_FIELDS:
-        value = (fields.get(field) or "").strip()
+        raw = fields.get(field)
+        value = str(raw).strip() if raw is not None else ""
         if not value or value == CUSTOM:
             continue
         parts.append(f"{FIELD_LABELS[field]}: {value}")

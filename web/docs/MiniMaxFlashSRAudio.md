@@ -44,3 +44,4 @@ Downloads are logged with progress and the run continues afterwards. Set `auto_d
 
 - FlashSR is generative: reconstructed high frequencies may be invented. The example workflow's hybrid crossover and HF repair stages exist to control exactly that.
 - Loaded FlashSR models are cached per process; `MiniMaxLLMUnload` can release them with `unload_flashsr`.
+- The log shows a single ASCII progress bar per run — `[##########----------]  6/12` (0 on the left, chunk count on the right) — instead of one line per chunk.

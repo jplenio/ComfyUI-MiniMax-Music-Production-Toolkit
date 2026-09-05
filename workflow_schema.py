@@ -85,6 +85,9 @@ JSON_NEW_INPUT_ORDER = (
     "declip_json",
     "release_prep_json",
     "workflow_name",
+    # Since 2.0.4 the canonical JSON writer also emits the MiniMax prompt
+    # report as a Markdown file next to the JSON.
+    "minimax_prompt_md",
 )
 
 # External custom nodes the toolkit replaced with integrated implementations.

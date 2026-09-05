@@ -32,7 +32,7 @@ from .model_downloader import (
     load_models_config,
     resolve_target,
 )
-from .progress_utils import make_progress_bar
+from .progress_utils import format_progress_bar, make_progress_bar
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("flashsr")
@@ -300,14 +300,15 @@ class MiniMaxFlashSRAudio:
                 chunk = np.concatenate([chunk, np.zeros((in_cs.shape[0], window - length), np.float32)], axis=1)
             x = torch.from_numpy(chunk).to(device).float()
             # The vendored diffusion wrapper prints a tqdm progress bar per
-            # chunk; the toolkit logs its own per-chunk progress instead.
+            # chunk; the toolkit logs its own single-line ASCII progress bar
+            # (0 on the left, chunk count on the right) instead.
             with torch.inference_mode(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 y = model(x, lowpass_input=bool(lowpass_input))
             predictions.append((y.detach().to("cpu").float().numpy(), start, length))
             pbar.update_absolute(chunk_index + 1)
             done = chunk_index + 1
             if done % log_every == 0 or done == total_chunks:
-                LOGGER.info("FlashSR chunk %d/%d done", done, total_chunks)
+                LOGGER.info("FlashSR progress %s", format_progress_bar(done, total_chunks))
 
         out_48k = _wola_stitch(predictions, total_len=total, window=window)
 

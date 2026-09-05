@@ -62,6 +62,55 @@ class ProductionJSONTests(unittest.TestCase):
             self.assertEqual(data["outputs"]["release_mp3"]["format"], "mp3")
             self.assertEqual(Path(data["outputs"]["artwork"]["path"]), artwork.resolve())
             self.assertEqual(json.loads(rendered)["outputs"]["configuration"]["file"], "Album - Track.json")
+
+    def test_minimax_prompt_report_is_written_next_to_the_json(self):
+        # The MiniMax prompt report is written as "Album - Title.md" with the
+        # same basename as the canonical JSON, and recorded in the payload.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            node = self.mod.MiniMaxSaveProductionJSON()
+            report = "# MiniMax Music 3 - Prompt Report\n\n```\nfinal prompt\n```\n"
+            saved_path, rendered = node.save(
+                configuration_prefix=str(root / "json" / "source"),
+                audio_tags_json=json.dumps({"album": "Album", "title": "Track"}),
+                title="Track",
+                original_audio_save_json=json.dumps({"path": str(root / "original.flac")}),
+                release_flac_save_json=json.dumps({"path": str(root / "release.flac")}),
+                release_mp3_save_json=json.dumps({"path": str(root / "release.mp3")}),
+                artwork_path=str(root / "cover.jpg"),
+                collision_mode="auto_increment",
+                filename_mode="album - title",
+                create_directories=True,
+                minimax_prompt_md=report,
+            )
+            saved = Path(saved_path)
+            report_path = saved.with_suffix(".md")
+            self.assertTrue(report_path.exists())
+            self.assertEqual(report_path.name, "Album - Track.md")
+            self.assertIn("final prompt", report_path.read_text(encoding="utf-8"))
+            data = json.loads(rendered)
+            self.assertEqual(data["outputs"]["prompt_report"]["file"], "Album - Track.md")
+            self.assertEqual(Path(data["outputs"]["prompt_report"]["path"]), report_path.resolve())
+
+    def test_no_markdown_file_is_written_without_prompt_report(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            node = self.mod.MiniMaxSaveProductionJSON()
+            saved_path, rendered = node.save(
+                configuration_prefix=str(root / "json" / "source"),
+                audio_tags_json=json.dumps({"album": "Album", "title": "Track"}),
+                title="Track",
+                original_audio_save_json=json.dumps({"path": str(root / "original.flac")}),
+                release_flac_save_json=json.dumps({"path": str(root / "release.flac")}),
+                release_mp3_save_json=json.dumps({"path": str(root / "release.mp3")}),
+                artwork_path=str(root / "cover.jpg"),
+                collision_mode="auto_increment",
+                filename_mode="album - title",
+                create_directories=True,
+            )
+            self.assertFalse(Path(saved_path).with_suffix(".md").exists())
+            self.assertNotIn("prompt_report", json.loads(rendered)["outputs"])
+
     def test_canonical_json_works_without_metadata_payload(self):
         # metadata_json is optional since 2.0.0; the canonical JSON still
         # records the tags, title and artifacts.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import types
@@ -189,7 +190,7 @@ class LibraryAggregationTests(unittest.TestCase):
         })
         self.assertIn("House", merged["genre"])
         self.assertIn("Weird Library Genre", merged["genre"])
-        self.assertIn("128 BPM", merged["tempo"])
+        self.assertIn("Uptempo (130-145 BPM)", merged["tempo"])
         self.assertIn("D minor", merged["key"])
         self.assertEqual(merged["lyrics"], list(prompt_metadata.LYRICS_CHOICES))
         self.assertIn("English", merged["language"])
@@ -348,6 +349,18 @@ class StructuredPromptNodeTests(unittest.TestCase):
         self.assertIn(CUSTOM, file_options)
         self.assertIn(PLACEHOLDER, file_options)
 
+    def test_tempo_combo_offers_curated_bpm_ranges(self):
+        # Tempo is a combo whose first entry is custom and whose curated
+        # entries are BPM ranges (not single fixed values), so a selection
+        # always leaves the LLM a comfortable musical window.
+        _combo = MODULES["minimax_structured_prompt"]._combo
+        options = _combo("tempo")
+        self.assertEqual(options[0], CUSTOM)
+        self.assertGreaterEqual(len(options), 7)
+        range_re = re.compile(r"\(\d{2,3}-\d{2,3} BPM\)$")
+        for option in options[1:]:
+            self.assertRegex(option, range_re)
+
     def test_custom_prompt_file_acts_as_free_manual_mode(self):
         # "custom" in the prompt-file dropdown means: load no file, touch no
         # fields, and use only what the user typed themselves.
@@ -432,7 +445,7 @@ class StructuredPromptNodeTests(unittest.TestCase):
         self.assertIn("Deutsch", _combo("language"))
         self.assertIn("4-5 minutes", _combo("length"))
         self.assertIn("female vocal", _combo("voice"))
-        self.assertEqual(_combo("lyrics"), [CUSTOM, "yes", "sparse", "instrumental"])
+        self.assertEqual(_combo("lyrics"), [CUSTOM, "yes", "sparse", "only voice - no words", "instrumental"])
 
 
 class PromptSourceCountParseTests(unittest.TestCase):

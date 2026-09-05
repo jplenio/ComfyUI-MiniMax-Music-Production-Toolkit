@@ -106,11 +106,17 @@ def to_api_format(workflow):
             continue
         inputs = {}
         widget_values = list(node.get("widgets_values") or [])
+        named_values = node.get("widgets_values_named") or {}
         for entry in node.get("inputs", []):
             name = entry.get("name")
             link_id = entry.get("link")
             has_widget = "widget" in entry
             value = widget_values.pop(0) if (has_widget and widget_values) else None
+            # The frontend's positional list interleaves extra values (e.g. the
+            # seed's control_after_generate) that do not belong to input
+            # entries; the named map is the authoritative per-widget value.
+            if has_widget and name in named_values:
+                value = named_values[name]
             if link_id is not None:
                 outer = links[link_id]
                 origin = output_map.get((outer[1], outer[2]), (str(outer[1]), outer[2]))
@@ -309,6 +315,28 @@ def main():
                 print("SMOKE: expected stop at a model loader (empty placeholder model files)")
             else:
                 print(f"SMOKE: NOTE: run stopped at {sorted(error_node_types) or 'unknown'}; expected a model loader with placeholder files")
+
+            # Second public workflow: the audio-enhancement lab.  It skips the
+            # production stage, so it must load, validate and run up to the
+            # missing source audio / FlashSR weights.
+            enhance = json.load(open(f"{REPO}/example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json", encoding="utf-8"))
+            enhance_prompt = to_api_format(enhance)
+            if "11" in enhance_prompt:
+                enhance_prompt["11"]["inputs"]["auto_download"] = False
+            enhance_payload = {"prompt": enhance_prompt, "client_id": "smoke-test-v2-enhance"}
+            enhance_result = http_json(f"{BASE_URL}/prompt", data=enhance_payload, timeout=120)
+            enhance_id = enhance_result.get("prompt_id")
+            print(f"SMOKE: audio-enhance prompt accepted, prompt_id={enhance_id}")
+            enhance_deadline = time.time() + 300
+            while time.time() < enhance_deadline:
+                enhance_history = http_json(f"{BASE_URL}/history/{enhance_id}", timeout=30).get(enhance_id, {})
+                enhance_status = enhance_history.get("status", {})
+                if enhance_status.get("completed") or enhance_status.get("status_str") == "error":
+                    break
+                time.sleep(2)
+            print(f"SMOKE: audio-enhance final status_str={enhance_status.get('status_str')}")
+            for message in (enhance_status.get("messages") or [])[:4]:
+                print(f"SMOKE:   enhance message: {message[0]}: {str(message[1])[:200]}")
         finally:
             process.terminate()
             try:

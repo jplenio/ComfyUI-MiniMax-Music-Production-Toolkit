@@ -88,9 +88,7 @@ song, the machine takes care of the craft.
 
 ## What the toolkit does
 
-- **Structured Song Prompt** — dedicated fields for Genre, Tempo, Key, Lyrics,
-  Language, Voice, Theme and Length plus a free description. Prompt files can
-  prefill the fields; every field can be overridden and `custom` leaves it out.
+- **Structured Song Prompt** — dedicated fields for Genre, Tempo (curated BPM ranges, `custom` first), Key (circle of fifths), Lyrics (yes / sparse / only voice - no words / instrumental), Language (important languages first, then alphabetical), Voice, Theme and Length plus a free description. Prompt files can prefill the fields; every combo field can be overridden and `custom` leaves it out.
 - **Integrated LLM Chat (llama.cpp)** — self-contained GGUF chat node; no
   external LLM custom node required. The LLM stage can also be switched off
   completely.
@@ -98,8 +96,7 @@ song, the machine takes care of the craft.
   `[Image_Prompt]` from the response, with manual fallbacks.
 - **Production system prompt** — tuned for MiniMax Music 3: long instrumental
   structures, imaginative lyrics, and avoidance of smeared high frequencies.
-- **Bundled genre prompt library** — 60+ ready-made genre templates with
-  metadata.
+- **Bundled genre prompt library** — 90+ curated, unified genre templates with metadata: every template carries its Genre / Tempo / Lyrics / Voice / Theme / Length as fields, so the free text never repeats them. Coverage spans Western pop/rock/electronic, plus Asian (K-Pop, City Pop, Bollywood, Chinese & Indian traditional), European (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), African (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues) and Latin American styles (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata). The dropdown lists the categories alphabetically with their files indented beneath.
 - **Reproducible generation controls** — consistent seeds and sampling values.
 - **Integrated Audio Super Resolution (FlashSR)** — the inference code is
   bundled; only the weights are fetched on first use.
@@ -138,7 +135,9 @@ URL in `models_config.json`).
 
 Full instructions: [INSTALLATION.md](INSTALLATION.md).
 
-## Example workflow
+## Example workflows
+
+### Full production workflow
 
 Load:
 
@@ -147,6 +146,19 @@ Load:
 The public workflow contains only generic metadata and no machine-specific
 paths. It is intended as a complete reference workflow; each individual node can
 also be used independently.
+
+### Audio Enhancement Lab
+
+Load:
+
+`example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json`
+
+A compact second workflow that **skips the production stage** entirely. It
+takes an already-finished song (a 32 kHz MiniMax source file, or any imperfect
+recording), runs it through declipping, FlashSR, the hybrid crossover, HF
+repair and release preparation, and saves the enhanced result with full tags.
+Perfect for experimenting with the enhancement settings without generating a
+new song each time: drop in a file, tweak the presets, compare the results.
 
 ## Demo & SoundCloud
 

@@ -28,3 +28,17 @@ def make_progress_bar(total: int) -> Any:
             pass
 
     return _NoopProgress()
+
+
+def format_progress_bar(done: int, total: int, width: int = 20) -> str:
+    """Render an ASCII progress bar for the log, spanning 0 (left) to total (right).
+
+    Example: ``[##########----------]  8192/16384``.  The bar mirrors the node's
+    progress bar; the right-hand annotation shows ``done/total`` so the left end
+    reads as 0 and the right end as the maximum (max_tokens, chunk count, ...).
+    """
+    total = max(1, int(total))
+    done = max(0, min(int(done), total))
+    filled = int(round(width * done / total))
+    bar = "#" * filled + "-" * (width - filled)
+    return f"[{bar}]  {done}/{total}"

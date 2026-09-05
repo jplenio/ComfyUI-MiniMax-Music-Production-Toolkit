@@ -1,7 +1,9 @@
 ---
 Genre: Metal
-Lyrics: yes
+Lyrics: sparse
+Language: English
+Theme: social commentary
 Length: 4-5 minutes
 ---
 
-Industrial Metal — mechanical, dark and highly rhythmic, with crushing guitar riffs, deep bass, rigid drums, electronic pulses and cold synthetic textures. Sparse aggressive vocals, repetitive hook phrases and a relentless machine-like groove. Lyrics about technology, control, identity and humans becoming part of the system
+Mechanical, dark and highly rhythmic, with crushing guitar riffs, deep bass, rigid drums, electronic pulses and cold synthetic textures. Aggressive vocals, repetitive hook phrases and a relentless machine-like groove. Lyrics about technology, control, identity and humans becoming part of the system.

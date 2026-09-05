@@ -1,7 +1,10 @@
 ---
 Genre: Rock
 Lyrics: yes
+Language: English
+Voice: male vocal
+Theme: hope & resilience
 Length: 4-5 minutes
 ---
 
-Hard Rock — heavy, punchy and highly energetic, with massive guitar riffs, tight bass, hard-hitting drums and a powerful rough male vocal. Strong groove, memorable hooks, explosive chorus and a melodic guitar solo. Lyrics about resilience, pressure and refusing to give up
+Heavy, punchy and highly energetic, with massive guitar riffs, tight bass, hard-hitting drums and a powerful rough vocal. Strong groove, memorable hooks, explosive chorus and a melodic guitar solo. Lyrics about resilience, pressure and refusing to give up.

@@ -58,6 +58,8 @@ When it is missing, the node still registers and produces a clear error at execu
 
 The node logs the model load, the LLM environment (llama.cpp version, GGUF inventory) once per process, and the **full assistant output**. llama.cpp is constructed with `verbose=False`, so its per-token debug output does not flood the log - one consistent INFO line per run instead.
 
+While streaming, the log shows a single ASCII progress bar that mirrors the node's bar: `[##########----------]  8192/16384` (0 on the left, `max_tokens` on the right), updated roughly every 10% instead of one line per token.
+
 ## Memory
 
 Only the most recently used model stays loaded. Wire `MiniMaxLLMUnload` after this node to release it before music generation.

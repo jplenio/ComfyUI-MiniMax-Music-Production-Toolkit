@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from pathlib import Path
 
 from .minimax_prompt_source import DEFAULT_SYSTEM_PROMPT, _clean_source_name
@@ -234,7 +233,8 @@ class MiniMaxStructuredPromptV20:
         resolved = {}
         overrides = {}
         for field in STRUCTURED_FIELDS:
-            widget_value = (widget_values.get(field) or "").strip()
+            widget_value = widget_values.get(field)
+            widget_value = str(widget_value or "").strip()
             if widget_value == CUSTOM:
                 continue
             if widget_value:

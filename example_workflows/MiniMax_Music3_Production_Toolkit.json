@@ -2,7 +2,7 @@
   "id": "56ba4af8-75d2-41a6-a2ed-c08c8d894978",
   "revision": 26,
   "last_node_id": 108,
-  "last_link_id": 254,
+  "last_link_id": 259,
   "nodes": [
     {
       "id": 35,
@@ -4534,6 +4534,13 @@
           "link": 253
         },
         {
+          "localized_name": "minimax_prompt_md",
+          "name": "minimax_prompt_md",
+          "shape": 7,
+          "type": "STRING",
+          "link": 259
+        },
+        {
           "localized_name": "collision_mode",
           "name": "collision_mode",
           "type": "COMBO",
@@ -4912,7 +4919,9 @@
           "localized_name": "markdown",
           "name": "markdown",
           "type": "STRING",
-          "links": null
+          "links": [
+            259
+          ]
         }
       ],
       "properties": {
@@ -5851,6 +5860,14 @@
       3,
       108,
       3,
+      "STRING"
+    ],
+    [
+      259,
+      108,
+      0,
+      99,
+      41,
       "STRING"
     ]
   ],
@@ -7206,7 +7223,7 @@
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
     "workflow_name": "MiniMax Music Production Toolkit – Example Workflow",
-    "workflow_version": "2.0.3"
+    "workflow_version": "2.0.4"
   },
   "version": 0.4
 }

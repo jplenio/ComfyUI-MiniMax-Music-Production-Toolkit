@@ -65,7 +65,7 @@ class ReleaseDryRunSummaryTests(unittest.TestCase):
 
     def test_prompt_and_demo_counts(self):
         user, system = PACKAGE.count_prompts()
-        self.assertGreaterEqual(user, 62)
+        self.assertGreaterEqual(user, 95, "the world-music-extended 2.0.3 library has 95 bundled user prompts")
         self.assertGreaterEqual(system, 1)
         self.assertGreaterEqual(PACKAGE.count_demo_tracks(), 35)
 

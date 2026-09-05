@@ -804,15 +804,16 @@ def _run_chat(
 
 
 def _run_chat_streamed(model, kwargs: dict, max_tokens: int) -> tuple:
-    """Run one chat turn with token streaming (progress bar + log heartbeat).
+    """Run one chat turn with token streaming (progress bar in node and log).
 
     Streaming makes the generation visible: the node's progress bar advances
-    with every generated token (content + reasoning) up to ``max_tokens``, and
-    a log line appears every 64 tokens so the run is observable even without
-    looking at the node.  The collected text is split exactly like the
-    non-streaming path, so behaviour is identical otherwise.
+    with every generated token (content + reasoning) up to ``max_tokens``,
+    and the log shows a single ASCII progress bar (0 on the left, max_tokens
+    on the right) that updates every ~10% instead of one log line per step.
+    The collected text is split exactly like the non-streaming path, so
+    behaviour is identical otherwise.
     """
-    from .progress_utils import make_progress_bar
+    from .progress_utils import format_progress_bar, make_progress_bar
 
     kwargs = dict(kwargs)
     kwargs.pop("cache_prompt", None)  # prompt caching and streaming are not combined
@@ -822,7 +823,7 @@ def _run_chat_streamed(model, kwargs: dict, max_tokens: int) -> tuple:
     text_parts: List[str] = []
     reasoning_parts: List[str] = []
     total_tokens = 0
-    log_every = 64
+    log_every = max(64, max_tokens // 10)
     pbar = make_progress_bar(max_tokens)
     for chunk in stream:
         choices = chunk.get("choices") or []
@@ -837,8 +838,9 @@ def _run_chat_streamed(model, kwargs: dict, max_tokens: int) -> tuple:
             reasoning_parts.append(reasoning)
         total_tokens += 1
         pbar.update_absolute(min(total_tokens, max_tokens))
-        if total_tokens % log_every == 0:
-            LOGGER.info("LLM generating ... %d tokens so far", total_tokens)
+        if total_tokens % log_every == 0 or total_tokens >= max_tokens:
+            LOGGER.info("LLM progress %s", format_progress_bar(total_tokens, max_tokens))
+    LOGGER.info("LLM progress %s", format_progress_bar(total_tokens, max_tokens))
     LOGGER.info("LLM streaming finished: %d tokens.", total_tokens)
     reasoning = "".join(reasoning_parts).strip()
     text = "".join(text_parts).strip()

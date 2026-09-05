@@ -1,8 +1,10 @@
 ---
 Genre: EDM
-Tempo: 176 BPM
+Tempo: Very fast (175-200 BPM)
 Lyrics: sparse
+Language: English
+Voice: female vocal
 Length: 4-5 minutes
 ---
 
-Liquid Drum & Bass — emotional yet highly propulsive, with warm sub bass, fast flowing breakbeats, atmospheric synths and a beautiful recurring melody. Add sparse airy female vocal phrases as texture and hook elements only. Smooth, energetic and uplifting with strong progression
+Emotional yet highly propulsive, with warm sub bass, fast flowing breakbeats, atmospheric synths and a beautiful recurring melody. Add only airy vocal phrases as texture and hook elements. Smooth, energetic and uplifting with strong progression.

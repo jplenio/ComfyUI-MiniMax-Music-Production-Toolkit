@@ -1,7 +1,10 @@
 ---
 Genre: Jazz
 Lyrics: yes
+Language: English
+Voice: female vocal
+Theme: hope & resilience
 Length: 3-4 minutes
 ---
 
-Create a smooth jazz piece with female deep lyrics about a troublesome topic but finally with a positive ending. Add nice instrumental sections. Piano and guitar are lead instruments
+Smooth jazz with deep lyrics about a troublesome topic that finally finds a positive ending. Nice sections without vocals, with piano and guitar as the lead instruments.

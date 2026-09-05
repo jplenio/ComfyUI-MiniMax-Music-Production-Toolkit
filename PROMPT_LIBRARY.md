@@ -21,7 +21,7 @@ prompts/user/
 prompts/system/
 ```
 
-The file dropdown contains relative paths, including category folders.
+The file dropdown shows the categories as alphabetical directory labels first, with the files of each directory indented beneath them. The values themselves stay the resolvable relative paths (`category/file.txt`).
 
 ### `external_directory`
 
@@ -42,7 +42,7 @@ Prompt files may start with a metadata block. `MiniMaxStructuredPromptV20` uses 
 ```text
 ---
 Genre: Melodic Techno
-Tempo: 128 BPM
+Tempo: Midtempo (100-120 BPM)
 Key: A minor
 Lyrics: sparse
 Language: English
@@ -55,12 +55,12 @@ Free text describing the track in more detail.
 
 - The block must be the very first thing in the file, delimited by lines containing only `---`.
 - Keys are case-insensitive; aliases such as `BPM`, `Tonart`, `Sprache`, `Stimme`, `Lyrics theme` and `Song length` are accepted. Unknown keys are ignored.
-- Lyrics values are normalized to `yes` / `sparse` / `instrumental` where recognizable (`ja`, `no`, `wenig`, …).
+- Lyrics values are normalized to `yes` / `sparse` / `only voice - no words` / `instrumental` where recognizable (`ja`, `no`, `wenig`, `wordless`, `vocalise`, …).
 - Everything after the closing `---` (or the whole file, if there is no block) is the **further description**.
 - Files without a metadata block are fully supported: all fields default to `custom` and the whole file is used as the description.
 - Every prefilled field can be overridden in the node; `custom` leaves that part out of the LLM prompt entirely.
 
-The bundled library ships with metadata for all 62 user prompts; regenerate it with:
+The bundled library ships with metadata for all 95 user prompts; regenerate it with:
 
 ```bash
 python scripts/annotate_prompt_metadata.py --dry-run
@@ -97,11 +97,14 @@ Create a descriptive UTF-8 file under a category, for example:
 prompts/user/house/my-house-prompt.txt
 ```
 
-After restarting or refreshing the prompt list, it appears as:
+After restarting or refreshing the prompt list, it appears under its directory label as an indented entry:
 
 ```text
-house/my-house-prompt.txt
+house/
+    my-house-prompt.txt
 ```
+
+Every bundled prompt follows the same unified format: a metadata block with only the canonical fields (Genre, Tempo, Key, Lyrics, Language, Voice, Theme, Length — omit fields that should stay `custom`) plus a description that never repeats what the fields already express (no BPM, key, lyric mode, voice gender, language or duration in the free text). Tempo values are curated BPM ranges (Slow 40-70 through Very fast 175-200), never single fixed values.
 
 ## Adding system prompts
 
@@ -115,15 +118,17 @@ A system prompt should document the output contract expected by your downstream 
 
 ## Current bundled library
 
-The v1.0.7 repository contains **62 user prompt files** across:
+The v2.0.3 repository contains **95 user prompt files** across:
 
-`alternative`, `ambient`, `classical`, `comedy`, `edm`, `electronic`, `folk`, `funk`, `house`, `jazz`, `metal`, `pop`, and `rock`.
+`african`, `alternative`, `ambient`, `asian`, `classical`, `comedy`, `edm`, `electronic`, `european`, `folk`, `funk`, `hiphop`, `house`, `jazz`, `latin`, `metal`, `pop`, `reggae`, and `rock`.
+
+All 95 files were unified in v2.0.3: every file carries a canonical metadata block, near-duplicates were consolidated (EDM dance anthem, minimal electronic German vocals, absurd German novelty, chillout guitar, heavy metal moved from `rock/` to `metal/`), the free text no longer repeats anything a structured field can express, and the library now covers world styles from Asia (K-Pop, City Pop, Chinese/Indian traditional, Bollywood), Europe (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), Africa (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues) and Latin America (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata) alongside the classic Western and electronic genres.
 
 The production system prompt is stored only in `prompts/system/minimax-music3-production.txt`; avoid duplicating that long prompt in Python source.
 
 ## Implementation notes for developers
 
-The dropdown is populated through the toolkit's `/minimax_music_toolkit/prompt_files` route and `web/prompt_library.js`. Because the choices are dynamic, the node performs authoritative path/file validation at execution time rather than assuming a saved combo value is permanently valid.
+The dropdown is populated through the toolkit's `/minimax_music_toolkit/prompt_files` route and `web/prompt_library.js` / `web/structured_prompt.js`. It lists the files alphabetically with each directory shown once as a display-only group label; selecting a directory label keeps the previous file selection. Because the choices are dynamic, the node performs authoritative path/file validation at execution time rather than assuming a saved combo value is permanently valid.
 
 `IS_CHANGED` includes a content fingerprint for file-backed prompts, so an edit to a selected file invalidates ComfyUI caching even when its filename is unchanged.
 

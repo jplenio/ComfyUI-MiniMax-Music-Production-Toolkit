@@ -26,7 +26,7 @@ The node assembles the **complete generation record** from direct inputs (no sep
 - every audio-enhancement report: de-clipping, PRE/POST low-pass, FlashSR settings, hybrid crossover, HF cymbal/shimmer repair and release preparation;
 - the standard audio tags,
 - original-audio / release FLAC / release MP3 save information,
-- the artwork path and the configuration-file path.
+- the artwork path, the configuration-file path and (since 2.0.4) the MiniMax prompt-report path.
 
 Audio save information includes format, sample rate, peak before final file writing, any constant safety gain applied by the saver, filename mode and embedded-cover size.
 
@@ -38,8 +38,14 @@ With the recommended `album - title` mode, a song with album `Example Album` and
 
 `json/Example Album - Northern Light.json`
 
+Since 2.0.4 the node additionally writes the MiniMax prompt report beside the JSON with the **same basename**:
+
+`json/Example Album - Northern Light.md`
+
+The Markdown report (from the `MiniMaxPromptReport` node, wired to the new `minimax_prompt_md` input) contains the cleaned caption, the normalized lyrics, the verbatim final prompt sent to MiniMax and the FLUX.2 image prompt. When the input is empty (not wired), no `.md` file is written.
+
 This affects only the filesystem name. It does not change the song Title metadata.
 
 ## Atomic writing
 
-The JSON is first written to a temporary file and then atomically renamed to the final `.json` path. This reduces the chance of leaving a partially written configuration file after an interrupted write.
+The JSON (and the optional prompt-report Markdown) is first written to a temporary file and then atomically renamed to the final path. This reduces the chance of leaving a partially written configuration file after an interrupted write.

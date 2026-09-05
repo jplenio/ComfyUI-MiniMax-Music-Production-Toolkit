@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.4] - 2026-09-05
+
+The "fields that feel right" release: a curated tempo range list, circle-of-fifths keys, a wordless-vocal lyrics mode, more languages, log progress bars, the MiniMax prompt as an `.md` file, and the unified world-spanning prompt library.
+
+### Added
+- **Curated tempo range list** in `MiniMaxStructuredPromptV20`: `custom` first, then sensible BPM ranges (Slow 40-70 / Laid-back 70-100 / Midtempo 100-120 / Dancefloor 120-130 / Uptempo 130-145 / Fast 145-175 / Very fast 175-200 BPM). All 24 prompt files with Tempo metadata use the matching range; consistency tests enforce range-only Tempo values.
+- **`only voice - no words` lyrics mode** (yes / sparse / only voice - no words / instrumental) with normalization for `wordless`, `vocalise`, `vocalese`, `scat`, `humming`, `no words`.
+- **Circle-of-fifths key list** (C major … F major, then A minor … D minor).
+- **More languages**: important languages first, then 25 additional languages in alphabetical order (Arabic … Vietnamese, incl. Hindi in the important set).
+- **MiniMax prompt report as Markdown file**: `MiniMaxSaveProductionJSON` gained the optional `minimax_prompt_md` input; wired to `MiniMaxPromptReport` it writes `Album - Title.md` next to the canonical JSON (same basename, atomic) and records it in `outputs.prompt_report`. Bundled workflow wired (link 259).
+- **Audio Enhancement Lab workflow**: a second public example workflow (`MiniMax_Music3_Production_Toolkit_AudioEnhance.json`) that skips the production stage — LoadAudio → declip → FlashSR chain → release prep → tagged FLAC save — for experimenting with enhancement settings on finished songs. Generic (no pre-selected audio file), validated and shipped in the release ZIP.
+- **Log progress bars**: single ASCII bar (`[##########----------]  8192/16384`, 0 left / max right) in the log for LLM streaming (~every 10% of max_tokens) and FlashSR (every 10% of chunks); replaces the per-64-token heartbeat and per-chunk lines. In-node progress bars unchanged.
+- **Unified, consolidated, world-spanning prompt library**: 95 templates, one canonical format, no field duplication in the free text; near-duplicates merged; heavy metal moved to `metal/`; new `african/`, `asian/`, `european/`, `latin/`, `reggae/`, `hiphop/` categories plus modern genres (Punk, Indie, Power Metal, Psytrance, Jungle, Trap, Synth-Pop, R&B, Dub, Dancehall, Opera); curated Genre/Language lists extended.
+- **Grouped prompt dropdown**: directory labels first (alphabetical), files indented beneath; labels are display-only.
+- New consistency tests (`test_prompt_consistency.py`), progress-bar tests (`test_progress_utils.py`) and tempo-migration tests.
+
+### Changed
+- Log heartbeat for LLM streaming / FlashSR chunking replaced by the ASCII progress bar.
+- All pre-2.0.0 release notes merged into `RELEASE_NOTES_v1.0.x.md`; the six per-version v1.0.x note files were removed.
+- Bundled example workflow carries the user's audio-preset edits and the new `minimax_prompt_md` wiring.
+
+### Fixed
+- The smoke-test workflow converter (`scripts/comfyui_smoke_test.py`) now reads widget values from `widgets_values_named`; the positional list interleaves seed `control_after_generate` values and previously broke API validation (`main_gpu`, `tempo`).
+
 ## [2.0.3] - 2026-09-05
 
 Full-freedom prompt release: a `custom` choice in the Structured Song Prompt's file dropdown, refined audio presets in the example workflow, and a rewritten, welcoming README.

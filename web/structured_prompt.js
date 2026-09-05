@@ -18,6 +18,9 @@ const NODE_TYPES = new Set(["MiniMaxStructuredPromptV20"]);
 const PLACEHOLDER = "<select a prompt>";
 const CUSTOM = "custom";
 const STRUCTURED_FIELDS = ["genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length"];
+// Directory group labels in the prompt-file dropdown end with this suffix and
+// carry no file value; selecting one keeps the previous real selection.
+const DIRECTORY_MARKER_SUFFIX = "/";
 
 function widget(node, name) {
     return node.widgets?.find((w) => w.name === name);
@@ -33,6 +36,34 @@ function setComboValues(w, values, firstValue = CUSTOM) {
     w.options = w.options || {};
     w.options.values = normalized;
     if (!normalized.includes(w.value)) w.value = firstValue;
+}
+
+function buildGroupedFileOptions(files) {
+    // files arrive sorted by relative path, which groups them per directory.
+    // The dropdown shows each directory once (first), then its files indented
+    // beneath it.  Directory labels are display-only markers.
+    const entries = [PLACEHOLDER, CUSTOM];
+    let currentDir = null;
+    for (const file of files) {
+        const slash = file.indexOf("/");
+        const dir = slash >= 0 ? file.slice(0, slash) : "";
+        if (slash >= 0 && dir !== currentDir) {
+            entries.push(dir + DIRECTORY_MARKER_SUFFIX);
+            currentDir = dir;
+        }
+        entries.push(file);
+    }
+    return entries;
+}
+
+function fileOptionLabel(value) {
+    if (typeof value !== "string") return value;
+    if (value === PLACEHOLDER || value === CUSTOM) return value;
+    if (value.endsWith(DIRECTORY_MARKER_SUFFIX)) return value;
+    const slash = value.indexOf("/");
+    // Indent files under their directory label (non-breaking spaces survive
+    // HTML rendering; the value itself stays the resolvable relative path).
+    return slash >= 0 ? "\u00A0\u00A0\u00A0\u00A0" + value.slice(slash + 1) : value;
 }
 
 function markDirty(node) {
@@ -89,7 +120,12 @@ async function refreshFiles(node) {
         const oldValue = fileWidget.value;
         // "custom" is always the first real choice and selects the free mode:
         // no prompt file is loaded and the structured fields stay untouched.
-        setComboValues(fileWidget, [CUSTOM, ...files], PLACEHOLDER);
+        // Directory labels group the remaining files alphabetically; the
+        // option labels indent each file under its directory.
+        const grouped = buildGroupedFileOptions(files);
+        fileWidget.options = fileWidget.options || {};
+        fileWidget.options.values = grouped;
+        fileWidget.options.getOptionLabel = fileOptionLabel;
         if (files.includes(oldValue)) fileWidget.value = oldValue;
         else if (oldValue === CUSTOM) fileWidget.value = CUSTOM;
         else if (files.length === 1) fileWidget.value = files[0];
@@ -261,7 +297,19 @@ function attach(node) {
 
     const fileWidget = widget(node, "user_prompt_file");
     if (fileWidget) {
-        chainCallback(fileWidget, () => prefillStructuredFields(node, fileWidget.value));
+        node.__minimaxLastFileValue = fileWidget.value;
+        chainCallback(fileWidget, () => {
+            const value = fileWidget.value;
+            if (typeof value === "string" && value.endsWith(DIRECTORY_MARKER_SUFFIX)) {
+                // Directory labels are display-only group headers; keep the
+                // previous real selection instead of resolving a folder.
+                fileWidget.value = node.__minimaxLastFileValue ?? PLACEHOLDER;
+                markDirty(node);
+                return;
+            }
+            node.__minimaxLastFileValue = value;
+            prefillStructuredFields(node, value);
+        });
     }
     chainCallback(widget(node, "user_prompt_source"), async () => {
         await refreshFiles(node);

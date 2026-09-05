@@ -236,7 +236,9 @@ def save_custom_prompt(
     }
     lines = ["---"]
     for field in ("genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length"):
-        value = (fields.get(field) or "").strip()
+        value = fields.get(field)
+        if isinstance(value, str):
+            value = value.strip()
         if value and value != "custom":
             lines.append(f"{labels[field]}: {value}")
     lines.append("---")

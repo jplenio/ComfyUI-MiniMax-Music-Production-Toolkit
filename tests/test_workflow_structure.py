@@ -125,6 +125,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIsNotNone(linked_inputs["llm_output"])
         self.assertIsNotNone(linked_inputs["caption"])
         self.assertIsNotNone(linked_inputs["release_prep_json"])
+        # Since 2.0.4 the prompt report node feeds the canonical JSON writer,
+        # which emits "Album - Title.md" next to the JSON.
+        self.assertIsNotNone(linked_inputs["minimax_prompt_md"])
 
     def test_legacy_settings_and_metadata_nodes_are_removed(self):
         types = {n["type"] for n in self.wf["nodes"]}
@@ -232,6 +235,56 @@ class WorkflowTests(unittest.TestCase):
         # chat status -> parser llm_status (upstream failure diagnostics)
         self.assertIsNotNone(parser_links["llm_status"])
         self.assertEqual(links[parser_links["llm_status"]][1], chat["id"])
+
+
+ENHANCE_WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
+
+
+class AudioEnhanceWorkflowTests(unittest.TestCase):
+    """The public audio-enhancement workflow (finished songs, no production
+    stage) must be self-contained, generic and structurally valid."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.wf = json.loads(ENHANCE_WORKFLOW.read_text(encoding="utf-8"))
+
+    def test_all_links_resolve(self):
+        nodes = {n["id"]: n for n in self.wf["nodes"]}
+        links = {l[0]: l for l in self.wf["links"]}
+        for lid, src, src_slot, dst, dst_slot, _typ in self.wf["links"]:
+            self.assertIn(src, nodes, lid)
+            self.assertIn(dst, nodes, lid)
+            self.assertLess(src_slot, len(nodes[src].get("outputs", [])), lid)
+            self.assertLess(dst_slot, len(nodes[dst].get("inputs", [])), lid)
+        for node in self.wf["nodes"]:
+            for inp in node.get("inputs", []):
+                if inp.get("link") is not None:
+                    self.assertIn(inp["link"], links)
+            for out in node.get("outputs", []):
+                for lid in out.get("links") or []:
+                    self.assertIn(lid, links)
+
+    def test_chain_contains_the_enhancement_stage(self):
+        types = {n["type"] for n in self.wf["nodes"]}
+        for required in (
+            "LoadAudio", "AudioDeclipRepair", "FlashSRLowpassLab", "MiniMaxFlashSRAudio",
+            "FlashSRHybridCrossover", "HFCymbalShimmerRepair", "AudioReleasePrep",
+            "SaveAudioSmartPrefix", "MiniMaxOutputPaths", "MiniMaxStandardAudioTags",
+        ):
+            self.assertIn(required, types, required)
+
+    def test_workflow_is_generic(self):
+        loader = next(n for n in self.wf["nodes"] if n["type"] == "LoadAudio")
+        positional = loader.get("widgets_values") or []
+        named = (loader.get("widgets_values_named") or {}).get("audio")
+        self.assertEqual(positional[0] if positional else None, "")
+        self.assertEqual(named, "")
+        version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        self.assertEqual((self.wf.get("extra") or {}).get("workflow_version"), version)
+
+    def test_no_external_custom_nodes(self):
+        from workflow_schema import find_external_node_dependencies
+        self.assertEqual(find_external_node_dependencies(self.wf), [])
 
 
 if __name__ == "__main__":

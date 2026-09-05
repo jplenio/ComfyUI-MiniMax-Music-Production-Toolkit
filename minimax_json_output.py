@@ -265,6 +265,9 @@ class MiniMaxSaveProductionJSON:
                 "declip_json": ("STRING", {"forceInput": True}),
                 "release_prep_json": ("STRING", {"forceInput": True}),
                 "workflow_name": ("STRING", {"default": DEFAULT_WORKFLOW_NAME, "multiline": False}),
+                # Since 2.0.4: the MiniMax prompt report (Markdown) is written
+                # next to the canonical JSON with the same basename.
+                "minimax_prompt_md": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -321,6 +324,7 @@ class MiniMaxSaveProductionJSON:
         declip_json: str = "",
         release_prep_json: str = "",
         workflow_name: str = DEFAULT_WORKFLOW_NAME,
+        minimax_prompt_md: str = "",
     ):
         metadata = _parse_object(metadata_json, "metadata_json")
         payload = _generation_metadata(
@@ -394,6 +398,32 @@ class MiniMaxSaveProductionJSON:
                 "filename_mode": str(filename_mode),
             },
         }
+
+        # The MiniMax prompt report is written as a Markdown file beside the
+        # canonical JSON, using exactly the same basename (Album - Title.md).
+        markdown_text = (minimax_prompt_md or "").strip()
+        prompt_report_target: Optional[str] = None
+        if markdown_text:
+            prompt_report_target = str(Path(target).with_suffix(".md"))
+            markdown_tmp = prompt_report_target + ".tmp"
+            try:
+                with open(markdown_tmp, "w", encoding="utf-8", newline="\n") as handle:
+                    handle.write(markdown_text)
+                    if not markdown_text.endswith("\n"):
+                        handle.write("\n")
+                os.replace(markdown_tmp, prompt_report_target)
+            except Exception:
+                try:
+                    if os.path.exists(markdown_tmp):
+                        os.remove(markdown_tmp)
+                except OSError:
+                    pass
+                raise
+            outputs["prompt_report"] = {
+                "path": os.path.abspath(prompt_report_target),
+                "file": os.path.basename(prompt_report_target),
+            }
+            LOGGER.info("Saved MiniMax prompt report: %s", prompt_report_target)
         payload["outputs"] = outputs
 
         tmp = target + ".tmp"

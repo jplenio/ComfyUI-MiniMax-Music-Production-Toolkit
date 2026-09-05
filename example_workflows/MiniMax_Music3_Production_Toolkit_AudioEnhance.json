@@ -1,0 +1,1850 @@
+{
+  "id": "4dc88fb5-7e0b-4d5b-97e6-fbf56d436ced",
+  "revision": 0,
+  "last_node_id": 24,
+  "last_link_id": 27,
+  "nodes": [
+    {
+      "id": 8,
+      "type": "LoadAudio",
+      "pos": [
+        -149.18422585750886,
+        568.4181871220486
+      ],
+      "size": [
+        447,
+        255.890625
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "COMBO",
+          "widget": {
+            "name": "audio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "audioUI",
+          "name": "audioUI",
+          "type": "AUDIO_UI",
+          "widget": {
+            "name": "audioUI"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "choose file to upload",
+          "name": "upload",
+          "type": "AUDIOUPLOAD",
+          "widget": {
+            "name": "upload"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "AUDIO",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "LoadAudio"
+      },
+      "widgets_values": [
+        "",
+        null,
+        null
+      ],
+      "widgets_values_named": {
+        "audio": "",
+        "upload": null
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 9,
+      "type": "AudioDeclipRepair",
+      "pos": [
+        407.92758757049205,
+        569.6684319180512
+      ],
+      "size": [
+        366.75,
+        384.25
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 16
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detection_threshold_percent",
+          "name": "detection_threshold_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "detection_threshold_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "plateau_tolerance_percent",
+          "name": "plateau_tolerance_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "plateau_tolerance_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_flat_samples",
+          "name": "min_flat_samples",
+          "type": "INT",
+          "widget": {
+            "name": "min_flat_samples"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slope_context_samples",
+          "name": "slope_context_samples",
+          "type": "INT",
+          "widget": {
+            "name": "slope_context_samples"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_repair_ms",
+          "name": "max_repair_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_repair_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_peak_extension_db",
+          "name": "max_peak_extension_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_peak_extension_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "output_ceiling_dbfs",
+          "name": "output_ceiling_dbfs",
+          "type": "FLOAT",
+          "widget": {
+            "name": "output_ceiling_dbfs"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mix",
+          "name": "mix",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            8,
+            10
+          ]
+        },
+        {
+          "localized_name": "declip_json",
+          "name": "declip_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "Source Declip / Overload Repair – before FlashSR",
+      "properties": {
+        "Node name for S&R": "AudioDeclipRepair"
+      },
+      "widgets_values": [
+        "Auto / conservative",
+        98,
+        0.001,
+        3,
+        3,
+        8,
+        4,
+        -1,
+        1
+      ],
+      "widgets_values_named": {
+        "mode": "Auto / conservative",
+        "detection_threshold_percent": 98,
+        "plateau_tolerance_percent": 0.001,
+        "min_flat_samples": 3,
+        "slope_context_samples": 3,
+        "max_repair_ms": 8,
+        "max_peak_extension_db": 4,
+        "output_ceiling_dbfs": -1,
+        "mix": 1
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 10,
+      "type": "FlashSRLowpassLab",
+      "pos": [
+        821.8583054545652,
+        566.8448194047716
+      ],
+      "size": [
+        284,
+        298
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 8
+        },
+        {
+          "localized_name": "preset_override",
+          "name": "preset_override",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "custom_cutoff_override",
+          "name": "custom_cutoff_override",
+          "shape": 7,
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "custom_order_override",
+          "name": "custom_order_override",
+          "shape": 7,
+          "type": "INT",
+          "link": null
+        },
+        {
+          "localized_name": "custom_phase_override",
+          "name": "custom_phase_override",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "bypass_override",
+          "name": "bypass_override",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "localized_name": "preset",
+          "name": "preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "preset"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_cutoff_hz",
+          "name": "custom_cutoff_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_cutoff_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_order",
+          "name": "custom_order",
+          "type": "INT",
+          "widget": {
+            "name": "custom_order"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_phase_mode",
+          "name": "custom_phase_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "custom_phase_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bypass",
+          "name": "bypass",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bypass"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            9
+          ]
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "preset",
+          "name": "preset",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "settings_json",
+          "name": "settings_json",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "PRE Lowpass",
+      "properties": {
+        "Node name for S&R": "FlashSRLowpassLab"
+      },
+      "widgets_values": [
+        "PRE 10 kHz - strong",
+        10000,
+        2,
+        "zero_phase",
+        false
+      ],
+      "widgets_values_named": {
+        "preset": "PRE 10 kHz - strong",
+        "custom_cutoff_hz": 10000,
+        "custom_order": 2,
+        "custom_phase_mode": "zero_phase",
+        "bypass": false
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 11,
+      "type": "MiniMaxFlashSRAudio",
+      "pos": [
+        1161.8583054545652,
+        566.8448194047716
+      ],
+      "size": [
+        336.84375,
+        213.75
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 9
+        },
+        {
+          "localized_name": "lowpass_input",
+          "name": "lowpass_input",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "lowpass_input"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "output_sr",
+          "name": "output_sr",
+          "type": "COMBO",
+          "widget": {
+            "name": "output_sr"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_download",
+          "name": "auto_download",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_download"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            11
+          ]
+        },
+        {
+          "localized_name": "settings_json",
+          "name": "settings_json",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EgregoraAudioUpscaler",
+        "cnr_id": "egregora-audio-super-resolution",
+        "ver": "1.0.0"
+      },
+      "widgets_values": [
+        false,
+        "48000",
+        true
+      ],
+      "widgets_values_named": {
+        "lowpass_input": false,
+        "output_sr": "48000",
+        "auto_download": true
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 12,
+      "type": "FlashSRHybridCrossover",
+      "pos": [
+        1551.8583054545652,
+        566.8448194047716
+      ],
+      "size": [
+        378,
+        219.875
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "original_audio",
+          "name": "original_audio",
+          "type": "AUDIO",
+          "link": 10
+        },
+        {
+          "localized_name": "flashsr_audio",
+          "name": "flashsr_audio",
+          "type": "AUDIO",
+          "link": 11
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "crossover_hz",
+          "name": "crossover_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "crossover_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "transition_hz",
+          "name": "transition_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "transition_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flashsr_hf_mix",
+          "name": "flashsr_hf_mix",
+          "type": "FLOAT",
+          "widget": {
+            "name": "flashsr_hf_mix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            12
+          ]
+        },
+        {
+          "localized_name": "hybrid_crossover_json",
+          "name": "hybrid_crossover_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "FlashSR Hybrid – Preserve Original + Controlled Air",
+      "properties": {
+        "Node name for S&R": "FlashSRHybridCrossover"
+      },
+      "widgets_values": [
+        "FlashSR only",
+        13500,
+        2000,
+        0.45
+      ],
+      "widgets_values_named": {
+        "mode": "FlashSR only",
+        "crossover_hz": 13500,
+        "transition_hz": 2000,
+        "flashsr_hf_mix": 0.45
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 13,
+      "type": "HFCymbalShimmerRepair",
+      "pos": [
+        1983.0936008653393,
+        567.0137751957018
+      ],
+      "size": [
+        320.875,
+        378
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 12
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_frequency_hz",
+          "name": "start_frequency_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_frequency_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sustain_reduction_db",
+          "name": "sustain_reduction_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "sustain_reduction_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "fast_envelope_ms",
+          "name": "fast_envelope_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fast_envelope_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "slow_envelope_ms",
+          "name": "slow_envelope_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "slow_envelope_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "transient_sensitivity",
+          "name": "transient_sensitivity",
+          "type": "FLOAT",
+          "widget": {
+            "name": "transient_sensitivity"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "side_hf_reduction_db",
+          "name": "side_hf_reduction_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "side_hf_reduction_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "static_hf_trim_db",
+          "name": "static_hf_trim_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "static_hf_trim_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_hf_level_dbfs",
+          "name": "min_hf_level_dbfs",
+          "type": "FLOAT",
+          "widget": {
+            "name": "min_hf_level_dbfs"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mix",
+          "name": "mix",
+          "type": "FLOAT",
+          "widget": {
+            "name": "mix"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            14
+          ]
+        },
+        {
+          "localized_name": "hf_repair_json",
+          "name": "hf_repair_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HFCymbalShimmerRepair"
+      },
+      "widgets_values": [
+        "Cymbal clarity",
+        7000,
+        2.25,
+        5,
+        180,
+        0.3,
+        1,
+        -0.5,
+        -58,
+        1
+      ],
+      "widgets_values_named": {
+        "mode": "Cymbal clarity",
+        "start_frequency_hz": 7000,
+        "sustain_reduction_db": 2.25,
+        "fast_envelope_ms": 5,
+        "slow_envelope_ms": 180,
+        "transient_sensitivity": 0.3,
+        "side_hf_reduction_db": 1,
+        "static_hf_trim_db": -0.5,
+        "min_hf_level_dbfs": -58,
+        "mix": 1
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 14,
+      "type": "AudioReleasePrep",
+      "pos": [
+        1851.8583054545652,
+        1066.8448194047714
+      ],
+      "size": [
+        436.5,
+        272.125
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 13
+        },
+        {
+          "localized_name": "target_sample_rate",
+          "name": "target_sample_rate",
+          "type": "COMBO",
+          "widget": {
+            "name": "target_sample_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "processing",
+          "name": "processing",
+          "type": "COMBO",
+          "widget": {
+            "name": "processing"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_target_lufs",
+          "name": "custom_target_lufs",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_target_lufs"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_true_peak_dbtp",
+          "name": "custom_true_peak_dbtp",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_true_peak_dbtp"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            15
+          ]
+        },
+        {
+          "localized_name": "release_prep_json",
+          "name": "release_prep_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "Release Prep – 44.1 kHz / STATIC LUFS / True Peak",
+      "properties": {
+        "Node name for S&R": "AudioReleasePrep"
+      },
+      "widgets_values": [
+        "44100",
+        "Streaming Safe -14 LUFS / -1 dBTP",
+        -14,
+        -1
+      ],
+      "widgets_values_named": {
+        "target_sample_rate": "44100",
+        "processing": "Streaming Safe -14 LUFS / -1 dBTP",
+        "custom_target_lufs": -14,
+        "custom_true_peak_dbtp": -1
+      },
+      "color": "#324",
+      "bgcolor": "#546"
+    },
+    {
+      "id": 15,
+      "type": "FlashSRLowpassLab",
+      "pos": [
+        1491.8583054545652,
+        1066.8448194047714
+      ],
+      "size": [
+        284,
+        298
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 14
+        },
+        {
+          "localized_name": "preset_override",
+          "name": "preset_override",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "custom_cutoff_override",
+          "name": "custom_cutoff_override",
+          "shape": 7,
+          "type": "FLOAT",
+          "link": null
+        },
+        {
+          "localized_name": "custom_order_override",
+          "name": "custom_order_override",
+          "shape": 7,
+          "type": "INT",
+          "link": null
+        },
+        {
+          "localized_name": "custom_phase_override",
+          "name": "custom_phase_override",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "bypass_override",
+          "name": "bypass_override",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "link": null
+        },
+        {
+          "localized_name": "preset",
+          "name": "preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "preset"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_cutoff_hz",
+          "name": "custom_cutoff_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_cutoff_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_order",
+          "name": "custom_order",
+          "type": "INT",
+          "widget": {
+            "name": "custom_order"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_phase_mode",
+          "name": "custom_phase_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "custom_phase_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bypass",
+          "name": "bypass",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bypass"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            13
+          ]
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "preset",
+          "name": "preset",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "settings_json",
+          "name": "settings_json",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "POST Lowpass",
+      "properties": {
+        "Node name for S&R": "FlashSRLowpassLab"
+      },
+      "widgets_values": [
+        "POST 19 kHz - slightly stronger",
+        19000,
+        2,
+        "causal",
+        false
+      ],
+      "widgets_values_named": {
+        "preset": "POST 19 kHz - slightly stronger",
+        "custom_cutoff_hz": 19000,
+        "custom_order": 2,
+        "custom_phase_mode": "causal",
+        "bypass": false
+      },
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 16,
+      "type": "SaveAudioSmartPrefix",
+      "pos": [
+        3245.986316478129,
+        1060.6675387276887
+      ],
+      "size": [
+        397.421875,
+        466
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 15
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "link": 18
+        },
+        {
+          "localized_name": "title",
+          "name": "title",
+          "shape": 7,
+          "type": "STRING",
+          "link": 20
+        },
+        {
+          "localized_name": "metadata_json",
+          "name": "metadata_json",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "audio_tags_json",
+          "name": "audio_tags_json",
+          "shape": 7,
+          "type": "STRING",
+          "link": 19
+        },
+        {
+          "localized_name": "cover_image_path",
+          "name": "cover_image_path",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "collision_mode",
+          "name": "collision_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "collision_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "create_directories",
+          "name": "create_directories",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "create_directories"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "mp3_quality",
+          "name": "mp3_quality",
+          "type": "COMBO",
+          "widget": {
+            "name": "mp3_quality"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "flac_bit_depth",
+          "name": "flac_bit_depth",
+          "type": "COMBO",
+          "widget": {
+            "name": "flac_bit_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "wav_bit_depth",
+          "name": "wav_bit_depth",
+          "type": "COMBO",
+          "widget": {
+            "name": "wav_bit_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "peak_handling",
+          "name": "peak_handling",
+          "type": "COMBO",
+          "widget": {
+            "name": "peak_handling"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "write_json_sidecar",
+          "name": "write_json_sidecar",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "write_json_sidecar"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "embed_basic_metadata",
+          "name": "embed_basic_metadata",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "embed_basic_metadata"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "filename_mode",
+          "name": "filename_mode",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "filename_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "embedded_cover_size",
+          "name": "embedded_cover_size",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "embedded_cover_size"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": []
+        },
+        {
+          "localized_name": "saved_path",
+          "name": "saved_path",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "metadata_path",
+          "name": "metadata_path",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "save_info_json",
+          "name": "save_info_json",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "44.1 kHz Release FLAC – Album - Title + Full Metadata",
+      "properties": {
+        "Node name for S&R": "SaveAudioSmartPrefix"
+      },
+      "widgets_values": [
+        "flac",
+        "auto_increment",
+        true,
+        "V0 (~245 kbps)",
+        "24-bit",
+        "32-bit float",
+        "normalize_only_if_clipping",
+        false,
+        true,
+        "album - title",
+        1536
+      ],
+      "widgets_values_named": {
+        "format": "flac",
+        "collision_mode": "auto_increment",
+        "create_directories": true,
+        "mp3_quality": "V0 (~245 kbps)",
+        "flac_bit_depth": "24-bit",
+        "wav_bit_depth": "32-bit float",
+        "peak_handling": "normalize_only_if_clipping",
+        "write_json_sidecar": false,
+        "embed_basic_metadata": true,
+        "filename_mode": "album - title",
+        "embedded_cover_size": 1536
+      },
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 18,
+      "type": "MiniMaxOutputPaths",
+      "pos": [
+        2555.30596969479,
+        569.6536030763042
+      ],
+      "size": [
+        544,
+        434
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "source_name",
+          "name": "source_name",
+          "type": "STRING",
+          "link": 21
+        },
+        {
+          "localized_name": "run_index",
+          "name": "run_index",
+          "shape": 7,
+          "type": "INT",
+          "link": 25
+        },
+        {
+          "localized_name": "variant_count",
+          "name": "variant_count",
+          "shape": 7,
+          "type": "INT",
+          "link": 26
+        },
+        {
+          "localized_name": "base_output",
+          "name": "base_output",
+          "type": "STRING",
+          "widget": {
+            "name": "base_output"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "original_subdir",
+          "name": "original_subdir",
+          "type": "STRING",
+          "widget": {
+            "name": "original_subdir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sr_flac_subdir",
+          "name": "sr_flac_subdir",
+          "type": "STRING",
+          "widget": {
+            "name": "sr_flac_subdir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sr_mp3_subdir",
+          "name": "sr_mp3_subdir",
+          "type": "STRING",
+          "widget": {
+            "name": "sr_mp3_subdir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "artwork_subdir",
+          "name": "artwork_subdir",
+          "type": "STRING",
+          "widget": {
+            "name": "artwork_subdir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "configuration_subdir",
+          "name": "configuration_subdir",
+          "type": "STRING",
+          "widget": {
+            "name": "configuration_subdir"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "append_variant_index",
+          "name": "append_variant_index",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "append_variant_index"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "variant_padding",
+          "name": "variant_padding",
+          "type": "INT",
+          "widget": {
+            "name": "variant_padding"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "original_prefix",
+          "name": "original_prefix",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "sr_flac_prefix",
+          "name": "sr_flac_prefix",
+          "type": "STRING",
+          "links": [
+            18
+          ]
+        },
+        {
+          "localized_name": "sr_mp3_prefix",
+          "name": "sr_mp3_prefix",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "artwork_prefix",
+          "name": "artwork_prefix",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "configuration_prefix",
+          "name": "configuration_prefix",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "title": "Central Output Paths",
+      "properties": {
+        "Node name for S&R": "MiniMaxOutputPaths"
+      },
+      "widgets_values": [
+        "audio/minimax3/%date:yyyy-MM-dd%/test-output/",
+        "32flac/",
+        "44flac/",
+        "44mp3/",
+        "artwork/",
+        "json",
+        true,
+        2
+      ],
+      "widgets_values_named": {
+        "base_output": "audio/minimax3/%date:yyyy-MM-dd%/test-output/",
+        "original_subdir": "32flac/",
+        "sr_flac_subdir": "44flac/",
+        "sr_mp3_subdir": "44mp3/",
+        "artwork_subdir": "artwork/",
+        "configuration_subdir": "json",
+        "append_variant_index": true,
+        "variant_padding": 2
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 19,
+      "type": "MiniMaxStandardAudioTags",
+      "pos": [
+        3157.084785851344,
+        575.8579034225795
+      ],
+      "size": [
+        488.625,
+        402
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "title",
+          "name": "title",
+          "type": "STRING",
+          "link": 27
+        },
+        {
+          "localized_name": "artist",
+          "name": "artist",
+          "type": "STRING",
+          "widget": {
+            "name": "artist"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "album",
+          "name": "album",
+          "type": "STRING",
+          "widget": {
+            "name": "album"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "year",
+          "name": "year",
+          "type": "STRING",
+          "widget": {
+            "name": "year"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "track",
+          "name": "track",
+          "type": "STRING",
+          "widget": {
+            "name": "track"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "genre",
+          "name": "genre",
+          "type": "STRING",
+          "widget": {
+            "name": "genre"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "comment",
+          "name": "comment",
+          "type": "STRING",
+          "widget": {
+            "name": "comment"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "album_artist",
+          "name": "album_artist",
+          "type": "STRING",
+          "widget": {
+            "name": "album_artist"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "composer",
+          "name": "composer",
+          "type": "STRING",
+          "widget": {
+            "name": "composer"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio_tags_json",
+          "name": "audio_tags_json",
+          "type": "STRING",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "title": "Standard MP3 / FLAC Metadata",
+      "properties": {
+        "Node name for S&R": "MiniMaxStandardAudioTags"
+      },
+      "widgets_values": [
+        "Example Artist",
+        "Example Album",
+        "2026",
+        "01",
+        "Example Genre",
+        "Generated with MiniMax Music Production Toolkit",
+        "Example Artist",
+        "Example Composer"
+      ],
+      "widgets_values_named": {
+        "artist": "Example Artist",
+        "album": "Example Album",
+        "year": "2026",
+        "track": "01",
+        "genre": "Example Genre",
+        "comment": "Generated with MiniMax Music Production Toolkit",
+        "album_artist": "Example Artist",
+        "composer": "Example Composer"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 20,
+      "type": "PrimitiveString",
+      "pos": [
+        2569.175482220935,
+        1297.3192678021514
+      ],
+      "size": [
+        424.40625,
+        116.265625
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "STRING",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            20,
+            27
+          ]
+        }
+      ],
+      "title": "Title",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "standard"
+      ],
+      "widgets_values_named": {
+        "value": "standard"
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 21,
+      "type": "PrimitiveString",
+      "pos": [
+        2154.473629630269,
+        245.43952503990073
+      ],
+      "size": [
+        270,
+        70
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "STRING",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "n/a"
+      ],
+      "widgets_values_named": {
+        "value": "n/a"
+      }
+    },
+    {
+      "id": 23,
+      "type": "PrimitiveInt",
+      "pos": [
+        2152.6837251601164,
+        365.07757252911665
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "INT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "INT",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            25,
+            26
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "PrimitiveInt"
+      },
+      "widgets_values": [
+        0,
+        "fixed"
+      ],
+      "widgets_values_named": {
+        "value": 0,
+        "fixed": "fixed"
+      }
+    },
+    {
+      "id": 24,
+      "type": "MarkdownNote",
+      "pos": [
+        -105.56500371734819,
+        935.992031808051
+      ],
+      "size": [
+        397,
+        226.5
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Info",
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Quick Experimentation with Audio Enhancement Settings\n\nAllows quick test of various audio enhancement settings.\n\nJust add your original 32khz File from Minimax (or other not perfect quality audio)."
+      ],
+      "widgets_values_named": {
+        "text": "## Quick Experimentation with Audio Enhancement Settings\n\nAllows quick test of various audio enhancement settings.\n\nJust add your original 32khz File from Minimax (or other not perfect quality audio)."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    }
+  ],
+  "links": [
+    [
+      8,
+      9,
+      0,
+      10,
+      0,
+      "AUDIO"
+    ],
+    [
+      9,
+      10,
+      0,
+      11,
+      0,
+      "AUDIO"
+    ],
+    [
+      10,
+      9,
+      0,
+      12,
+      0,
+      "AUDIO"
+    ],
+    [
+      11,
+      11,
+      0,
+      12,
+      1,
+      "AUDIO"
+    ],
+    [
+      12,
+      12,
+      0,
+      13,
+      0,
+      "AUDIO"
+    ],
+    [
+      13,
+      15,
+      0,
+      14,
+      0,
+      "AUDIO"
+    ],
+    [
+      14,
+      13,
+      0,
+      15,
+      0,
+      "AUDIO"
+    ],
+    [
+      15,
+      14,
+      0,
+      16,
+      0,
+      "AUDIO"
+    ],
+    [
+      16,
+      8,
+      0,
+      9,
+      0,
+      "AUDIO"
+    ],
+    [
+      18,
+      18,
+      1,
+      16,
+      1,
+      "STRING"
+    ],
+    [
+      19,
+      19,
+      0,
+      16,
+      4,
+      "STRING"
+    ],
+    [
+      20,
+      20,
+      0,
+      16,
+      2,
+      "STRING"
+    ],
+    [
+      21,
+      21,
+      0,
+      18,
+      0,
+      "STRING"
+    ],
+    [
+      25,
+      23,
+      0,
+      18,
+      1,
+      "INT"
+    ],
+    [
+      26,
+      23,
+      0,
+      18,
+      2,
+      "INT"
+    ],
+    [
+      27,
+      20,
+      0,
+      19,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "05 Audio enhancement and reduce Minimax weaknesses",
+      "bounding": [
+        371.9930742438462,
+        478.75858499626406,
+        2005.0775526470104,
+        1147.0574481009141
+      ],
+      "color": "#88A",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "06 Save Audio",
+      "bounding": [
+        2499.3330731689502,
+        482.4162310800826,
+        1224.8020031473075,
+        1153.9731463365274
+      ],
+      "color": "#8A8",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.5863092971714992,
+      "offset": [
+        401.5301207472603,
+        -759.18236940423
+      ]
+    },
+    "workflow_name": "MiniMax Music Production Toolkit - Audio Enhancement Lab",
+    "workflow_version": "2.0.4"
+  },
+  "version": 0.4
+}
