@@ -1,9 +1,12 @@
 ---
 Genre: Synth-Pop
+Tempo: Dancefloor (120-130 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
+Voice: female vocal
 Theme: night & city lights
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Bright, catchy and danceable, with analog synth hooks, punchy drum machines, melodic bass and a clean polished vocal. Lyrics about neon nights, fleeting romance and chasing a feeling. Glossy 1980s character with modern production.
+Bright, catchy synth-pop: analog synth hooks, punchy drum machines, melodic bass, glassy arpeggios and a clean polished vocal with layered harmonies in the chorus. Glossy 1980s character with modern production, strong verse-chorus structure. Lyrics about neon nights, fleeting romance and chasing a feeling.

@@ -1,10 +1,12 @@
 ---
-Genre: Metal
+Genre: Symphonic Metal
+Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Voice: female vocal
+Voice: operatic soprano
 Theme: hope & resilience
 Length: 4-5 minutes
 ---
 
-Dramatic, emotional and powerful, combining heavy guitars and drums with orchestral strings, choir textures and a strong expressive vocal. Memorable melodic themes, large cinematic chorus, dynamic contrasts and a soaring guitar solo. Lyrics about fate, loss and finding light within darkness.
+Dramatic symphonic metal: heavy guitars and double-kick drums combined with full orchestral strings, brass and choir textures, plus a strong operatic-leaning female lead vocal. Memorable melodic themes, huge cinematic chorus, dynamic contrast with a quiet orchestral bridge and a soaring guitar solo. Lyrics about fate, loss and finding light within darkness.

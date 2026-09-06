@@ -1,9 +1,12 @@
 ---
 Genre: Electronic
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
-Language: Deutsch
+Language: Deutsch (German)
+Voice: cool & detached vocal
 Theme: social commentary
 Length: 4-5 minutes
 ---
 
-Minimalist 1980s-style electronic music with precise machine rhythms, dry analog synthesizers, deep repetitive bass and distinctive short recurring riffs. Cool, mechanical and hypnotic, with vocals consisting of short repeated phrases. Lyrics about dystopian futures, technology, AI, robots and humans slowly delegating their memories and decisions to machines. Minimal words, subtle variations, no dramatic singing, little reverb. German title.
+Minimalist 1980s-style electronic music: precise machine rhythms, dry analog synthesizers, deep repetitive bass and distinctive short recurring riffs. Cool, mechanical and hypnotic; vocals are short repeated phrases, spoken-sung, with little reverb and no dramatic singing. Lyrics about dystopian futures, technology, AI, robots and humans slowly delegating their memories and decisions to machines. German title.

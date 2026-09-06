@@ -1,7 +1,9 @@
 ---
-Genre: Jazz
+Genre: Smooth Jazz
+Tempo: Laid-back (70-100 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
-Length: 3-5 minutes
+Length: 4-5 minutes
 ---
 
-Smooth, warm, soulful, sophisticated, relaxed and groovy, with warm tenor sax, clean electric guitar, Fender Rhodes, melodic bass and soft drums. Rich jazz chords, memorable melodic motifs, tasteful improvisation, subtle funk influence, spacious polished production and gradual development.
+Smooth, warm and soulful smooth jazz: warm tenor sax lead, clean electric guitar, Fender Rhodes, melodic fretless bass and soft drums. Rich extended chords, memorable melodic motifs, tasteful improvisation, subtle funk influence, spacious polished production and gradual development.

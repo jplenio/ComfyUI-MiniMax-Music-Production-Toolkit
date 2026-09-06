@@ -2,10 +2,11 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
 // Structured Song Prompt (MiniMaxStructuredPromptV20): refreshes the prompt
-// file dropdown, prefills the structured fields (Genre, Tempo, Key, Lyrics,
-// Language, Voice, Theme, Length) from the selected prompt file's optional
-// metadata block, and copies the file's body text (the "further description")
-// into the description_override field, which is authoritative from then on.
+// file dropdown, prefills the structured fields (Genre, Tempo, Time signature,
+// Key, Lyrics, Language, Voice, Theme, Length) from the selected prompt file's
+// optional metadata block, and copies the file's body text (the "further
+// description") into the description_override field, which is authoritative
+// from then on.
 //
 // The user can always override any prefilled value afterwards; "custom" means
 // the field is left out of the LLM prompt.  In the prompt-file dropdown,
@@ -17,7 +18,7 @@ import { api } from "../../scripts/api.js";
 const NODE_TYPES = new Set(["MiniMaxStructuredPromptV20"]);
 const PLACEHOLDER = "<select a prompt>";
 const CUSTOM = "custom";
-const STRUCTURED_FIELDS = ["genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length"];
+const STRUCTURED_FIELDS = ["genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length"];
 // Directory group labels in the prompt-file dropdown end with this suffix and
 // carry no file value; selecting one keeps the previous real selection.
 const DIRECTORY_MARKER_SUFFIX = "/";

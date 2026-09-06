@@ -2,8 +2,8 @@
 
 This node is the user-facing prompt control introduced in 2.0.0.  Instead of a
 single free-form ``user_prompt`` text field, it exposes structured fields
-(Genre, Tempo, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus
-a "further description" area.  Prompt library files may *optionally* carry a
+(Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme,
+Target length) plus a "further description" area.  Prompt library files may *optionally* carry a
 metadata block that prefills these fields when the file is selected; the user
 can still override every field, and selecting ``custom`` leaves a part out of
 the LLM prompt entirely.
@@ -101,6 +101,7 @@ class MiniMaxStructuredPromptV20:
                 "user_prompt_file": (user_file_options, {"default": PLACEHOLDER}),
                 "genre": (_safe_choices(_combo("genre")), {"default": CUSTOM}),
                 "tempo": (_safe_choices(_combo("tempo")), {"default": CUSTOM}),
+                "meter": (_safe_choices(_combo("meter")), {"default": CUSTOM}),
                 "key": (_safe_choices(_combo("key")), {"default": CUSTOM}),
                 "lyrics": (_safe_choices(_combo("lyrics")), {"default": CUSTOM}),
                 "language": (_safe_choices(_combo("language")), {"default": CUSTOM}),
@@ -137,6 +138,7 @@ class MiniMaxStructuredPromptV20:
         user_prompt_file,
         genre,
         tempo,
+        meter,
         key,
         lyrics,
         language,
@@ -168,8 +170,9 @@ class MiniMaxStructuredPromptV20:
         )
         field_state = "|".join(
             f"{f}={v}" for f, v in (
-                ("genre", genre), ("tempo", tempo), ("key", key), ("lyrics", lyrics),
-                ("language", language), ("voice", voice), ("theme", theme), ("length", length),
+                ("genre", genre), ("tempo", tempo), ("meter", meter), ("key", key),
+                ("lyrics", lyrics), ("language", language), ("voice", voice),
+                ("theme", theme), ("length", length),
             )
         )
         return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}"
@@ -181,6 +184,7 @@ class MiniMaxStructuredPromptV20:
         user_prompt_file,
         genre,
         tempo,
+        meter,
         key,
         lyrics,
         language,
@@ -199,8 +203,9 @@ class MiniMaxStructuredPromptV20:
         )
 
         widget_values = {
-            "genre": genre, "tempo": tempo, "key": key, "lyrics": lyrics,
-            "language": language, "voice": voice, "theme": theme, "length": length,
+            "genre": genre, "tempo": tempo, "meter": meter, "key": key,
+            "lyrics": lyrics, "language": language, "voice": voice,
+            "theme": theme, "length": length,
         }
 
         source = (user_prompt_source or "manual").strip().lower()
@@ -281,5 +286,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MiniMaxStructuredPromptV20": "Structured Song Prompt (Genre / Tempo / Lyrics ...)",
+    "MiniMaxStructuredPromptV20": "Structured Song Prompt (Genre / Tempo / Time signature / Lyrics ...)",
 }

@@ -1,5 +1,7 @@
 ---
 Genre: Folk
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
 Voice: female vocal
@@ -7,4 +9,4 @@ Theme: nostalgia & memories
 Length: 4-5 minutes
 ---
 
-Warm, intimate and organic, with fingerpicked acoustic guitar, soft piano, cello and minimal brushed percussion. Vulnerable and deeply emotional. Lyrics about finding an old letter from a past relationship and realizing that the memories remain even though both lives have moved on. Simple poetic language, memorable restrained chorus, bittersweet rather than tragic.
+Warm, intimate folk ballad: fingerpicked acoustic guitar, soft piano, cello and minimal brushed percussion, with a vulnerable close-mic vocal. Lyrics about finding an old letter from a past relationship and realizing the memories remain even though both lives have moved on. Simple poetic language, memorable restrained chorus, bittersweet rather than tragic.

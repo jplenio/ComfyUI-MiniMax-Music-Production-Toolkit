@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.0.5] - 2026-09-06
+
+The time-signature and world-library release: a dedicated Time signature field in the Structured Song Prompt, the prompt library expanded from 95 to 239 world-spanning templates with Meter metadata everywhere, and a fully overhauled curated combo vocabulary.
+
+### Added
+- **Time signature (`meter`) field** in `MiniMaxStructuredPromptV20` between tempo and key: curated list (`4/4 (common time)`, `3/4 (waltz)`, `6/8`, odd meters, `changing time signatures`, `free time / rubato`) with `custom` first. The assembled prompt gets a `Time signature:` line; `IS_CHANGED`, the provenance summary, the frontend prefill and the option lists all include it. Front-matter aliases: `Meter`, `Taktart`, `Time signature`, `Signature`.
+- **Prompt library expanded to 239 templates across 31 categories**: new `blues`, `cinematic`, `country`, `disco`, `gospel`, `kids`, `meditation`, `musical`, `punk`, `seasonal`, `soul`, `world` categories plus dozens of new subgenres in the existing ones (drill, phonk, cloud rap, dubstep, hardstyle, big room, eurodance, future bass, goa trance, acid/french/disco house, Berlin school, vaporwave, chiptune, IDM, EBM, electro swing, bebop, cool jazz, dixieland, swing, gypsy jazz, baroque, sacred choir, string quartet, minimalism, death/black/folk/nu metal, metalcore, djent, britpop, new wave, shoegaze, garage rock, psychedelic/surf/stoney/post rock, merengue, son cubano, norteño, rocksteady, ska, enka, mandopop, gqom, soukous, …). Every template carries the canonical metadata block including Meter.
+- **Overhauled curated vocabulary**: genre list spans the full world map; voice list adds character/age/mood variants, ensembles, choirs, rap flows, operatic/baritone/falsetto, screamed/growled vocals, vocoder and spoken word; language list adds ~50 languages plus regional variants and special cases; key list reordered to circle of fifths starting with the minor keys.
+- **Consistency tests for meter**: canonical field order including `meter`, curated time-signature values, and the no-duplication rule extended to numeric time signatures in descriptions.
+
+### Changed
+- Key combo order: minor keys first (`A minor … D minor`, then `C major … F major`).
+- Both example workflows carry `workflow_version: 2.0.5`; the production workflow's Structured Song Prompt includes the new `meter` widget (default `custom`).
+- All prompt descriptions cleaned so the free text never repeats a selectable field value; two new ambient templates gained their missing Meter metadata.
+
+### Fixed
+- **Pre-2.0.5 workflow load shift**: inserting `meter` between tempo and key shifted every following widget value on load (ComfyUI applies the positional `widgets_values` slot by slot). A load-time migration repair in `web/workflow_migration.js` / `web/migration_utils.js` (unit-tested) now re-aligns pre-2.0.5 serializations: named values are re-applied by name with `meter` = `custom`, positional-only files get `custom` inserted at the meter slot, and the stored serialization is kept in the new shape.
+- Prompt-library consistency tests now pass over all 239 templates (field duplication in descriptions removed).
+
 ## [2.0.4] - 2026-09-05
 
 The "fields that feel right" release: a curated tempo range list, circle-of-fifths keys, a wordless-vocal lyrics mode, more languages, log progress bars, the MiniMax prompt as an `.md` file, and the unified world-spanning prompt library.

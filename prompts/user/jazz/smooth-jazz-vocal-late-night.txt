@@ -1,10 +1,12 @@
 ---
-Genre: Jazz
+Genre: Smooth Jazz
+Tempo: Laid-back (70-100 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Voice: female vocal
+Voice: smoky & soulful vocal
 Theme: night & city lights
-Length: 3-5 minutes
+Length: 4-5 minutes
 ---
 
-Contemporary smooth jazz with warm tenor saxophone, clean electric guitar, Fender Rhodes and a silky intimate vocal. Relaxed groove, rich extended chords, soulful melodic phrasing, tasteful interplay between instruments and an elegant late-night atmosphere. Lyrics about quiet intimacy, longing and a relationship that feels close but uncertain. Mature, understated and bittersweet rather than dramatic.
+Contemporary smooth jazz with warm tenor saxophone, clean electric guitar, Fender Rhodes, upright bass and brushed drums, plus a silky intimate vocal. Relaxed groove, rich extended chords, soulful phrasing, tasteful solo interplay and an elegant late-night atmosphere. Lyrics about quiet intimacy, longing and a relationship that feels close but uncertain. Mature, understated and bittersweet rather than dramatic.

@@ -160,7 +160,7 @@ def normalize_file(path: Path, write: bool) -> bool:
 
     if write:
         front_matter_keys = {
-            "genre": "Genre", "tempo": "Tempo", "key": "Key", "lyrics": "Lyrics",
+            "genre": "Genre", "tempo": "Tempo", "meter": "Time signature", "key": "Key", "lyrics": "Lyrics",
             "language": "Language", "voice": "Voice", "theme": "Theme", "length": "Length",
         }
         lines = ["---"]

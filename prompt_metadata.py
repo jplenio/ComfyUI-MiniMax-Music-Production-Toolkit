@@ -2,15 +2,16 @@
 
 Prompt library files can *optionally* carry a small metadata block at the very
 top of the file, so that selecting a prompt can prefill the structured fields
-of ``MiniMaxStructuredPromptV20`` (genre, tempo, key, lyrics, language, voice,
-lyrics theme, target length).  Everything after the closing delimiter is the
-"further description" part of the prompt.
+of ``MiniMaxStructuredPromptV20`` (genre, tempo, meter, key, lyrics, language,
+voice, lyrics theme, target length).  Everything after the closing delimiter is
+the "further description" part of the prompt.
 
 Example::
 
     ---
     Genre: Melodic Techno
     Tempo: Midtempo (100-120 BPM)
+    Meter: 4/4 (common time)
     Key: A minor
     Lyrics: sparse
     Language: English
@@ -35,7 +36,9 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("prompt_metadata")
 
 # Field order used by the node and the assembled prompt.
-STRUCTURED_FIELDS = ("genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length")
+STRUCTURED_FIELDS = (
+    "genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length",
+)
 
 # "custom" means: do not include this part at all, let the LLM decide.
 CUSTOM = "custom"
@@ -68,6 +71,70 @@ CURATED_FIELD_OPTIONS = {
         "Bossa Nova", "Samba", "Salsa", "Cumbia", "Tango", "Reggaeton", "Bachata",
         # European styles
         "Flamenco", "Fado", "Chanson", "Schlager", "Klezmer", "Balkan Folk",
+        # --- Electronic: umbrella + house / techno subgenres
+        "Electronic", "Progressive House", "Afro House", "Organic House", "Bass House",
+        "Electro House", "Disco House", "French House", "Acid House", "Future Rave",
+        "Melodic Techno", "Peak Time Techno", "Hardgroove Techno", "Minimal / Deep Tech",
+        # --- Electronic: bass, breaks & rave
+        "Liquid Drum & Bass", "Neurofunk", "UK Garage", "2-Step / Speed Garage", "Grime",
+        "Footwork / Juke", "Hardstyle", "Hardcore / Gabber", "Big Room / Festival EDM",
+        "Future Bass", "Eurodance", "Progressive Trance", "Uplifting Trance", "Goa Trance",
+        # --- Electronic: leftfield, retro & chill
+        "IDM / Experimental Electronic", "Glitch Hop", "Electro Swing", "Vaporwave",
+        "Chiptune / 8-Bit", "Berlin School / Kosmische", "EBM / Darkwave", "Dark Ambient",
+        "Drone", "Lo-Fi Hip-Hop", "Downtempo / Balearic",
+        # --- Disco & funk
+        "Disco", "Nu-Disco", "Italo Disco", "P-Funk / Classic Funk", "Boogie / Post-Disco",
+        # --- Hip-Hop subgenres
+        "Boom Bap", "Drill", "Cloud Rap", "Phonk", "Conscious Hip-Hop", "Old School Hip-Hop",
+        "Hyperpop",
+        # --- Pop subgenres
+        "Dance-Pop", "Indie Pop", "Dream Pop", "Electropop", "Bedroom Pop", "Art Pop",
+        "Power Ballad", "Singer-Songwriter", "Acoustic Pop", "Pop Rock", "Britpop",
+        "New Wave", "Post-Punk", "Shoegaze",
+        # --- Rock subgenres
+        "Classic Rock", "Blues Rock", "Southern Rock", "Psychedelic Rock", "Progressive Rock",
+        "Post-Rock", "Garage Rock", "Stoner Rock", "Surf Rock", "Rockabilly", "Grunge",
+        "Pop-Punk / Emo", "Hardcore Punk", "Ska Punk", "Folk Punk", "Math Rock",
+        # --- Metal subgenres
+        "Melodic Metal", "Symphonic Metal", "Thrash Metal", "Death Metal", "Black Metal",
+        "Doom Metal", "Sludge / Post-Metal", "Metalcore", "Nu Metal", "Folk Metal",
+        "Gothic Metal", "Progressive Metal / Djent", "Industrial Metal",
+        # --- Jazz subgenres
+        "Swing / Big Band", "Bebop", "Cool Jazz", "Modal Jazz", "Jazz Fusion", "Smooth Jazz",
+        "Gypsy Jazz", "Vocal Jazz / Crooner", "Nu Jazz", "Dixieland / New Orleans Jazz",
+        "Ragtime", "Boogie-Woogie",
+        # --- Soul, R&B & gospel
+        "Motown / Classic Soul", "Neo-Soul", "Soul Ballad", "Doo-Wop", "Gospel",
+        "Contemporary Worship", "Hymn / Sacred",
+        # --- Blues subgenres
+        "Delta Blues", "Chicago Blues", "Electric Blues", "Blues Ballad",
+        # --- Country & Americana
+        "Modern Country Pop", "Outlaw Country", "Country Rock", "Honky Tonk", "Bluegrass",
+        "Americana", "Country Ballad",
+        # --- Folk & traditional
+        "Celtic Folk", "Nordic Folk", "Medieval / Renaissance", "Appalachian Folk",
+        "Sea Shanty", "Alpine Folk / Volksmusik", "Russian Folk", "Polka", "Waltz",
+        # --- Classical subgenres
+        "Baroque", "Classical Period", "Romantic Classical", "Impressionist Classical",
+        "Minimalism", "Chamber Music", "String Quartet", "Symphonic / Orchestral",
+        "Solo Piano", "Choral / Sacred Choir", "Gregorian Chant",
+        # --- Cinematic & functional
+        "Epic Trailer", "Orchestral Action", "Horror / Suspense Score",
+        "Documentary Underscore", "Corporate / Advertising", "Fantasy / Adventure Score",
+        "Video Game Orchestral", "Sports / Stadium Anthem", "Fanfare / March",
+        "Musical / Broadway",
+        # --- Kids, wellness & seasonal
+        "Children's Song", "Lullaby", "Nursery Rhyme", "Meditation / Healing",
+        "Nature Soundscape", "Focus / Study Music", "Sleep Music",
+        "Christmas / Holiday", "Wedding / Ceremonial",
+        # --- More world styles
+        "Afrobeat (Classic)", "Gqom", "Soukous", "Kwaito", "Mbalax",
+        "Arabic Pop", "Turkish Folk", "Persian Classical", "Rai", "Gnawa",
+        "Qawwali", "Bhangra", "Carnatic", "Gamelan", "Mongolian Throat Singing",
+        "Andean Folk", "Mariachi", "Ranchera", "Norteño / Corrido", "Vallenato",
+        "Merengue", "Son Cubano", "Calypso / Soca", "Ska (Jamaican)", "Rocksteady",
+        "Mandopop", "Cantopop", "Enka", "V-Pop", "Hawaiian",
     ),
     "tempo": (
         # Curated BPM ranges (not fixed values) so a selection always leaves
@@ -81,11 +148,29 @@ CURATED_FIELD_OPTIONS = {
         "Very fast (175-200 BPM)",
     ),
     "key": (
-        # Circle of fifths: major keys first, then minor keys.
-        "C major", "G major", "D major", "A major", "E major", "B major",
-        "F# major", "Db major", "Ab major", "Eb major", "Bb major", "F major",
+        # Circle of fifths: minor keys first, then major keys.
         "A minor", "E minor", "B minor", "F# minor", "C# minor", "G# minor",
         "D# minor", "Bb minor", "F minor", "C minor", "G minor", "D minor",
+        "C major", "G major", "D major", "A major", "E major", "B major",
+        "F# major", "Db major", "Ab major", "Eb major", "Bb major", "F major",
+    ),
+    "meter": (
+        # Time signature - most common first, then rarer / odd meters.
+        "4/4 (common time)",
+        "3/4 (waltz)",
+        "6/8",
+        "2/4 (march / polka)",
+        "12/8 (shuffle / slow blues)",
+        "2/2 (cut time)",
+        "6/4",
+        "5/4",
+        "7/8",
+        "7/4",
+        "9/8",
+        "5/8",
+        "11/8",
+        "changing time signatures",
+        "free time / rubato",
     ),
     "lyrics": LYRICS_CHOICES,
     "language": (
@@ -101,12 +186,52 @@ CURATED_FIELD_OPTIONS = {
         "Română (Romanian)", "Српски (Serbian)", "Kiswahili (Swahili)", "Svenska (Swedish)",
         "Tagalog", "ไทย (Thai)", "Türkçe (Turkish)", "Українська (Ukrainian)",
         "اردو (Urdu)", "Tiếng Việt (Vietnamese)",
+        # Further languages (alphabetical), incl. regional variants and
+        # languages needed for specific traditional genres.
+        "Afrikaans", "Shqip (Albanian)", "አማርኛ (Amharic)", "Հայերեն (Armenian)",
+        "Azərbaycanca (Azerbaijani)", "Euskara (Basque)", "Беларуская (Belarusian)",
+        "Bosanski (Bosnian)", "Català (Catalan)", "Hrvatski (Croatian)", "Eesti (Estonian)",
+        "Galego (Galician)", "ქართული (Georgian)", "Gaeilge (Irish)", "Íslenska (Icelandic)",
+        "Latina (Latin)", "Latviešu (Latvian)", "Lietuvių (Lithuanian)",
+        "Lëtzebuergesch (Luxembourgish)", "Македонски (Macedonian)", "Malti (Maltese)",
+        "ਪੰਜਾਬੀ (Punjabi)", "தமிழ் (Tamil)", "తెలుగు (Telugu)", "मराठी (Marathi)",
+        "ગુજરાતી (Gujarati)", "മലയാളം (Malayalam)", "ಕನ್ನಡ (Kannada)", "नेपाली (Nepali)",
+        "සිංහල (Sinhala)", "ဗမာ (Burmese)", "ខ្មែរ (Khmer)", "ລາວ (Lao)",
+        "Қазақша (Kazakh)", "Oʻzbekcha (Uzbek)", "Монгол (Mongolian)",
+        "Slovenčina (Slovak)", "Slovenščina (Slovenian)", "Gàidhlig (Scottish Gaelic)",
+        "Cymraeg (Welsh)", "ייִדיש (Yiddish)", "Yorùbá (Yoruba)", "isiZulu (Zulu)",
+        "Hausa", "Igbo", "ʻŌlelo Hawaiʻi (Hawaiian)", "Te Reo Māori (Maori)",
+        "Runa Simi (Quechua)",
+        # German regional variants (useful for Volksmusik, Schlager, comedy)
+        "Bairisch (Bavarian)", "Schwiizerdütsch (Swiss German)", "Plattdeutsch (Low German)",
+        # Special cases
+        "Multilingual / mixed", "Invented / gibberish language",
         "No lyrics / n/a",
     ),
     "voice": (
-        "female vocal", "male vocal", "female lead + male backing", "male lead + female backing",
-        "duet (female & male)", "female choir", "male choir", "children's choir",
-        "group vocals / gang vocals", "spoken word", "no vocals / n/a",
+        # Most frequently used first, then character / age / mood variants,
+        # then ensembles and special vocal types.
+        "female vocal", "male vocal",
+        "female vocal, soft & airy", "male vocal, deep & warm",
+        "female vocal, powerful & belting", "male vocal, powerful & belting",
+        "female vocal, raspy & raw", "male vocal, raspy & raw",
+        "female vocal, young & bright", "male vocal, young & energetic",
+        "mature female vocal", "mature male vocal", "child vocal",
+        "happy & uplifting vocal", "sad & melancholic vocal",
+        "angry & aggressive vocal", "funny & playful vocal",
+        "warm & comforting vocal", "cool & detached vocal",
+        "whispered & intimate vocal", "breathy & sensual vocal",
+        "smoky & soulful vocal", "bright & clean pop vocal",
+        "female lead + male backing", "male lead + female backing",
+        "duet (female & male)", "layered harmony vocals",
+        "female choir", "male choir", "mixed choir", "children's choir",
+        "gospel choir", "group vocals / gang vocals",
+        "rap flow, male", "rap flow, female",
+        "operatic soprano", "operatic tenor", "baritone vocal", "falsetto vocal",
+        "growled / screamed vocal", "throat singing",
+        "robotic / vocoder vocal", "auto-tuned vocal",
+        "spoken word", "narrator / voice-over",
+        "no vocals / n/a",
     ),
     "theme": (
         "love & romance", "heartbreak & loss", "freedom & escape", "night & city lights",
@@ -123,6 +248,7 @@ CURATED_FIELD_OPTIONS = {
 FIELD_LABELS = {
     "genre": "Genre",
     "tempo": "Tempo",
+    "meter": "Time signature",
     "key": "Key",
     "lyrics": "Lyrics",
     "language": "Language",
@@ -136,6 +262,12 @@ _ALIASES = {
     "genre": "genre",
     "tempo": "tempo",
     "bpm": "tempo",
+    "meter": "meter",
+    "taktart": "meter",
+    "time_signature": "meter",
+    "time signature": "meter",
+    "timesignature": "meter",
+    "signature": "meter",
     "key": "key",
     "tonart": "key",
     "lyrics": "lyrics",

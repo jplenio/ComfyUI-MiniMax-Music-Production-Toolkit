@@ -1,10 +1,12 @@
 ---
-Genre: Folk
+Genre: Medieval / Renaissance
+Tempo: Laid-back (70-100 BPM)
+Meter: 6/8
 Lyrics: yes
 Language: English
-Voice: female vocal
+Voice: female vocal, soft & airy
 Theme: love & romance
 Length: 4-5 minutes
 ---
 
-Ethereal and dreamlike, with Celtic harp, lute, wooden flute, bowed strings and gentle hand percussion. Ancient atmosphere with haunting modal melodies and memorable recurring motifs. Lyrics about an impossible love remembered across centuries, using poetic imagery of old ruins, moonlight, rivers and forgotten names.
+Ethereal medieval folk: Celtic harp, lute, wooden flute, bowed vielle strings and gentle hand percussion. Ancient modal melodies with drone harmony, haunting recurring motifs and open fifths. Lyrics about an impossible love remembered across centuries, using poetic imagery of old ruins, moonlight, rivers and forgotten names.

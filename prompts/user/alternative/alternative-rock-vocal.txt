@@ -1,9 +1,12 @@
 ---
-Genre: Alternative
+Genre: Alternative Rock
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
+Voice: male vocal
 Theme: self-discovery & growth
 Length: 4-5 minutes
 ---
 
-Emotional, slightly dark and highly melodic, with textured electric guitars, driving bass, dynamic drums and an expressive intimate vocal. Strong recurring guitar motif, restrained verses and a powerful memorable chorus. Lyrics about alienation, change and trying to reconnect with someone.
+Emotional, slightly dark and highly melodic alternative rock: layered textured electric guitars with chorus and delay, driving melodic bass, dynamic live drums and an expressive intimate vocal. Strong recurring guitar motif, restrained verses, explosive memorable chorus, loud-quiet dynamics. Lyrics about alienation, change and trying to reconnect with someone.

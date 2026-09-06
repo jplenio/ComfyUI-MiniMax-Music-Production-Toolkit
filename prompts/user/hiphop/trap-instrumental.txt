@@ -1,8 +1,9 @@
 ---
 Genre: Trap
 Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Dark and atmospheric, with rolling hi-hats, booming 808 bass, eerie synth melodies and sharp snare hits. Brooding energy, spacious production and hypnotic repetition.
+Dark atmospheric trap: rolling triplet hi-hats, booming distorted 808 bass with glides, sharp snares and claps on the third beat, eerie plucked or bell synth melody and cinematic pads. Brooding energy, spacious mix, hypnotic four-bar repetition with drop-outs.

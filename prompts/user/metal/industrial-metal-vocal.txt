@@ -1,9 +1,12 @@
 ---
-Genre: Metal
+Genre: Industrial Metal
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: sparse
 Language: English
+Voice: angry & aggressive vocal
 Theme: social commentary
 Length: 4-5 minutes
 ---
 
-Mechanical, dark and highly rhythmic, with crushing guitar riffs, deep bass, rigid drums, electronic pulses and cold synthetic textures. Aggressive vocals, repetitive hook phrases and a relentless machine-like groove. Lyrics about technology, control, identity and humans becoming part of the system.
+Mechanical, dark industrial metal: crushing detuned guitar riffs locked to rigid programmed drums, deep bass, electronic pulses, samples and cold synthetic textures. Aggressive half-shouted vocals, repetitive hook phrases and a relentless machine-like groove. Lyrics about technology, control, identity and humans becoming part of the system.

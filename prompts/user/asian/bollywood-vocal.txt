@@ -1,9 +1,12 @@
 ---
 Genre: Bollywood
+Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: हिन्दी (Hindi)
+Voice: duet (female & male)
 Theme: love & romance
 Length: 4-5 minutes
 ---
 
-Colorful, dramatic and larger than life, with lush orchestral strings, driving dhol rhythms, bright brass and a passionate vocal duet. Sweeping melodies, joyful dance interludes and an emotional cinematic arc. Lyrics about love, celebration and destiny.
+Colorful, dramatic Bollywood playback song: lush orchestral strings, driving dhol and tabla rhythms, bright brass, dholak fills, harmonium and a passionate vocal duet with ornamented melismatic phrasing. Sweeping melodies, joyful dance interlude and an emotional cinematic arc. Lyrics about love, celebration and destiny.

@@ -1,8 +1,12 @@
 ---
-Genre: Metal
+Genre: Grunge
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Length: 4-5 minutes
+Voice: male vocal, raspy & raw
+Theme: melancholy & longing
+Length: 3-4 minutes
 ---
 
-Raw, heavy and emotionally intense, with dirty distorted guitars, thick bass, loose powerful drums and a rough expressive vocal. Simple but highly recognizable riffs, strong loud-quiet dynamics and an explosive chorus. Lyrics about frustration, disillusionment and feeling trapped between anger and apathy.
+Raw, heavy grunge: dirty distorted guitars with loose bends, thick bass, powerful sloppy drums and a rough expressive vocal moving between mumbled verses and a screamed chorus. Simple but unforgettable riff, extreme quiet-loud dynamics, unpolished early-1990s production. Lyrics about frustration, disillusionment and feeling trapped between anger and apathy.

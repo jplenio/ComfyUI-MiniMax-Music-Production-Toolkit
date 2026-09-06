@@ -1,10 +1,12 @@
 ---
-Genre: Alternative
+Genre: UK Garage
 Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
+Voice: female vocal, soft & airy
 Theme: night & city lights
 Length: 4-5 minutes
 ---
 
-Bouncy, rhythmic and stylish, with shuffled drums, deep elastic bass, chopped vocal textures and a catchy soulful vocal hook. Strong swing, tight low end and infectious groove. Lyrics should be short, repetitive and focused on movement and attraction.
+Bouncy, stylish UK Garage: shuffled 2-step drums with swung hi-hats and syncopated snare, deep elastic sub bass, chopped and pitched vocal textures, warm organ chords and a catchy soulful vocal hook. Heavy swing, tight low end, infectious groove. Lyrics short, repetitive and focused on movement and attraction.

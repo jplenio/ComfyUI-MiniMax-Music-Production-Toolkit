@@ -25,7 +25,7 @@ SYSTEM_PROMPT_FILE = ROOT / "prompts" / "system" / "minimax-music3-production.tx
 
 PLACEHOLDER = "<select a prompt>"
 CUSTOM = "custom"
-STRUCTURED_FIELDS = ("genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length")
+STRUCTURED_FIELDS = ("genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length")
 
 
 def widget_input(name: str, input_type: str, link=None):
@@ -504,8 +504,8 @@ def main() -> None:
     add_note(
         102, "Prompt & LLM (01 + 02)",
         "## 01 + 02 - Prompt & LLM\n\n"
-        "- `Structured Song Prompt`: choose a prompt file (`bundled_library`), then pick Genre / Tempo / Key / "
-        "Lyrics / Language / Voice / Theme / Length (or `custom`). Selecting a file prefills the fields and copies "
+        "- `Structured Song Prompt`: choose a prompt file (`bundled_library`), then pick Genre / Tempo / Time "
+        "signature / Key / Lyrics / Language / Voice / Theme / Length (or `custom`). Selecting a file prefills the fields and copies "
         "its description into the description field - edit freely. `custom` always means no specification for that "
         "field. The `Save as custom prompt` button stores the current values into the library's `_custom/` folder.\n"
         "- `LLM Chat`: needs `llama-cpp-python` and a GGUF in `models/llm` (see the Models note). All LM Studio-style "
@@ -581,8 +581,8 @@ def main() -> None:
     note_text = (
         "## Prompt control + integrated LLM\n\n"
         "`Structured Song Prompt` loads a prompt file (bundled `prompts/user/` or an external "
-        "directory) and prefills Genre / Tempo / Key / Lyrics / Language / Voice / Theme / Length "
-        "from the file's optional metadata block. Every field can be overridden; `custom` leaves "
+        "directory) and prefills Genre / Tempo / Time signature / Key / Lyrics / Language / Voice / Theme / "
+        "Length from the file's optional metadata block. Every field can be overridden; `custom` leaves "
         "the part out of the LLM prompt. The rest of the prompt file is the description.\n\n"
         "`LLM Chat (llama.cpp)` is part of this toolkit — no external LLM custom node is needed. "
         "It needs llama-cpp-python plus a GGUF in `models/llm` (auto-download when a URL is "

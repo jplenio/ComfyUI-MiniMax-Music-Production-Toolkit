@@ -1,7 +1,9 @@
 ---
-Genre: Classical
+Genre: Neoclassical
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Mysterious, beautiful and deeply emotional, combining delicate piano, expressive cello, gentle violin, subtle harp and distant atmospheric textures. Haunting recurring melodic motif, unusual but harmonious chord changes and slow evolving development. Feels ancient and timeless while remaining modern, intimate and cinematic. Romantic melancholy with a sense of wonder and unresolved mystery.
+Mysterious and deeply emotional neoclassical piece: delicate piano, expressive cello, gentle violin, subtle harp and distant atmospheric textures. Haunting recurring motif, unusual but harmonious chord changes, slow evolving development. Ancient and timeless yet modern, intimate and cinematic. Romantic melancholy with wonder and unresolved mystery.

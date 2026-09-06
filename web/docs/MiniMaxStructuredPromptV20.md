@@ -1,6 +1,6 @@
 # MiniMax Structured Song Prompt (V20)
 
-Structured prompt control for the integrated LLM. Instead of one free-form user prompt, this node exposes dedicated fields for Genre, Tempo, Key, Lyrics, Language, Voice, Lyrics theme and Target length, plus a further-description area. The node assembles a short structured brief plus the description into the LLM user prompt.
+Structured prompt control for the integrated LLM. Instead of one free-form user prompt, this node exposes dedicated fields for Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme and Target length, plus a further-description area. The node assembles a short structured brief plus the description into the LLM user prompt.
 
 **Node ID:** `MiniMaxStructuredPromptV20`  
 **Category:** `MiniMax Music Production Toolkit/prompts`
@@ -13,12 +13,13 @@ Select **`custom`** (the first choice in the prompt-file dropdown) for the **fre
 
 The dropdown lists the bundled library alphabetically: each category appears once as a directory label, with its files indented beneath it. Directory labels are display-only — selecting one keeps the previous file selection.
 
-Bundled prompt files follow one unified format: the metadata block contains only the canonical fields, and the free description never repeats anything a field can express (no BPM, key, lyric mode, voice gender, language or duration in the text).
+Bundled prompt files follow one unified format: the metadata block contains only the canonical fields, and the free description never repeats anything a field can express (no BPM, time signature, key, lyric mode, voice gender, language or duration in the text).
 
 ```text
 ---
 Genre: Melodic Techno
 Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Key: A minor
 Lyrics: sparse
 Language: English
@@ -30,7 +31,7 @@ Free text describing the track in more detail.
 ```
 
 - The block must be the very first thing in the file, delimited by lines containing only `---`.
-- Keys are case-insensitive; aliases such as `BPM`, `Tonart`, `Sprache`, `Stimme`, `Lyrics theme` and `Song length` are accepted. Unknown keys are ignored.
+- Keys are case-insensitive; aliases such as `BPM`, `Meter`, `Taktart`, `Time signature`, `Tonart`, `Sprache`, `Stimme`, `Lyrics theme` and `Song length` are accepted. Unknown keys are ignored.
 - Lyrics values are normalized to `yes` / `sparse` / `only voice - no words` / `instrumental` where recognizable (`ja`, `no`, `wenig`, `ohne`, `wordless`, `vocalise`, …). Unrecognized values are kept verbatim.
 - Everything after the closing `---` (or the whole file, if there is no block) is the **further description**.
 - Files without a metadata block are fully supported: all fields default to `custom` and the whole file is copied into `description_override`.
@@ -45,7 +46,7 @@ A **Save as custom prompt** button stores the current field values and the descr
 
 ## Combo option lists
 
-Every structured combo offers a curated list of common options (genres, tempos, keys, languages, voices, lyrics themes, target lengths) so the node is useful without opening the library. Keys follow the circle of fifths (majors first, then minors); languages list the most important ones first and then more languages in alphabetical order; **tempo offers curated BPM ranges** (Slow 40-70 through Very fast 175-200) so a selection always leaves the LLM a comfortable musical window. Values found in the prompt library's metadata blocks are merged into the same lists.
+Every structured combo offers a curated list of common options (genres, tempos, time signatures, keys, languages, voices, lyrics themes, target lengths) so the node is useful without opening the library. Keys follow the circle of fifths (minor keys first, then major keys); languages list the most important ones first and then more languages in alphabetical order; **tempo offers curated BPM ranges** (Slow 40-70 through Very fast 175-200) so a selection always leaves the LLM a comfortable musical window; **meter offers a curated time-signature list** (4/4 (common time), 3/4 (waltz), 6/8, odd meters, changing time signatures, free time / rubato). Values found in the prompt library's metadata blocks are merged into the same lists.
 
 ## Inputs
 
@@ -54,7 +55,7 @@ Every structured combo offers a curated list of common options (genres, tempos, 
 - **`user_prompt_source`** — `manual`, `bundled_library` or `external_directory`.
 - **`user_prompt_directory`** — Folder for `external_directory` mode (on the machine running ComfyUI).
 - **`user_prompt_file`** — Selected prompt file, or **`custom`** (the first choice) for the free mode: no file is loaded and the fields stay untouched. The dropdown groups files alphabetically under their directory labels (directories first, files indented). The frontend refreshes this list and prefills the fields below from the file's metadata.
-- **`genre`**, **`tempo`**, **`key`**, **`lyrics`**, **`language`**, **`voice`**, **`theme`**, **`length`** — Structured combos. Select **`custom`** (the first entry of every combo) to leave that part out of the LLM prompt entirely. Tempo offers curated BPM ranges; selecting a prompt file with a Tempo metadata value prefills it. The option lists contain a curated vocabulary plus all values found in the prompt library.
+- **`genre`**, **`tempo`**, **`meter`**, **`key`**, **`lyrics`**, **`language`**, **`voice`**, **`theme`**, **`length`** — Structured combos. Select **`custom`** (the first entry of every combo) to leave that part out of the LLM prompt entirely. Tempo offers curated BPM ranges; meter offers curated time signatures; selecting a prompt file with matching metadata prefills them. The option lists contain a curated vocabulary plus all values found in the prompt library.
 - **`description_override`** — Further description appended to the structured brief. Selecting a prompt file copies its body text here; only this field's content is used from then on.
 - **`system_prompt`** / **`system_prompt_source`** / **`system_prompt_directory`** / **`system_prompt_file`** — System prompt selection, identical in behavior to the LLM Prompt Library / Template node.
 

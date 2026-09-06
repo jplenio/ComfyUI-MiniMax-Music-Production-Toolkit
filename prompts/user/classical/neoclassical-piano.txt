@@ -1,7 +1,9 @@
 ---
-Genre: Classical
+Genre: Solo Piano
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Deeply romantic, intimate and bittersweet, led by expressive solo piano with a beautiful, highly memorable recurring theme. Delicate dynamics, emotional pauses, subtle harmonic tension and graceful development. Modern classical with romantic influences, melancholic but warm and hopeful. Natural concert-hall ambience.
+Deeply romantic solo piano: an expressive, highly memorable recurring theme with delicate dynamics, emotional pauses, subtle harmonic tension and graceful development through two variations. Modern classical with romantic influences, melancholic but warm and hopeful. Felt-piano intimacy with audible hammers and natural room sound.

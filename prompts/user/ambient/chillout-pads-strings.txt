@@ -1,7 +1,9 @@
 ---
-Genre: Ambient
+Genre: Chillout / Downtempo
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Chillout, sentimental and atmospheric, with warm pads, soft strings, gentle guitar and a wide stereo image. Slowly evolving, calm and dreamy.
+Chillout, sentimental and atmospheric: warm evolving pads, soft string layers, gentle guitar, subtle piano and a wide stereo image. Very slow harmonic movement, no drums or only the faintest pulse, calm and dreamy with a long gradual swell and quiet resolution.

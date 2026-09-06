@@ -1,7 +1,9 @@
 ---
-Genre: Rock
+Genre: Blues Rock
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Raw, soulful and groovy, led by expressive electric guitar, warm tube-amp tone, deep bass and relaxed but powerful drums. Memorable blues-rock riffs, emotional bends, dynamic solos and strong call-and-response phrasing. Organic live feel with gradual development.
+Raw, soulful blues rock: expressive electric guitar with warm overdriven tube tone, deep bass, Hammond organ pads and relaxed but powerful drums. Memorable riff, emotional bends, dynamic extended solo and strong call-and-response phrasing. Organic live-band feel with gradual development.

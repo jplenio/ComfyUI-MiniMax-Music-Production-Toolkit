@@ -1,5 +1,7 @@
 ---
-Genre: Jazz
+Genre: Smooth Jazz
+Tempo: Laid-back (70-100 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
 Voice: female vocal
@@ -7,4 +9,4 @@ Theme: hope & resilience
 Length: 3-4 minutes
 ---
 
-Smooth jazz with deep lyrics about a troublesome topic that finally finds a positive ending. Nice sections without vocals, with piano and guitar as the lead instruments.
+Smooth jazz with deep, honest lyrics about a difficult situation that finally finds a positive ending. Warm Rhodes, piano and clean guitar as lead instruments, upright bass and soft brushed drums. Include substantial sections without vocals where piano and guitar trade melodies. Gentle build from resignation to quiet confidence.

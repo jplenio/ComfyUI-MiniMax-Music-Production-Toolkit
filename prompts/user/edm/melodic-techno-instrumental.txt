@@ -1,8 +1,10 @@
 ---
-Genre: EDM
-Tempo: Uptempo (130-145 BPM)
+Genre: Melodic Techno
+Tempo: Dancefloor (120-130 BPM)
+Meter: 4/4 (common time)
+Key: A minor
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Dark, emotional and driving, with deep bass, powerful kick, evolving arpeggios and a distinctive recurring synth theme. Strong tension and release, hypnotic progression, spacious breakdowns and energetic peaks. Cinematic atmosphere but clearly built for the club.
+Dark, emotional and driving melodic techno: deep bass, powerful kick, evolving arpeggios, filtered pads and a distinctive recurring synth theme. Strong tension and release, hypnotic progression, spacious breakdown and energetic peaks. Cinematic atmosphere but clearly built for the club.

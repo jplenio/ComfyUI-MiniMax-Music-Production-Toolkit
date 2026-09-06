@@ -1,10 +1,12 @@
 ---
-Genre: Rock
+Genre: Hard Rock
+Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Voice: male vocal
+Voice: male vocal, raspy & raw
 Theme: hope & resilience
 Length: 4-5 minutes
 ---
 
-Heavy, punchy and highly energetic, with massive guitar riffs, tight bass, hard-hitting drums and a powerful rough vocal. Strong groove, memorable hooks, explosive chorus and a melodic guitar solo. Lyrics about resilience, pressure and refusing to give up.
+Heavy, punchy hard rock: massive guitar riffs, tight bass, hard-hitting drums and a powerful rough vocal. Strong groove, memorable hooks, explosive chorus, a melodic guitar solo and a stomping half-time breakdown. Big, loud and confident. Lyrics about resilience, pressure and refusing to give up.

@@ -1,8 +1,10 @@
 ---
 Genre: Tango
-Tempo: Dancefloor (120-130 BPM)
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
+Key: A minor
 Lyrics: instrumental
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Passionate and dramatic, led by bandoneon and violin over a strong staccato piano and double-bass pulse. Sharp dynamic contrasts, sensual melodic phrasing and a dark, elegant atmosphere.
+Passionate tango: bandoneón and violin leading over staccato piano and a strong double-bass pulse, with sharp marcato accents and dramatic rubato passages. Dark elegant minor melody, sudden dynamic contrasts, sensual phrasing and a decisive final chord.

@@ -1,10 +1,12 @@
 ---
 Genre: Power Metal
+Tempo: Fast (145-175 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Voice: male vocal
+Voice: male vocal, powerful & belting
 Theme: storytelling & adventure
 Length: 4-5 minutes
 ---
 
-Fast, heroic and euphoric, with twin-guitar harmonies, galloping double-bass drums, symphonic keyboards and a soaring clean vocal. Epic choruses, fantasy imagery and unstoppable energy. Lyrics about legends, battles and triumph.
+Fast, heroic power metal: twin-guitar harmonies, galloping double-bass drums, symphonic keyboards, driving bass and a soaring clean high vocal. Epic layered chorus, fantasy imagery, neoclassical guitar and keyboard solo trade-off, unstoppable energy. Lyrics about legends, battles and triumph.

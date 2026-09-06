@@ -1,9 +1,12 @@
 ---
 Genre: Schlager
+Tempo: Dancefloor (120-130 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: Deutsch (German)
+Voice: happy & uplifting vocal
 Theme: celebration & party
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Bright, cheerful and irresistibly catchy, with a bouncing beat, sparkling synth hooks, a big singalong chorus and warm brass accents. Lyrics about love, sunshine and good times. Light-hearted, polished and full of joy.
+Bright, cheerful German Schlager: bouncing four-on-the-floor beat, sparkling synth hooks, warm brass accents, simple major-key melody and a huge singalong chorus with layered backing vocals and a final key change. Polished, light-hearted and radio-friendly. Lyrics about love, sunshine and good times, very simple and repetitive.

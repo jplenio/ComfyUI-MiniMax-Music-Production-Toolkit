@@ -1,9 +1,12 @@
 ---
-Genre: Rock
+Genre: Classic Rock
+Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
+Voice: male vocal, raspy & raw
 Theme: freedom & escape
 Length: 4-5 minutes
 ---
 
-Energetic, melodic and timeless, with crunchy electric guitars, driving bass, powerful acoustic drums and a strong charismatic lead vocal. Memorable guitar riffs, catchy chorus, tasteful solos and a natural live-band feel. Lyrics about freedom, taking risks and leaving the past behind.
+Energetic, timeless classic rock: crunchy electric guitars, driving bass, powerful acoustic drums and a charismatic lead vocal. Memorable opening riff, catchy chorus with harmony vocals, a tasteful guitar solo and a natural live-band feel with warm analog production. Lyrics about freedom, taking risks and leaving the past behind.

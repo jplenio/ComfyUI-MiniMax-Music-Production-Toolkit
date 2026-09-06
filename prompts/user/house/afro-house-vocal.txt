@@ -1,10 +1,12 @@
 ---
-Genre: House
+Genre: Afro House
 Tempo: Dancefloor (120-130 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: English
-Theme: night & city lights
+Voice: male vocal
+Theme: freedom & escape
 Length: 4-5 minutes
 ---
 
-Deep, warm and irresistibly rhythmic, with rolling bass, organic percussion, tribal grooves, atmospheric synth layers and a soulful vocal hook. Lyrics should be short, repetitive and uplifting, focused on movement, connection and freedom. Hypnotic, elegant and highly danceable.
+Deep, warm Afro House: rolling melodic bass, layered organic percussion and congas, tribal shakers, atmospheric synth pads and a soulful vocal hook with chant-like answers. Lyrics short, repetitive and uplifting, about movement, connection and freedom. Hypnotic, elegant and highly danceable, with a long percussive breakdown.

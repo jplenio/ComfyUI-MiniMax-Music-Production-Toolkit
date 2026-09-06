@@ -58,6 +58,7 @@ class PromptFrontMatterTests(unittest.TestCase):
             "---\n"
             "Genre: Melodic Techno\n"
             "Tempo: 128 BPM\n"
+            "Meter: 4/4 (common time)\n"
             "Key: A minor\n"
             "Lyrics: sparse\n"
             "Language: English\n"
@@ -70,6 +71,7 @@ class PromptFrontMatterTests(unittest.TestCase):
         fields, description = prompt_metadata.parse_prompt_front_matter(text)
         self.assertEqual(fields["genre"], "Melodic Techno")
         self.assertEqual(fields["tempo"], "128 BPM")
+        self.assertEqual(fields["meter"], "4/4 (common time)")
         self.assertEqual(fields["key"], "A minor")
         self.assertEqual(fields["lyrics"], "sparse")
         self.assertEqual(fields["language"], "English")
@@ -91,12 +93,13 @@ class PromptFrontMatterTests(unittest.TestCase):
         self.assertEqual(description, "body")
 
     def test_aliases_are_normalized(self):
-        text = "---\nTonart: F# minor\nSprache: Deutsch\nStimme: male\nBPM: 124\n---\nbody"
+        text = "---\nTonart: F# minor\nSprache: Deutsch\nStimme: male\nBPM: 124\nTaktart: 3/4 (waltz)\n---\nbody"
         fields, _ = prompt_metadata.parse_prompt_front_matter(text)
         self.assertEqual(fields["key"], "F# minor")
         self.assertEqual(fields["language"], "Deutsch")
         self.assertEqual(fields["voice"], "male")
         self.assertEqual(fields["tempo"], "124")
+        self.assertEqual(fields["meter"], "3/4 (waltz)")
 
     def test_description_key_fallback_when_body_empty(self):
         text = "---\nGenre: Ambient\nDescription: Short description only\n---\n"
@@ -210,6 +213,7 @@ class StructuredPromptNodeTests(unittest.TestCase):
             user_prompt_file=PLACEHOLDER,
             genre=CUSTOM,
             tempo=CUSTOM,
+            meter=CUSTOM,
             key=CUSTOM,
             lyrics=CUSTOM,
             language=CUSTOM,
@@ -391,14 +395,14 @@ class StructuredPromptNodeTests(unittest.TestCase):
     def test_is_changed_includes_field_state(self):
         fp1 = structured_node.IS_CHANGED(
             user_prompt_source="manual", user_prompt_directory="", user_prompt_file=PLACEHOLDER,
-            genre="House", tempo=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
+            genre="House", tempo=CUSTOM, meter=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
             voice=CUSTOM, theme=CUSTOM, length=CUSTOM, description_override="",
             system_prompt="SYS", system_prompt_source="manual", system_prompt_directory="",
             system_prompt_file=PLACEHOLDER, source_name_override="",
         )
         fp2 = structured_node.IS_CHANGED(
             user_prompt_source="manual", user_prompt_directory="", user_prompt_file=PLACEHOLDER,
-            genre="Techno", tempo=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
+            genre="Techno", tempo=CUSTOM, meter=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
             voice=CUSTOM, theme=CUSTOM, length=CUSTOM, description_override="",
             system_prompt="SYS", system_prompt_source="manual", system_prompt_directory="",
             system_prompt_file=PLACEHOLDER, source_name_override="",
@@ -409,7 +413,7 @@ class StructuredPromptNodeTests(unittest.TestCase):
         # Free mode must not try to resolve a file literally named "custom".
         fp = structured_node.IS_CHANGED(
             user_prompt_source="bundled_library", user_prompt_directory="", user_prompt_file=CUSTOM,
-            genre="House", tempo=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
+            genre="House", tempo=CUSTOM, meter=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
             voice=CUSTOM, theme=CUSTOM, length=CUSTOM, description_override="",
             system_prompt="SYS", system_prompt_source="manual", system_prompt_directory="",
             system_prompt_file=PLACEHOLDER, source_name_override="",
@@ -423,7 +427,7 @@ class StructuredPromptNodeTests(unittest.TestCase):
                 user_prompt_source="external_directory",
                 user_prompt_directory=str(Path("/nonexistent")),
                 user_prompt_file="song.txt",
-                genre=CUSTOM, tempo=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
+                genre=CUSTOM, tempo=CUSTOM, meter=CUSTOM, key=CUSTOM, lyrics=CUSTOM, language=CUSTOM,
                 voice=CUSTOM, theme=CUSTOM, length=CUSTOM,
                 description_override=description,
                 system_prompt="SYS", system_prompt_source="manual", system_prompt_directory="",
@@ -440,11 +444,15 @@ class StructuredPromptNodeTests(unittest.TestCase):
         genres = _combo("genre")
         self.assertEqual(genres[0], CUSTOM)
         self.assertIn("House", genres)
-        self.assertIn("Alternative", genres)  # bundled-library value merged in
+        self.assertIn("Gqom", genres)  # bundled-library value merged in
         self.assertIn("English", _combo("language"))
-        self.assertIn("Deutsch", _combo("language"))
+        self.assertIn("Deutsch (German)", _combo("language"))
         self.assertIn("4-5 minutes", _combo("length"))
         self.assertIn("female vocal", _combo("voice"))
+        meters = _combo("meter")
+        self.assertEqual(meters[0], CUSTOM)
+        self.assertIn("4/4 (common time)", meters)
+        self.assertIn("free time / rubato", meters)
         self.assertEqual(_combo("lyrics"), [CUSTOM, "yes", "sparse", "only voice - no words", "instrumental"])
 
 

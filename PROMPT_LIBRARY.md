@@ -43,6 +43,7 @@ Prompt files may start with a metadata block. `MiniMaxStructuredPromptV20` uses 
 ---
 Genre: Melodic Techno
 Tempo: Midtempo (100-120 BPM)
+Meter: 4/4 (common time)
 Key: A minor
 Lyrics: sparse
 Language: English
@@ -54,13 +55,13 @@ Free text describing the track in more detail.
 ```
 
 - The block must be the very first thing in the file, delimited by lines containing only `---`.
-- Keys are case-insensitive; aliases such as `BPM`, `Tonart`, `Sprache`, `Stimme`, `Lyrics theme` and `Song length` are accepted. Unknown keys are ignored.
+- Keys are case-insensitive; aliases such as `BPM`, `Meter`, `Taktart`, `Time signature`, `Tonart`, `Sprache`, `Stimme`, `Lyrics theme` and `Song length` are accepted. Unknown keys are ignored.
 - Lyrics values are normalized to `yes` / `sparse` / `only voice - no words` / `instrumental` where recognizable (`ja`, `no`, `wenig`, `wordless`, `vocalise`, …).
 - Everything after the closing `---` (or the whole file, if there is no block) is the **further description**.
 - Files without a metadata block are fully supported: all fields default to `custom` and the whole file is used as the description.
 - Every prefilled field can be overridden in the node; `custom` leaves that part out of the LLM prompt entirely.
 
-The bundled library ships with metadata for all 95 user prompts; regenerate it with:
+The bundled library ships with metadata for all 239 user prompts; regenerate it with:
 
 ```bash
 python scripts/annotate_prompt_metadata.py --dry-run
@@ -104,7 +105,7 @@ house/
     my-house-prompt.txt
 ```
 
-Every bundled prompt follows the same unified format: a metadata block with only the canonical fields (Genre, Tempo, Key, Lyrics, Language, Voice, Theme, Length — omit fields that should stay `custom`) plus a description that never repeats what the fields already express (no BPM, key, lyric mode, voice gender, language or duration in the free text). Tempo values are curated BPM ranges (Slow 40-70 through Very fast 175-200), never single fixed values.
+Every bundled prompt follows the same unified format: a metadata block with only the canonical fields (Genre, Tempo, Meter, Key, Lyrics, Language, Voice, Theme, Length — omit fields that should stay `custom`) plus a description that never repeats what the fields already express (no BPM, time signature, key, lyric mode, voice gender, language or duration in the free text). Tempo values are curated BPM ranges (Slow 40-70 through Very fast 175-200), never single fixed values; meter values are curated time signatures (4/4 (common time) through free time / rubato).
 
 ## Adding system prompts
 
@@ -118,11 +119,13 @@ A system prompt should document the output contract expected by your downstream 
 
 ## Current bundled library
 
-The v2.0.3 repository contains **95 user prompt files** across:
+The v2.0.5 repository contains **239 user prompt files** across:
 
-`african`, `alternative`, `ambient`, `asian`, `classical`, `comedy`, `edm`, `electronic`, `european`, `folk`, `funk`, `hiphop`, `house`, `jazz`, `latin`, `metal`, `pop`, `reggae`, and `rock`.
+`african`, `alternative`, `ambient`, `asian`, `blues`, `cinematic`, `classical`, `comedy`, `country`, `disco`, `edm`, `electronic`, `european`, `folk`, `funk`, `gospel`, `hiphop`, `house`, `jazz`, `kids`, `latin`, `meditation`, `metal`, `musical`, `pop`, `punk`, `reggae`, `rock`, `seasonal`, `soul`, and `world`.
 
-All 95 files were unified in v2.0.3: every file carries a canonical metadata block, near-duplicates were consolidated (EDM dance anthem, minimal electronic German vocals, absurd German novelty, chillout guitar, heavy metal moved from `rock/` to `metal/`), the free text no longer repeats anything a structured field can express, and the library now covers world styles from Asia (K-Pop, City Pop, Chinese/Indian traditional, Bollywood), Europe (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), Africa (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues) and Latin America (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata) alongside the classic Western and electronic genres.
+All 95 files were unified in v2.0.3: every file carries a canonical metadata block, near-duplicates were consolidated (EDM dance anthem, minimal electronic German vocals, absurd German novelty, chillout guitar, heavy metal moved from `rock/` to `metal/`), the free text no longer repeats anything a structured field can express, and the library covers world styles from Asia (K-Pop, City Pop, Chinese/Indian traditional, Bollywood), Europe (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), Africa (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues) and Latin America (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata) alongside the classic Western and electronic genres.
+
+In v2.0.5 the library was expanded to 239 templates and every template gained the canonical **Meter** (time signature) field. New categories cover blues, country, disco, gospel, kids, meditation, musical, punk, seasonal, soul, cinematic, and world music; the existing categories gained dozens of new subgenres (UK drill, phonk, cloud rap, dubstep, hardstyle, big room, eurodance, future bass, goa trance, acid/french/disco house, Berlin school, vaporwave, chiptune, IDM, EBM, electro swing, bebop, cool jazz, dixieland, swing, gypsy jazz, baroque, choral, string quartet, minimalism, death/black/folk/nu metal, metalcore, djent, britpop, new wave, shoegaze, garage rock, psychedelic rock, surf rock, rockabilly, post-rock, stoner rock, cumbia, merengue, son cubano, bachata, dancehall, rocksteady, ska, enka, mandopop, gqom, soukous, and many more). The structured-field vocabulary was extended to match: the curated genre, voice and language lists now cover the full world map, the key list follows the circle of fifths starting with the minor keys, and the new time-signature combo offers common, odd and free meters.
 
 The production system prompt is stored only in `prompts/system/minimax-music3-production.txt`; avoid duplicating that long prompt in Python source.
 

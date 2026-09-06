@@ -84,3 +84,69 @@ export function shouldRepairJsonMetadataLink(originOutputName, slotInputName, me
     if (originOutputName !== JSON_METADATA_INPUT_NAME) return false;
     return slotInputName !== JSON_METADATA_INPUT_NAME;
 }
+
+/**
+ * Widget-value repairs for MiniMaxStructuredPromptV20 (meter migration).
+ *
+ * v2.0.5 inserted the ``meter`` widget between ``tempo`` and ``key``.  ComfyUI
+ * applies the serialized positional ``widgets_values`` array slot by slot, so
+ * a workflow saved before 2.0.5 loads with every field from ``meter`` onwards
+ * showing the NEXT field's old value (meter=key, key=lyrics, ..., length=
+ * description, description=system_prompt, ...).  ``widgets_values_named`` is
+ * always correct (values are stored by name) - it just has no ``meter`` key.
+ *
+ * This function computes the corrected value for every non-button widget of
+ * the node.  Returns ``{ valuesByName }`` when the loaded serialization is the
+ * old shape, or ``null`` when nothing needs repairing (no meter widget, or the
+ * serialization already carries meter).  A positional-only serialization is
+ * always treated as the old shape unless its meter slot already holds an
+ * unmistakable meter value - positional-only files come from frontends that
+ * predate the meter field.
+ *
+ * @param {{widgetNames: string[], widgetsValues: any, widgetsValuesNamed: any}} data
+ * @returns {{valuesByName: Record<string, any>} | null}
+ */
+export function structuredPromptWidgetRepairs({ widgetNames, widgetsValues, widgetsValuesNamed }) {
+    const meterIndex = widgetNames.indexOf("meter");
+    if (meterIndex < 0) return null; // no meter widget (older toolkit) - nothing to repair
+    if (
+        widgetsValuesNamed &&
+        typeof widgetsValuesNamed === "object" &&
+        "meter" in widgetsValuesNamed
+    ) {
+        return null; // already carries the meter entry - new shape
+    }
+
+    const valuesByName = {};
+    if (widgetsValuesNamed && typeof widgetsValuesNamed === "object") {
+        // Named values are correct by name; only the meter entry is missing.
+        for (const name of widgetNames) {
+            if (name in widgetsValuesNamed) valuesByName[name] = widgetsValuesNamed[name];
+        }
+        valuesByName.meter = "custom";
+        return { valuesByName };
+    }
+
+    if (Array.isArray(widgetsValues)) {
+        // Positional values: slot i (i > meter) got the NEXT field's old value.
+        // A meter-looking value in the meter slot means the file is already in
+        // the new shape - then there is nothing to insert.
+        const meterSlotValue = widgetsValues[meterIndex];
+        if (looksLikeMeterValue(meterSlotValue)) return null;
+        for (let i = 0; i < widgetNames.length; i++) {
+            const name = widgetNames[i];
+            const sourceIndex = i <= meterIndex ? i : i - 1;
+            const value = i === meterIndex ? "custom" : widgetsValues[sourceIndex];
+            if (value !== undefined && value !== null) valuesByName[name] = value;
+        }
+        return { valuesByName };
+    }
+    return null;
+}
+
+function looksLikeMeterValue(value) {
+    if (typeof value !== "string" || !value) return false;
+    if (value === "changing time signatures" || value === "free time / rubato") return true;
+    // All other curated meter entries contain a numeric fraction (4/4, 3/4, 7/8, ...).
+    return /\d{1,2}\/\d{1,2}/.test(value);
+}

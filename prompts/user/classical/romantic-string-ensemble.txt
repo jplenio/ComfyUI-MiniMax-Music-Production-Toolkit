@@ -1,7 +1,9 @@
 ---
-Genre: Classical
+Genre: Romantic Classical
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Deeply emotional string ensemble led by expressive cello and violin, with intimate piano accompaniment. Beautiful recurring melodic themes, rich harmonies, gentle crescendos and strong emotional development. Romantic, wistful and heartbreaking without becoming overly dramatic. Cinematic but intimate.
+Deeply emotional string ensemble led by expressive cello and violin with intimate piano accompaniment. Beautiful recurring themes, rich romantic harmonies, gentle crescendos and strong emotional development. Wistful and heartbreaking without becoming overly dramatic. Cinematic but intimate, warm hall reverb.

@@ -1,11 +1,12 @@
 """Consistency checks for the bundled user prompt library.
 
 The library follows one unified format: a ``---``-delimited metadata block with
-canonical keys (genre, tempo, key, lyrics, language, voice, theme, length) plus
-free description text.  The description must never repeat information that can
-be selected through the structured fields (lyrics mode, voice gender, BPM,
-duration, language, ...), and the dropdown listing must stay alphabetical with
-files grouped under their category directories.
+canonical keys (genre, tempo, meter, key, lyrics, language, voice, theme,
+length) plus free description text.  The description must never repeat
+information that can be selected through the structured fields (lyrics mode,
+voice gender, BPM, time signature, duration, language, ...), and the dropdown
+listing must stay alphabetical with files grouped under their category
+directories.
 """
 from __future__ import annotations
 
@@ -19,13 +20,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 USER_DIR = ROOT / "prompts" / "user"
 
-CANONICAL_FIELDS = ("genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length")
+CANONICAL_FIELDS = ("genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length")
 
 # Description text must not duplicate anything these fields already express.
 FIELD_DUPLICATION_PATTERNS = [
     (re.compile(r"\binstrumental\b", re.IGNORECASE), "lyrics mode (instrumental)"),
     (re.compile(r"\bsparse\b", re.IGNORECASE), "lyrics mode (sparse)"),
     (re.compile(r"\bBPM\b", re.IGNORECASE), "tempo (BPM)"),
+    (re.compile(r"\b\d{1,2}/\d{1,2}\b"), "meter (time signature)"),
     (re.compile(r"\bminute[s]?\b", re.IGNORECASE), "length (minutes)"),
     (re.compile(r"female vocal", re.IGNORECASE), "voice (female vocal)"),
     (re.compile(r"male vocal", re.IGNORECASE), "voice (male vocal)"),
@@ -140,6 +142,35 @@ class PromptLibraryConsistencyTests(unittest.TestCase):
             for key, value in pairs:
                 if key == "tempo":
                     self.assertIn(value, curated, f"{path.name}: tempo {value!r} is not a curated BPM range")
+
+    def test_meter_values_are_curated_time_signatures(self):
+        # Meter metadata must use one of the curated time-signature entries
+        # (4/4 (common time), 3/4 (waltz), ..., free time / rubato), never
+        # an ad-hoc value that is not offered by the combo.
+        import importlib.util as _iu
+        import sys as _sys
+        import types as _types
+
+        pkg_name = "_prompt_consistency_meta_meter"
+        pkg = _types.ModuleType(pkg_name)
+        pkg.__path__ = [str(ROOT)]
+        _sys.modules[pkg_name] = pkg
+        for module_name in ("toolkit_logging", "prompt_metadata"):
+            spec = _iu.spec_from_file_location(f"{pkg_name}.{module_name}", ROOT / f"{module_name}.py")
+            loaded = _iu.module_from_spec(spec)
+            _sys.modules[f"{pkg_name}.{module_name}"] = loaded
+            assert spec and spec.loader
+            spec.loader.exec_module(loaded)
+        curated = set(_sys.modules[f"{pkg_name}.prompt_metadata"].CURATED_FIELD_OPTIONS["meter"])
+        for path in USER_DIR.rglob("*"):
+            if not path.is_file():
+                continue
+            pairs, _description = parse_prompt_file(path)
+            if pairs is None:
+                continue
+            for key, value in pairs:
+                if key == "meter":
+                    self.assertIn(value, curated, f"{path.name}: meter {value!r} is not a curated time signature")
 
     def test_description_does_not_duplicate_field_values(self):
         for path in USER_DIR.rglob("*"):

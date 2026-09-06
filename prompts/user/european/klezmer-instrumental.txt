@@ -1,7 +1,9 @@
 ---
 Genre: Klezmer
+Tempo: Uptempo (130-145 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Expressive and festive, led by a wailing clarinet over accordion, violin and upright bass. Laughing and crying melodic phrases, driving wedding-dance rhythms and an earthy Eastern European character.
+Expressive and festive klezmer: wailing clarinet lead with bent notes and krekhts sobs, over accordion, violin, upright bass and driving frame drum. Laughing-and-crying phrases in a freygish mode, a slow doina-style intro then an accelerating wedding-dance finale.

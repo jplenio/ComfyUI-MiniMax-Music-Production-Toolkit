@@ -1,10 +1,12 @@
 ---
 Genre: Fado
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: Português (Portuguese)
-Voice: female vocal
+Voice: female vocal, powerful & belting
 Theme: melancholy & longing
-Length: 4-5 minutes
+Length: 3-4 minutes
 ---
 
-Deeply emotional and soulful, with Portuguese guitar, classical guitar and a dramatic, heartbroken vocal. Lyrics about fate, the sea and missing someone. Slow, haunting and profoundly moving.
+Deeply emotional Portuguese fado: Portuguese guitarra with its shimmering tremolo lines, classical guitar and bass viola, and a dramatic heartbroken vocal full of rubato and sudden dynamic swells. No drums, minor key, aching saudade. Lyrics about fate, the sea and missing someone.

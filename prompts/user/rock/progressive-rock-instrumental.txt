@@ -1,7 +1,9 @@
 ---
-Genre: Rock
+Genre: Progressive Rock
+Tempo: Midtempo (100-120 BPM)
+Meter: changing time signatures
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Atmospheric, sophisticated and dynamic, with expressive electric guitars, melodic bass, acoustic drums, subtle keyboards and evolving recurring themes. Strong contrast between calm passages and powerful sections, unusual but musical rhythmic changes and memorable motifs. Cinematic, emotional and highly developed.
+Atmospheric, sophisticated progressive rock: expressive electric guitars, melodic bass, acoustic drums, Hammond organ and Mellotron, with evolving recurring themes. Strong contrast between calm passages and powerful sections, unusual but musical meter changes and memorable motifs. Cinematic, emotional and highly developed multi-part structure.

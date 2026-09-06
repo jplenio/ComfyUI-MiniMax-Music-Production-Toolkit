@@ -204,8 +204,9 @@ def save_custom_prompt(
 ) -> str:
     """Save the current structured-prompt values as a prompt file.
 
-    Writes a metadata block (Genre/Tempo/Key/Lyrics/Language/Voice/Theme/
-    Length; ``custom`` values are omitted) plus the description into
+    Writes a metadata block (all canonical structured fields, e.g.
+    Genre/Tempo/Time signature/Key/Lyrics/Language/Voice/Theme/Length;
+    ``custom`` values are omitted) plus the description into
     ``<prompt-root>/_custom/<name>.txt``.  Returns the display-relative path
     (``_custom/<name>.txt``).  Existing files are only replaced when
     ``overwrite`` is true.
@@ -230,12 +231,23 @@ def save_custom_prompt(
             "Choose another name or allow overwrite."
         )
 
-    labels = {
-        "genre": "Genre", "tempo": "Tempo", "key": "Key", "lyrics": "Lyrics",
-        "language": "Language", "voice": "Voice", "theme": "Theme", "length": "Length",
-    }
+    # Canonical field order and display labels come from prompt_metadata so
+    # the saved file always matches what the structured node understands
+    # (including newer fields such as meter / time signature).  Fall back to
+    # the historic hardcoded list if the import is unavailable.
+    try:
+        from .prompt_metadata import FIELD_LABELS, STRUCTURED_FIELDS
+
+        labels = {field: FIELD_LABELS[field] for field in STRUCTURED_FIELDS}
+        field_order = tuple(STRUCTURED_FIELDS)
+    except Exception:  # pragma: no cover - defensive fallback only
+        labels = {
+            "genre": "Genre", "tempo": "Tempo", "key": "Key", "lyrics": "Lyrics",
+            "language": "Language", "voice": "Voice", "theme": "Theme", "length": "Length",
+        }
+        field_order = tuple(labels)
     lines = ["---"]
-    for field in ("genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length"):
+    for field in field_order:
         value = fields.get(field)
         if isinstance(value, str):
             value = value.strip()

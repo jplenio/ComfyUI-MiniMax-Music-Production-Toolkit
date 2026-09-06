@@ -1,10 +1,12 @@
 ---
 Genre: Opera
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: yes
 Language: Italiano (Italian)
-Voice: female vocal
+Voice: operatic soprano
 Theme: heartbreak & loss
 Length: 3-4 minutes
 ---
 
-A dramatic opera aria with a soaring soprano over a full orchestra. Sweeping melodic phrases, intense dynamic climaxes and deep emotional pathos. Lyrics about love, loss and farewell.
+A dramatic opera aria: soaring soprano over full romantic orchestra with lush strings, woodwind countermelodies and swelling brass. Recitative-like opening, sweeping melodic phrases, an intense high climax and a soft trailing close. Deep emotional pathos, authentic bel canto phrasing. Lyrics about love, loss and farewell.

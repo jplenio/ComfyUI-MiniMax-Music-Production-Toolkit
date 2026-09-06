@@ -1,7 +1,9 @@
 ---
-Genre: Metal
+Genre: Doom Metal
+Tempo: Slow (40-70 BPM)
+Meter: 4/4 (common time)
 Lyrics: instrumental
 Length: 4-5 minutes
 ---
 
-Slow, massive and deeply atmospheric, with crushing low-tuned guitars, heavy bass, huge drums and haunting melodic lead guitar. Dark recurring motifs, long sustained chords, strong emotional weight and gradual development. Mournful, mysterious and cinematic rather than chaotic.
+Slow, massive doom metal: crushing low-tuned downtuned guitars, thick fuzz bass, huge slow drums and a haunting melodic lead guitar. Dark recurring riff motifs, long sustained chords, enormous space between hits, gradual build to a monolithic climax. Mournful and cinematic rather than chaotic.
