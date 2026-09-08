@@ -128,14 +128,13 @@ function repairJsonNode(node) {
 const STRUCTURED_PROMPT_TYPE = "MiniMaxStructuredPromptV20";
 
 function repairStructuredPromptNode(node) {
-    // v2.0.5 inserted the meter widget between tempo and key.  ComfyUI applies
-    // the serialized positional widgets_values slot by slot, so a pre-2.0.5
-    // workflow loads with every field from meter onwards shifted by one
-    // (meter=key, key=lyrics, ..., description=system_prompt).  The named map
-    // (when present) is correct by name; the positional map needs a "custom"
-    // inserted at the meter slot.  Repairs run synchronously here so the
-    // structured-prompt extension's queued description prefill sees the
-    // corrected values.
+    // v2.0.5 inserted the meter widget and reordered the system-prompt fields
+    // (system_prompt moved after source_name_override).  ComfyUI applies the
+    // serialized positional widgets_values slot by slot, so older files load
+    // with those fields shifted.  The named map (when present) is correct by
+    // name; the pure helper below returns the corrected value for every widget
+    // by name, and we re-apply it here synchronously so the structured-prompt
+    // extension's queued prefill sees the corrected values.
     try {
         const widgetNames = [];
         for (const w of node.widgets || []) {
@@ -157,34 +156,34 @@ function repairStructuredPromptNode(node) {
                 applied += 1;
             }
         }
-        // Keep the stored serialization in the new shape so a later re-save or
-        // a second load in the same session stays aligned.
+        // Keep the stored positional serialization in the current widget order
+        // so a later re-save or a second load in the same session stays aligned.
+        if (Array.isArray(node.widgets_values)) {
+            const rebuilt = [];
+            for (const w of node.widgets || []) {
+                if (w.type === "button") {
+                    rebuilt.push(null);
+                } else if (w.name in result.valuesByName) {
+                    rebuilt.push(result.valuesByName[w.name]);
+                } else {
+                    rebuilt.push(w.value ?? null);
+                }
+            }
+            node.widgets_values = rebuilt;
+        }
         if (node.widgets_values_named && typeof node.widgets_values_named === "object") {
             node.widgets_values_named.meter = "custom";
-        }
-        const meterIndex = widgetNames.indexOf("meter");
-        if (Array.isArray(node.widgets_values) && meterIndex >= 0) {
-            const slot = node.widgets_values[meterIndex];
-            if (slot !== undefined && slot !== null && !looksLikeMeterSlotValue(slot)) {
-                node.widgets_values.splice(meterIndex, 0, "custom");
-            }
         }
         node.setDirtyCanvas?.(true, true);
         node.graph?.setDirtyCanvas?.(true, true);
         console.info(
-            `[MiniMax Music Production Toolkit] Repaired pre-2.0.5 ${STRUCTURED_PROMPT_TYPE} widget values (meter inserted; ${applied} value(s) corrected).`
+            `[MiniMax Music Production Toolkit] Repaired ${STRUCTURED_PROMPT_TYPE} widget values (${applied} value(s) corrected).`
         );
         return true;
     } catch (error) {
         console.warn(`[MiniMax Music Production Toolkit] Structured Song Prompt widget repair failed:`, error);
         return false;
     }
-}
-
-function looksLikeMeterSlotValue(value) {
-    if (typeof value !== "string" || !value) return false;
-    if (value === "changing time signatures" || value === "free time / rubato") return true;
-    return /\d{1,2}\/\d{1,2}/.test(value);
 }
 
 function repairLLMChatNode(node) {

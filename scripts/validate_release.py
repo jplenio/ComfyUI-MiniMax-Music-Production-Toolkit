@@ -227,8 +227,8 @@ def check_workflow() -> None:
         if llm_values.get("max_tokens") != 16384 or llm_values.get("n_ctx") != 32768:
             fail("Public workflow LLM example must use max_tokens=16384 and n_ctx=32768")
     path_nodes = nodes_by_type.get("MiniMaxOutputPaths", [])
-    if not path_nodes or path_nodes[0].get("widgets_values_named", {}).get("configuration_subdir") != "json":
-        fail("Public workflow configuration_subdir must default to json")
+    if not path_nodes or path_nodes[0].get("widgets_values_named", {}).get("configuration_subdir") != "log/":
+        fail("Public workflow configuration_subdir must default to log/")
     for saver in nodes_by_type.get("SaveAudioSmartPrefix", []):
         if saver.get("widgets_values_named", {}).get("write_json_sidecar"):
             fail("Public workflow must not write duplicated per-audio JSON sidecars")

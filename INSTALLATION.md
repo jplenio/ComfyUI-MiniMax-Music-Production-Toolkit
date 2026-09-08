@@ -128,11 +128,11 @@ or reinstall the toolkit requirements.
 `MiniMax Output Paths` defines a common base plus these subdirectories:
 
 ```text
-original_subdir       = 32flac/
-sr_flac_subdir        = 44flac/
-sr_mp3_subdir         = 44mp3/
+original_subdir       = org-32flac/
+sr_flac_subdir        = highres-44flac/
+sr_mp3_subdir         = highres-44mp3/
 artwork_subdir        = artwork/
-configuration_subdir  = json
+configuration_subdir  = log/
 ```
 
 All are configurable. The current example workflow writes one final JSON to `configuration_subdir` rather than one sidecar beside every audio file.

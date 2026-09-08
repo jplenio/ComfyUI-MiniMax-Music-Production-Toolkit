@@ -111,13 +111,13 @@ assert.deepEqual(
     "deliberate non-default LLM values are preserved"
 );
 
-// --- Structured Song Prompt: meter inserted between tempo and key (2.0.5) --
+// --- Structured Song Prompt: meter insertion + system-prompt reorder ---
 
 const STRUCTURED_WIDGETS = [
     "user_prompt_source", "user_prompt_directory", "user_prompt_file", "genre", "tempo",
     "meter", "key", "lyrics", "language", "voice", "theme", "length",
-    "description_override", "system_prompt", "system_prompt_source", "system_prompt_directory",
-    "system_prompt_file", "source_name_override",
+    "description_override", "system_prompt_source", "system_prompt_directory",
+    "system_prompt_file", "source_name_override", "system_prompt",
 ];
 
 // 1. No meter widget at all (older toolkit): nothing to repair.
@@ -131,23 +131,62 @@ assert.equal(
     "nodes without a meter widget need no repair"
 );
 
-// 2. Named serialization that already carries meter (new shape): no repair.
-assert.equal(
-    structuredPromptWidgetRepairs({
-        widgetNames: STRUCTURED_WIDGETS,
-        widgetsValues: null,
-        widgetsValuesNamed: { genre: "House", tempo: "custom", meter: "custom", key: "A minor" },
-    }),
-    null,
-    "named serialization with meter is already in the new shape"
-);
-
-// 3. Pre-2.0.5 named serialization (no meter key): values are correct by
-//    name; meter defaults to custom and every other field keeps its own value.
+// 2. Named serialization already in the new shape: every value is re-applied
+//    by name (idempotent) instead of trusting the positional order.
 assert.deepEqual(
     structuredPromptWidgetRepairs({
         widgetNames: STRUCTURED_WIDGETS,
-        widgetsValues: ["bundled_library", "", "<select a prompt>", "custom", "custom", "custom", "custom", "custom", "custom", "custom", "custom", "", "SYS", "manual", "", "<select a prompt>", "", null, null],
+        widgetsValues: null,
+        widgetsValuesNamed: {
+            user_prompt_source: "bundled_library",
+            user_prompt_directory: "",
+            user_prompt_file: "electronic/synth-pop-vocal.txt",
+            genre: "House",
+            tempo: "Midtempo (100-120 BPM)",
+            meter: "4/4 (common time)",
+            key: "A minor",
+            lyrics: "sparse",
+            language: "Deutsch (German)",
+            voice: "female vocal",
+            theme: "love & romance",
+            length: "4-5 minutes",
+            description_override: "My description.",
+            system_prompt_source: "manual",
+            system_prompt_directory: "",
+            system_prompt_file: "<select a prompt>",
+            source_name_override: "",
+            system_prompt: "SYS",
+        },
+    }).valuesByName,
+    {
+        user_prompt_source: "bundled_library",
+        user_prompt_directory: "",
+        user_prompt_file: "electronic/synth-pop-vocal.txt",
+        genre: "House",
+        tempo: "Midtempo (100-120 BPM)",
+        meter: "4/4 (common time)",
+        key: "A minor",
+        lyrics: "sparse",
+        language: "Deutsch (German)",
+        voice: "female vocal",
+        theme: "love & romance",
+        length: "4-5 minutes",
+        description_override: "My description.",
+        system_prompt_source: "manual",
+        system_prompt_directory: "",
+        system_prompt_file: "<select a prompt>",
+        source_name_override: "",
+        system_prompt: "SYS",
+    },
+    "named new-shape values must be re-applied by name"
+);
+
+// 3. Named pre-2.0.5 serialization (no meter key): meter defaults to custom and
+//    every other named field keeps its own value.
+assert.deepEqual(
+    structuredPromptWidgetRepairs({
+        widgetNames: STRUCTURED_WIDGETS,
+        widgetsValues: null,
         widgetsValuesNamed: {
             user_prompt_source: "bundled_library",
             user_prompt_file: "<select a prompt>",
@@ -177,8 +216,8 @@ assert.deepEqual(
     "named pre-2.0.5 values must be re-applied by name with meter=custom"
 );
 
-// 4. Pre-2.0.5 positional serialization: the meter slot holds the old key
-//    value, so every following slot must shift back by one.
+// 4. Pre-2.0.5 positional serialization (17 non-button values, no meter): map by
+//    the old order and default meter to custom.
 assert.deepEqual(
     structuredPromptWidgetRepairs({
         widgetNames: STRUCTURED_WIDGETS,
@@ -210,24 +249,60 @@ assert.deepEqual(
         system_prompt_file: "<select a prompt>",
         source_name_override: "",
     },
-    "positional pre-2.0.5 values must be shifted back with a custom meter inserted"
+    "positional pre-2.0.5 values must be reconstructed with a custom meter inserted"
 );
 
-// 5. Positional serialization already carrying an unmistakable meter value in
-//    the meter slot (new shape): no repair.
+// 5. 2.0.5 positional serialization (18 non-button values, old system-prompt
+//    order): map by the old order; system fields keep their own values.
+assert.deepEqual(
+    structuredPromptWidgetRepairs({
+        widgetNames: STRUCTURED_WIDGETS,
+        widgetsValues: [
+            "bundled_library", "", "<select a prompt>", "House", "Midtempo (100-120 BPM)",
+            "4/4 (common time)", "A minor", "sparse", "Deutsch (German)", "female vocal",
+            "love & romance", "4-5 minutes", "My description.", "SYS", "manual", "",
+            "<select a prompt>", "", null, null,
+        ],
+        widgetsValuesNamed: undefined,
+    }).valuesByName,
+    {
+        user_prompt_source: "bundled_library",
+        user_prompt_directory: "",
+        user_prompt_file: "<select a prompt>",
+        genre: "House",
+        tempo: "Midtempo (100-120 BPM)",
+        meter: "4/4 (common time)",
+        key: "A minor",
+        lyrics: "sparse",
+        language: "Deutsch (German)",
+        voice: "female vocal",
+        theme: "love & romance",
+        length: "4-5 minutes",
+        description_override: "My description.",
+        system_prompt: "SYS",
+        system_prompt_source: "manual",
+        system_prompt_directory: "",
+        system_prompt_file: "<select a prompt>",
+        source_name_override: "",
+    },
+    "positional 2.0.5 values must be reconstructed in the old system-prompt order"
+);
+
+// 6. Positional serialization already in the new shape: system_prompt_source
+//    sits at its new slot, so nothing needs repairing.
 assert.equal(
     structuredPromptWidgetRepairs({
         widgetNames: STRUCTURED_WIDGETS,
         widgetsValues: [
             "bundled_library", "", "<select a prompt>", "House", "Midtempo (100-120 BPM)",
-            "7/8", "A minor", "sparse", "Deutsch (German)", "female vocal", "love & romance",
-            "4-5 minutes", "My description.", "SYS", "manual", "", "<select a prompt>", "",
-            null, null,
+            "4/4 (common time)", "A minor", "sparse", "Deutsch (German)", "female vocal",
+            "love & romance", "4-5 minutes", "My description.", "manual", "",
+            "<select a prompt>", "", "SYS", null, null, null,
         ],
         widgetsValuesNamed: undefined,
     }),
     null,
-    "positional serialization with a meter value in the meter slot is already repaired"
+    "positional new-shape serialization needs no repair"
 );
 
 console.log("test_workflow_migration.mjs: all assertions passed");

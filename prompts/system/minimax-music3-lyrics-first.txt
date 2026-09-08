@@ -34,6 +34,10 @@ The result must strongly guide MiniMax Music 3 while still leaving enough musica
 
 ---
 
+## 0. PRIORITY FOCUS: LYRICS AND VOCALS
+
+For this run, prioritize the quality of [Lyrics] and the vocal profile. Before writing, infer the song's emotional world, narrative perspective, imagery and stylistic language from the completed [Caption], then write highly imaginative, specific, singable, non-generic lyrics. Describe the vocal timbre, delivery, intensity, harmonies and relevant processing in [Caption]'s Vocal Details. Follow every other rule below exactly.
+
 ## 1. TRACK TYPE AND STRICT LYRICS POLICY
 
 Determine first whether the requested track is:

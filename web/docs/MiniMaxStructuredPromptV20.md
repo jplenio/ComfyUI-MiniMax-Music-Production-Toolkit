@@ -2,6 +2,8 @@
 
 Structured prompt control for the integrated LLM. Instead of one free-form user prompt, this node exposes dedicated fields for Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme and Target length, plus a further-description area. The node assembles a short structured brief plus the description into the LLM user prompt.
 
+The node body is split into two visually separated sections: **User Prompt** (structured fields + description) and **System Prompt** (source/file selection + editable text).
+
 **Node ID:** `MiniMaxStructuredPromptV20`  
 **Category:** `MiniMax Music Production Toolkit/prompts`
 
@@ -40,9 +42,22 @@ Free text describing the track in more detail.
 
 Selecting a prompt file copies the file's body text into `description_override`. From then on **only the content of that field** is used - the file is not re-read for the description. Edit the field to change the description, or clear it to remove it entirely. On workflow load the field is only filled when it is still empty, so serialized edits are never overwritten.
 
-## Save as custom prompt
+## System prompt section
 
-A **Save as custom prompt** button stores the current field values and the description as a new prompt file in the active prompt library's `_custom/` folder. It asks for a file name (the `.txt` extension is added automatically), writes the metadata block (custom fields omitted) plus the description, refreshes the dropdown and selects the new file. In manual mode the file is saved into the bundled library and the node switches to it. Existing files are only overwritten after removing or renaming them.
+The system prompt is a separate section with the same selection model:
+
+- **`system_prompt_source`** — `bundled_library` (default), `manual` or `external_directory`.
+- **`system_prompt_directory`** — Folder for `external_directory` mode.
+- **`system_prompt_file`** — Selected system prompt file. The bundled default is `minimax-music3-production.txt`; additional variants emphasize different aspects (brevity, lyrics/vocals, instrumentation/arrangement).
+- **`system_prompt`** — Editable system prompt text. Selecting a system prompt file copies its text into this field, and **only this field's content is used from then on** (exactly like `description_override` for the user prompt). Edit it freely after selection.
+
+On workflow load the `system_prompt` field is only filled when it is still empty, so serialized edits are never overwritten.
+
+## Buttons
+
+- **`Save as custom user prompt`** — stores the current field values and description as a new prompt file in the active user prompt library's `_custom/` folder. It asks for a file name (the `.txt` extension is added automatically), writes the metadata block (custom fields omitted) plus the description, refreshes the dropdown and selects the new file. In manual mode the file is saved into the bundled library and the node switches to it. Existing files are only overwritten after removing or renaming them.
+- **`Save as custom system prompt`** — stores the current `system_prompt` text as a plain prompt file in the system library's `_custom/` folder.
+- **`Refresh prompt lists`** — refreshes both the user and system prompt-file dropdowns (and the structured combo options) after adding/deleting prompt files while ComfyUI is running.
 
 ## Combo option lists
 
@@ -57,11 +72,11 @@ Every structured combo offers a curated list of common options (genres, tempos, 
 - **`user_prompt_file`** — Selected prompt file, or **`custom`** (the first choice) for the free mode: no file is loaded and the fields stay untouched. The dropdown groups files alphabetically under their directory labels (directories first, files indented). The frontend refreshes this list and prefills the fields below from the file's metadata.
 - **`genre`**, **`tempo`**, **`meter`**, **`key`**, **`lyrics`**, **`language`**, **`voice`**, **`theme`**, **`length`** — Structured combos. Select **`custom`** (the first entry of every combo) to leave that part out of the LLM prompt entirely. Tempo offers curated BPM ranges; meter offers curated time signatures; selecting a prompt file with matching metadata prefills them. The option lists contain a curated vocabulary plus all values found in the prompt library.
 - **`description_override`** — Further description appended to the structured brief. Selecting a prompt file copies its body text here; only this field's content is used from then on.
-- **`system_prompt`** / **`system_prompt_source`** / **`system_prompt_directory`** / **`system_prompt_file`** — System prompt selection, identical in behavior to the LLM Prompt Library / Template node.
-
-### Optional
-
+- **`system_prompt_source`** — `bundled_library` (default), `manual` or `external_directory`.
+- **`system_prompt_directory`** — Folder for system prompt files in `external_directory` mode.
+- **`system_prompt_file`** — Selected system prompt file. The bundled default is `minimax-music3-production.txt`; additional variants emphasize different aspects (fantasy/free creativity, genre fidelity, cinematic scope, dance energy, emotional storytelling, minimalism/space, fast tempo/high BPM, brevity, lyrics/vocals, instrumentation/arrangement).
 - **`source_name_override`** — Stable source name for output paths/provenance. Defaults to the prompt filename stem.
+- **`system_prompt`** — Editable system prompt text, copied from the selected file and authoritative from then on.
 
 ## Outputs
 
@@ -87,9 +102,9 @@ When every field is `custom` and no description exists, the node raises a clear 
 
 ## Cache behavior
 
-`IS_CHANGED` includes the selected prompt file content fingerprint (editing a file invalidates the cache), the `description_override` text and all structured field values, so changing any of them re-runs the LLM step.
+`IS_CHANGED` includes the selected prompt file content fingerprint (editing a file invalidates the cache), the `description_override` text, the `system_prompt` text and all structured field values, so changing any of them re-runs the LLM step.
 
 ## Usage notes
 
 - The bundled example workflow uses this node instead of the legacy `LLM Prompt Library / Template` node for the user prompt; the legacy node remains available for backwards compatibility.
-- In `manual` mode, use the structured fields and `description_override` to compose the prompt directly.
+- In `manual` mode, use the structured fields and `description_override` to compose the prompt directly; for the system prompt, type the text directly into `system_prompt`.

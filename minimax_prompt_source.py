@@ -21,6 +21,9 @@ LOGGER = get_logger("prompts")
 _SECTION_RE = re.compile(r"^\s*\[(Title|Caption|Lyrics|Count|Song-Count|Image[_ ]Prompt)\]\s*$", re.IGNORECASE)
 _WINDOWS_INVALID = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
+DEFAULT_SYSTEM_PROMPT_FILE = "minimax-music3-production.txt"
+
+
 def _load_bundled_default_system_prompt() -> str:
     """Load the shipped production prompt from its canonical library file.
 
@@ -29,7 +32,7 @@ def _load_bundled_default_system_prompt() -> str:
     fallback keeps node discovery alive if an installation is incomplete; file
     mode will still surface the precise missing-file error at execution time.
     """
-    path = Path(__file__).resolve().parent / "prompts" / "system" / "minimax-music3-production.txt"
+    path = Path(__file__).resolve().parent / "prompts" / "system" / DEFAULT_SYSTEM_PROMPT_FILE
     try:
         text = path.read_text(encoding="utf-8-sig").strip()
         if not text:

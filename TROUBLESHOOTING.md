@@ -55,7 +55,7 @@ If ComfyUI reports a message such as `No link found in parent graph for id [37:6
 
 ## No JSON appears beside the FLAC/MP3 files
 
-That is expected in the current workflow. Since v1.0.4, the example no longer writes duplicated per-audio sidecars. Look in the directory configured by **MiniMax Output Paths → configuration_subdir** (default `json/`).
+That is expected in the current workflow. Since v1.0.4, the example no longer writes duplicated per-audio sidecars. Look in the directory configured by **MiniMax Output Paths → configuration_subdir** (default `log/`).
 
 The final `Save Production JSON` node must be connected to the three audio savers' `save_info_json` outputs and the saved artwork path.
 

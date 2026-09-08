@@ -154,7 +154,7 @@ configuration_subdir
 v1.0.4 adds:
 
 ```text
-configuration_subdir = json
+configuration_subdir = log/
 ```
 
 The node emits a dedicated `configuration_prefix` for the final JSON writer.
@@ -183,7 +183,7 @@ Because those save-info/path inputs only become available after each file is sav
 Default output:
 
 ```text
-json/Example Album - Song Title.json
+log/Example Album - Song Title.json
 ```
 
 The canonical JSON contains both **generation configuration** and an `outputs` section describing the files that were actually written.

@@ -239,13 +239,11 @@ class MiniMaxOutputPaths:
             "required": {
                 "source_name": ("STRING", {"forceInput": True}),
                 "base_output": ("STRING", {"default": "audio_minimax3/%date:yyyy-MM-dd%/", "multiline": False}),
-                "original_subdir": ("STRING", {"default": "32flac/", "multiline": False}),
-                "sr_flac_subdir": ("STRING", {"default": "48flac/", "multiline": False}),
-                "sr_mp3_subdir": ("STRING", {"default": "48mp3/", "multiline": False}),
+                "original_subdir": ("STRING", {"default": "org-32flac/", "multiline": False}),
+                "sr_flac_subdir": ("STRING", {"default": "highres-44flac/", "multiline": False}),
+                "sr_mp3_subdir": ("STRING", {"default": "highres-44mp3/", "multiline": False}),
                 "artwork_subdir": ("STRING", {"default": "artwork/", "multiline": False}),
-                "configuration_subdir": ("STRING", {"default": "json", "multiline": False}),
-                "append_variant_index": ("BOOLEAN", {"default": True}),
-                "variant_padding": ("INT", {"default": 2, "min": 1, "max": 6, "step": 1}),
+                "configuration_subdir": ("STRING", {"default": "log/", "multiline": False}),
             },
             "optional": {
                 "run_index": ("INT", {"forceInput": True}),
@@ -270,11 +268,12 @@ class MiniMaxOutputPaths:
         pieces.append(source)
         return "/".join(pieces)
 
-    def build(self, source_name, base_output, original_subdir, sr_flac_subdir, sr_mp3_subdir, artwork_subdir, configuration_subdir="json",
-              append_variant_index=True, variant_padding=2, run_index=1, variant_count=1):
+    def build(self, source_name, base_output, original_subdir, sr_flac_subdir, sr_mp3_subdir, artwork_subdir, configuration_subdir="log/", run_index=1, variant_count=1):
+        # run_index / variant_count are retained as optional connected batch info
+        # for workflow compatibility; the path prefixes no longer append a variant
+        # suffix because the downstream savers rebuild the basename from Album +
+        # Title via filename_mode.
         source = _clean_source_name(source_name)
-        if append_variant_index and int(variant_count or 1) > 1:
-            source = f"{source}_{int(run_index):0{int(variant_padding)}d}"
         return (
             self._join(base_output, original_subdir, source),
             self._join(base_output, sr_flac_subdir, source),

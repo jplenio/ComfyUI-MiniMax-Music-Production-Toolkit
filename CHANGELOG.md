@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.1.0] - 2026-09-09
+
+The structured system-prompt and output-layout release: a visually separated System Prompt section in the Structured Song Prompt with file selection and an editable authoritative field, eleven bundled system-prompt focus variants, clearer output folder defaults, and removal of the dead variant-suffix inputs.
+
+### Added
+- **System Prompt section in `MiniMaxStructuredPromptV20`**: `system_prompt_source` (default `bundled_library`), `system_prompt_directory`, `system_prompt_file` (default `minimax-music3-production.txt`) and the editable `system_prompt` field, with `USER PROMPT` / `SYSTEM PROMPT` section headings styled as plain headers. Selecting a system-prompt file copies its text into `system_prompt`, which is authoritative from then on.
+- **Buttons**: `Save as custom user prompt`, `Save as custom system prompt` and `Refresh prompt lists` (refreshes both libraries).
+- **Backend routes**: `/minimax_music_toolkit/prompt_text` and `/minimax_music_toolkit/save_system_prompt`, plus `save_custom_system_prompt()` in `prompt_library.py`.
+- **Eleven bundled system-prompt variants** in `prompts/system/`, each the full production contract plus a `## 0. PRIORITY FOCUS` section: concise, lyrics-first, instrumental-first, fantasy, genre-faithful, cinematic, dance-energy, emotional-story, minimal-sparse and fast-tempo (high BPM).
+- `user_prompt_file` default in `MiniMaxStructuredPromptV20` is now `electronic/synth-pop-vocal.txt`.
+
+### Changed
+- **`MiniMaxOutputPaths` defaults**: `org-32flac/`, `highres-44flac/`, `highres-44mp3/`, `log/`; workflow, tooltips and docs updated.
+- **Removed `append_variant_index` and `variant_padding`** from `MiniMaxOutputPaths` (no visible effect under `filename_mode="album - title"`).
+- **`MiniMaxStructuredPromptV20` field order**: `system_prompt` after `source_name_override`; `source_name_override` moved to required.
+- System prompt selection is now field-authoritative (the copied text is used); `IS_CHANGED` includes the `system_prompt` text.
+
+### Fixed
+- **Pre-2.1.0 workflow load shift**: the system-prompt reorder shifted old widget values; the load-time migration in `web/workflow_migration.js` / `web/migration_utils.js` now repairs by name and reconstructs the historical positional orders (the earlier `meter` repair is folded into the same path).
+- Removed the contradictory "Caption maximum ~120 words" guidance from all system prompts.
+
 ## [2.0.5] - 2026-09-06
 
 The time-signature and world-library release: a dedicated Time signature field in the Structured Song Prompt, the prompt library expanded from 95 to 239 world-spanning templates with Meter metadata everywhere, and a fully overhauled curated combo vocabulary.

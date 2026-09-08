@@ -34,6 +34,10 @@ The result must strongly guide MiniMax Music 3 while still leaving enough musica
 
 ---
 
+## 0. PRIORITY FOCUS: FANTASY AND FREE CREATIVITY
+
+For this run, prioritize fantasy and free creativity. Treat the user request as a starting spark: invent a vivid fictional world, surprising imagery and unexpected but coherent musical directions. Be more imaginative in execution, but still respect the user's explicit exclusions and core subject, and produce a finished, intentional song. Follow every structural and sonic rule below exactly.
+
 ## 1. TRACK TYPE AND STRICT LYRICS POLICY
 
 Determine first whether the requested track is:

@@ -1288,24 +1288,6 @@
             "name": "configuration_subdir"
           },
           "link": null
-        },
-        {
-          "localized_name": "append_variant_index",
-          "name": "append_variant_index",
-          "type": "BOOLEAN",
-          "widget": {
-            "name": "append_variant_index"
-          },
-          "link": null
-        },
-        {
-          "localized_name": "variant_padding",
-          "name": "variant_padding",
-          "type": "INT",
-          "widget": {
-            "name": "variant_padding"
-          },
-          "link": null
         }
       ],
       "outputs": [
@@ -1348,23 +1330,19 @@
       },
       "widgets_values": [
         "audio/minimax3/%date:yyyy-MM-dd%/test-output/",
-        "32flac/",
-        "44flac/",
-        "44mp3/",
+        "org-32flac/",
+        "highres-44flac/",
+        "highres-44mp3/",
         "artwork/",
-        "json",
-        true,
-        2
+        "log/"
       ],
       "widgets_values_named": {
         "base_output": "audio/minimax3/%date:yyyy-MM-dd%/test-output/",
-        "original_subdir": "32flac/",
-        "sr_flac_subdir": "44flac/",
-        "sr_mp3_subdir": "44mp3/",
+        "original_subdir": "org-32flac/",
+        "sr_flac_subdir": "highres-44flac/",
+        "sr_mp3_subdir": "highres-44mp3/",
         "artwork_subdir": "artwork/",
-        "configuration_subdir": "json",
-        "append_variant_index": true,
-        "variant_padding": 2
+        "configuration_subdir": "log/"
       },
       "color": "#432",
       "bgcolor": "#653"
@@ -1844,7 +1822,7 @@
       ]
     },
     "workflow_name": "MiniMax Music Production Toolkit - Audio Enhancement Lab",
-    "workflow_version": "2.0.5"
+    "workflow_version": "2.1.0"
   },
   "version": 0.4
 }

@@ -30,11 +30,11 @@ artwork/nordic-folk-vocal.jpg
 The bundled workflow now produces:
 
 ```text
-32flac/Example Album - Last Wick.flac
-44flac/Example Album - Last Wick.flac
-44mp3/Example Album - Last Wick.mp3
+org-32flac/Example Album - Last Wick.flac
+highres-44flac/Example Album - Last Wick.flac
+highres-44mp3/Example Album - Last Wick.mp3
 artwork/Example Album - Last Wick.jpg
-json/Example Album - Last Wick.json
+log/Example Album - Last Wick.json
 ```
 
 This naming changes only filesystem names. The embedded audio `TITLE` tag remains the song title, and the `ALBUM` tag remains the configured album name.

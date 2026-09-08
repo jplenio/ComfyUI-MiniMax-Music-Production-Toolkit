@@ -79,16 +79,16 @@ def main() -> None:
             widget_input("user_prompt_file", "COMBO"),
             *[widget_input(field, "COMBO") for field in STRUCTURED_FIELDS],
             widget_input("description_override", "STRING"),
-            widget_input("system_prompt", "STRING"),
             widget_input("system_prompt_source", "COMBO"),
             widget_input("system_prompt_directory", "STRING"),
             widget_input("system_prompt_file", "COMBO"),
             widget_input("source_name_override", "STRING"),
+            widget_input("system_prompt", "STRING"),
         ],
         widgets_values=[
-            "bundled_library", "", PLACEHOLDER,
+            "bundled_library", "", "electronic/synth-pop-vocal.txt",
             *([CUSTOM] * len(STRUCTURED_FIELDS)),
-            "", system_prompt, "manual", "", PLACEHOLDER, "",
+            "", "bundled_library", "", "minimax-music3-production.txt", "", system_prompt,
         ],
         outputs=[
             output("system_prompt", "STRING", [180, 195]),
@@ -98,11 +98,11 @@ def main() -> None:
         ],
         widgets_values_named={
             "user_prompt_source": "bundled_library", "user_prompt_directory": "",
-            "user_prompt_file": PLACEHOLDER,
+            "user_prompt_file": "electronic/synth-pop-vocal.txt",
             **{field: CUSTOM for field in STRUCTURED_FIELDS},
-            "description_override": "", "system_prompt": system_prompt,
-            "system_prompt_source": "manual", "system_prompt_directory": "",
-            "system_prompt_file": PLACEHOLDER, "source_name_override": "",
+            "description_override": "", "system_prompt_source": "bundled_library",
+            "system_prompt_directory": "", "system_prompt_file": "minimax-music3-production.txt",
+            "source_name_override": "", "system_prompt": system_prompt,
         },
     )
 

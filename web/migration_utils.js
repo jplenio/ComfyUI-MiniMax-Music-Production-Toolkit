@@ -5,6 +5,27 @@ export const PARSER_INPUT_NAME = "structured_llm_output";
 export const JSON_METADATA_INPUT_NAME = "metadata_json";
 export const LLM_SPLIT_MODE_OPTIONS = ["none", "layer", "row"];
 
+// Historical positional widget orders of MiniMaxStructuredPromptV20, used to
+// repair positional-only serializations.  Pre-2.0.5 had no meter; 2.0.5 added
+// meter but kept the old system-prompt field order.  The current order moved
+// system_prompt after source_name_override.
+const OLD_PRE_METER_ORDER = [
+    "user_prompt_source", "user_prompt_directory", "user_prompt_file",
+    "genre", "tempo", "key", "lyrics", "language", "voice", "theme", "length",
+    "description_override", "system_prompt", "system_prompt_source",
+    "system_prompt_directory", "system_prompt_file", "source_name_override",
+];
+const OLD_METER_ORDER = [
+    "user_prompt_source", "user_prompt_directory", "user_prompt_file",
+    "genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length",
+    "description_override", "system_prompt", "system_prompt_source",
+    "system_prompt_directory", "system_prompt_file", "source_name_override",
+];
+
+function looksLikeSourceKind(value) {
+    return value === "manual" || value === "bundled_library" || value === "external_directory";
+}
+
 /**
  * Compute widget repairs for the integrated LLM chat node.
  *
@@ -107,46 +128,52 @@ export function shouldRepairJsonMetadataLink(originOutputName, slotInputName, me
  * @returns {{valuesByName: Record<string, any>} | null}
  */
 export function structuredPromptWidgetRepairs({ widgetNames, widgetsValues, widgetsValuesNamed }) {
-    const meterIndex = widgetNames.indexOf("meter");
-    if (meterIndex < 0) return null; // no meter widget (older toolkit) - nothing to repair
-    if (
-        widgetsValuesNamed &&
-        typeof widgetsValuesNamed === "object" &&
-        "meter" in widgetsValuesNamed
-    ) {
-        return null; // already carries the meter entry - new shape
-    }
+    const named = widgetsValuesNamed && typeof widgetsValuesNamed === "object";
 
-    const valuesByName = {};
-    if (widgetsValuesNamed && typeof widgetsValuesNamed === "object") {
-        // Named values are correct by name; only the meter entry is missing.
+    if (named) {
+        // Named serializations are correct by name regardless of widget order,
+        // so re-apply every known widget value by name.  This resolves both the
+        // meter insertion and the system-prompt field reorder at once.
+        const valuesByName = {};
         for (const name of widgetNames) {
             if (name in widgetsValuesNamed) valuesByName[name] = widgetsValuesNamed[name];
         }
-        valuesByName.meter = "custom";
-        return { valuesByName };
-    }
-
-    if (Array.isArray(widgetsValues)) {
-        // Positional values: slot i (i > meter) got the NEXT field's old value.
-        // A meter-looking value in the meter slot means the file is already in
-        // the new shape - then there is nothing to insert.
-        const meterSlotValue = widgetsValues[meterIndex];
-        if (looksLikeMeterValue(meterSlotValue)) return null;
-        for (let i = 0; i < widgetNames.length; i++) {
-            const name = widgetNames[i];
-            const sourceIndex = i <= meterIndex ? i : i - 1;
-            const value = i === meterIndex ? "custom" : widgetsValues[sourceIndex];
-            if (value !== undefined && value !== null) valuesByName[name] = value;
+        if (widgetNames.includes("meter") && !("meter" in widgetsValuesNamed)) {
+            valuesByName.meter = "custom";
         }
         return { valuesByName };
     }
-    return null;
-}
 
-function looksLikeMeterValue(value) {
-    if (typeof value !== "string" || !value) return false;
-    if (value === "changing time signatures" || value === "free time / rubato") return true;
-    // All other curated meter entries contain a numeric fraction (4/4, 3/4, 7/8, ...).
-    return /\d{1,2}\/\d{1,2}/.test(value);
+    if (!Array.isArray(widgetsValues) || !widgetNames.includes("meter")) return null;
+
+    // Strip trailing button placeholders (null) to find the non-button count.
+    let count = widgetsValues.length;
+    while (count > 0 && widgetsValues[count - 1] == null) count--;
+
+    let oldOrder = null;
+    if (count === OLD_PRE_METER_ORDER.length) {
+        oldOrder = OLD_PRE_METER_ORDER;
+    } else if (count === OLD_METER_ORDER.length) {
+        // 18 non-button values can be either the 2.0.5 order or the current
+        // order.  In the current order system_prompt_source sits at its new
+        // slot, so a source-kind value there means the file is already new.
+        const newSourceSlot = widgetNames.indexOf("system_prompt_source");
+        if (newSourceSlot >= 0 && looksLikeSourceKind(widgetsValues[newSourceSlot])) {
+            return null;
+        }
+        oldOrder = OLD_METER_ORDER;
+    }
+    if (!oldOrder) return null;
+
+    const valuesByName = {};
+    for (let i = 0; i < oldOrder.length; i++) {
+        const name = oldOrder[i];
+        if (!widgetNames.includes(name)) continue;
+        const value = widgetsValues[i];
+        if (value !== undefined && value !== null) valuesByName[name] = value;
+    }
+    if (widgetNames.includes("meter") && !("meter" in valuesByName)) {
+        valuesByName.meter = "custom";
+    }
+    return { valuesByName };
 }

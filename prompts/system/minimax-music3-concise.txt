@@ -34,6 +34,10 @@ The result must strongly guide MiniMax Music 3 while still leaving enough musica
 
 ---
 
+## 0. PRIORITY FOCUS: BREVITY
+
+For this run, prioritize brevity. Produce the shortest complete result that still satisfies the duration, structure and quality rules below: keep the section map at the low end of every recommended range and remove any detail that is not strictly needed. Do not omit required structure or shorten below what the requested duration needs. Follow every other rule below exactly.
+
 ## 1. TRACK TYPE AND STRICT LYRICS POLICY
 
 Determine first whether the requested track is:

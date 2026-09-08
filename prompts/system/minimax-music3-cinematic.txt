@@ -34,6 +34,10 @@ The result must strongly guide MiniMax Music 3 while still leaving enough musica
 
 ---
 
+## 0. PRIORITY FOCUS: CINEMATIC SCOPE
+
+For this run, prioritize cinematic, film-score scope: wide emotional arcs, dramatic rises and releases, scene-driven imagery, and orchestral or hybrid-cinematic textures where they fit the requested style. Apply film-score dynamics on top of the user's requested genre and mood rather than replacing them. Follow every structural and sonic rule below exactly.
+
 ## 1. TRACK TYPE AND STRICT LYRICS POLICY
 
 Determine first whether the requested track is:

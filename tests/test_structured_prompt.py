@@ -341,13 +341,63 @@ class StructuredPromptNodeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self._build()
 
+    def test_system_prompt_file_mode_field_is_authoritative(self):
+        resolve = MODULES["minimax_structured_prompt"]._resolve_system_prompt
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "sys.txt").write_text("FILE SYSTEM TEXT", encoding="utf-8")
+            # A non-empty field wins even in file mode (the frontend copied it in).
+            text, origin = resolve("external_directory", str(root), "sys.txt", "EDITED TEXT")
+            self.assertEqual(text, "EDITED TEXT")
+            self.assertEqual(origin, "sys.txt")
+            # An empty field (headless/API without the frontend prefill) loads the file.
+            text2, origin2 = resolve("external_directory", str(root), "sys.txt", "")
+            self.assertEqual(text2, "FILE SYSTEM TEXT")
+            self.assertEqual(origin2, "sys.txt")
+            # Manual mode uses the field directly and errors when it is empty.
+            self.assertEqual(resolve("manual", "", PLACEHOLDER, "MANUAL")[0], "MANUAL")
+            with self.assertRaises(ValueError):
+                resolve("manual", "", PLACEHOLDER, "")
+
+    def test_node_system_file_mode_uses_selected_file_or_field(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "sys.txt").write_text("SYSTEM FROM FILE", encoding="utf-8")
+            system, _user, _name, _summary = self._build(
+                genre="Funk",
+                description_override="Upbeat bassline.",
+                system_prompt_source="external_directory",
+                system_prompt_directory=str(root),
+                system_prompt_file="sys.txt",
+                system_prompt="SYSTEM FROM FIELD",
+            )
+            self.assertEqual(system, "SYSTEM FROM FIELD")
+            system2, _user2, _name2, _summary2 = self._build(
+                genre="Funk",
+                description_override="Upbeat bassline.",
+                system_prompt_source="external_directory",
+                system_prompt_directory=str(root),
+                system_prompt_file="sys.txt",
+                system_prompt="",
+            )
+            self.assertEqual(system2, "SYSTEM FROM FILE")
+
     def test_node_input_types_shape(self):
         data = structured_node.INPUT_TYPES()
         required = data["required"]
         for field in STRUCTURED_FIELDS:
             self.assertIn(field, required)
             self.assertEqual(required[field][0][0], CUSTOM)
-        self.assertEqual(data["optional"]["source_name_override"][1].get("default"), "")
+        # source_name_override moved into required so it can sit before system_prompt.
+        self.assertNotIn("optional", data)
+        self.assertEqual(required["source_name_override"][1].get("default"), "")
+        self.assertEqual(required["user_prompt_file"][1].get("default"), "electronic/synth-pop-vocal.txt")
+        self.assertEqual(required["system_prompt_source"][1].get("default"), "bundled_library")
+        self.assertEqual(required["system_prompt_file"][1].get("default"), "minimax-music3-production.txt")
+        keys = list(required)
+        # The new field order: description -> system selector -> source_name -> system_prompt.
+        self.assertGreater(keys.index("system_prompt_source"), keys.index("description_override"))
+        self.assertGreater(keys.index("system_prompt"), keys.index("source_name_override"))
         # The prompt-file dropdown exposes the free mode as its first real choice.
         file_options = required["user_prompt_file"][0]
         self.assertIn(CUSTOM, file_options)

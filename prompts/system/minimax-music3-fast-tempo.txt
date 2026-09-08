@@ -34,6 +34,10 @@ The result must strongly guide MiniMax Music 3 while still leaving enough musica
 
 ---
 
+## 0. PRIORITY FOCUS: FAST TEMPO (HIGH BPM)
+
+For this run, prioritize a genuinely fast tempo. Honor the requested high BPM exactly and write the exact BPM as a number in [Caption]'s Basic Attributes. Keep the rhythmic language, note subdivision, section density and transient character clearly fast throughout, so the track never drifts into a slower feel. Use the higher end of the recommended section counts and avoid an overly sparse map that could cause the song to play slower than requested. Follow every other rule below exactly.
+
 ## 1. TRACK TYPE AND STRICT LYRICS POLICY
 
 Determine first whether the requested track is:

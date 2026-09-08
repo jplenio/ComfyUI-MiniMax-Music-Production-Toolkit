@@ -9,14 +9,12 @@ Creates consistent relative output prefixes for original audio, release FLAC/MP3
 
 - **`source_name`** — Stable source identifier used to derive preliminary path prefixes and provenance. In the bundled workflow, the audio/artwork/JSON savers subsequently rebuild the public basename from Album + generated Title, so a library prompt filename does not become the final cover filename.
 - **`base_output`** — Base path relative to ComfyUI's output directory. Date macros such as `%date:yyyy-MM-dd%` are supported by the saver/path logic.
-- **`original_subdir`** — Folder for untouched/original MiniMax audio. Example default: `32flac/`.
-- **`sr_flac_subdir`** — Folder for final lossless release FLAC. Example default: `44flac/`.
-- **`sr_mp3_subdir`** — Folder for final MP3. Example default: `44mp3/`.
+- **`original_subdir`** — Folder for untouched/original MiniMax audio. Default: `org-32flac/`.
+- **`sr_flac_subdir`** — Folder for final lossless release FLAC. Default: `highres-44flac/`.
+- **`sr_mp3_subdir`** — Folder for final MP3. Default: `highres-44mp3/`.
 - **`artwork_subdir`** — Folder for generated cover JPGs. Default: `artwork/`.
-- **`configuration_subdir`** — Folder for the single canonical JSON configuration. **Default: `json`**. This is the recommended v1.0.4 replacement for duplicated JSON sidecars beside individual audio files.
-- **`append_variant_index`** — Append a variant number when several songs are generated from one source.
-- **`variant_padding`** — Number of digits used for the variant suffix.
-- **`run_index` / `variant_count`** — Optional connected batch information.
+- **`configuration_subdir`** — Folder for the single canonical JSON configuration. **Default: `log/`**. This is the recommended v1.0.4 replacement for duplicated JSON sidecars beside individual audio files.
+- **`run_index` / `variant_count`** — Optional connected batch information (used by downstream nodes, not by this node's path construction).
 
 ## Outputs
 
@@ -30,11 +28,11 @@ Creates consistent relative output prefixes for original audio, release FLAC/MP3
 
 ```text
 base_output/
-├── 32flac/
-├── 44flac/
-├── 44mp3/
+├── org-32flac/
+├── highres-44flac/
+├── highres-44mp3/
 ├── artwork/
-└── json/
+└── log/
 ```
 
 All subfolder names remain configurable.

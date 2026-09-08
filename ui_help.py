@@ -188,9 +188,7 @@ NODE_INPUT_TOOLTIPS = {
         "sr_flac_subdir": "Subfolder for the final/upscaled lossless FLAC output. The name is only a folder label; actual sample rate comes from the audio signal entering the saver.",
         "sr_mp3_subdir": "Subfolder for final/preview MP3 output. The name is only a folder label; encoder quality is controlled in the saver node.",
         "artwork_subdir": "Subfolder for generated cover JPG files. The same base filename is used so cover embedding can be matched to the song.",
-        "configuration_subdir": "Subfolder for the ONE canonical production JSON per song. Default: json. This replaces duplicated JSON sidecars beside every audio encoding in the bundled workflow.",
-        "append_variant_index": "Append the run/variant number to filenames when multiple variants are generated. Recommended to avoid collisions and keep variants easy to associate with metadata.",
-        "variant_padding": "Number of digits used for the variant suffix, for example 2 produces _01 and 3 produces _001.",
+        "configuration_subdir": "Subfolder for the ONE canonical production configuration file per song. Default: log/. This replaces duplicated JSON sidecars beside every audio encoding in the bundled workflow.",
     },
     "SaveImageSmartPrefix": {
         "filename_prefix": "Output prefix/path for the JPG cover, normally produced by MiniMax Output Paths. The directory is preserved; with filename_mode=album - title the basename is rebuilt from the connected Album and generated Title so it matches the audio/JSON files.",
@@ -204,7 +202,7 @@ NODE_INPUT_TOOLTIPS = {
     },
     "MiniMaxSaveProductionJSON": {
         "metadata_json": "LEGACY base payload from the pre-2.0.0 song-metadata node. The direct inputs below overlay it; leave unconnected in the current example workflow.",
-        "configuration_prefix": "Destination prefix from MiniMax Output Paths. Its directory is controlled by configuration_subdir (default json); the node creates the final .json filename from Album/Title by default.",
+        "configuration_prefix": "Destination prefix from MiniMax Output Paths. Its directory is controlled by configuration_subdir (default log/); the node creates the final .json filename from Album/Title by default.",
         "audio_tags_json": "Standard tags containing Title/Artist/Album/etc. They are copied into the canonical JSON and are also used for consistent Album - Title JSON naming.",
         "title": "Generated song title. Used as a filename fallback and retained in the canonical configuration JSON; it does not alter audio metadata here.",
         "original_audio_save_json": "Save-info JSON emitted by the original-audio saver. Connecting it makes this node wait until the original audio file has been written and records path, format, sample rate, peak and applied save gain.",
@@ -262,10 +260,10 @@ NODE_INPUT_TOOLTIPS = {
         "theme": "Lyrics theme / topic. Select 'custom' to leave this part out of the LLM prompt.",
         "length": "Target song length (for example '4-5 minutes'). Select 'custom' to leave this part out of the LLM prompt.",
         "description_override": "Further description appended to the structured brief. Selecting a prompt file copies its body text into this field, and only this field's content is used afterwards - edit it freely, or clear it to remove the description.",
-        "system_prompt": "Manual system prompt text used when system_prompt_source is manual.",
-        "system_prompt_source": "Where the system prompt comes from: manual, the bundled library or an external directory.",
+        "system_prompt": "Effective system prompt sent to the LLM. Selecting a system prompt file copies its text into this field, and only this field's content is used afterwards - edit it freely. In manual mode this field is the whole system prompt.",
+        "system_prompt_source": "Where the system prompt comes from: the bundled library (default), manual text or an external directory.",
         "system_prompt_directory": "Folder containing system prompt files when system_prompt_source is external_directory.",
-        "system_prompt_file": "Selected system prompt file from the bundled or external library.",
+        "system_prompt_file": "Selected system prompt file from the bundled or external library. The bundled default is minimax-music3-production.txt; additional variants emphasize fantasy/free creativity, genre fidelity, cinematic scope, dance energy, emotional storytelling, minimalism/space, fast tempo/high BPM, brevity, lyrics/vocals and instrumentation/arrangement.",
         "source_name_override": "Optional stable source name used for output paths and provenance. When empty, the selected prompt filename stem is used.",
     },
     "MiniMaxParseExternalLLMOutputV16": {
@@ -319,7 +317,7 @@ NODE_INPUT_TOOLTIPS = {
 }
 
 NODE_DESCRIPTIONS = {
-    "MiniMaxStructuredPromptV20": "Structured prompt control for the LLM: optional metadata-prefilled fields (Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description text. Selecting a bundled/external prompt file prefills the fields and copies the file's body text into description_override, which is authoritative from then on; every field can be overridden, and 'custom' leaves the part out of the LLM prompt. Outputs the assembled user prompt and the resolved system prompt for the integrated LLM chat node.",
+    "MiniMaxStructuredPromptV20": "Structured prompt control for the LLM: optional metadata-prefilled fields (Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description text. Selecting a bundled/external prompt file prefills the fields and copies the file's body text into description_override, which is authoritative from then on; every field can be overridden, and 'custom' leaves the part out of the LLM prompt. The system prompt is a separate section: selecting a system prompt file copies its text into the editable system_prompt field, which is authoritative from then on. Outputs the assembled user prompt and the resolved system prompt for the integrated LLM chat node.",
     "MiniMaxFlashSRAudio": "Integrated Audio Super Resolution (FlashSR): reconstructs high-frequency content at 48 kHz with 5.12 s chunks and 0.50 s overlap-add stitching. Replaces the external Egregora node; the inference code is bundled with the toolkit (flashsr_inference/) and only the weights are auto-downloaded on first use per models_config.json. Emits a settings_json report for the production JSON.",
     "MiniMaxLLMChat": "Integrated LLM chat via llama-cpp-python: one system+user turn against a GGUF in models/llm, with optional session state per session_id. Replaces the external ComfyUI-LLM-Session chat node in the example workflow. Exposes the full LM Studio-style sampling set (temperature, top_k, top_p, min_p, repeat/presence/frequency penalty, seed), a chat-format selector, a thinking toggle (reasoning is split off, logged and recorded separately) and multi-GPU controls (split_mode, tensor_split 'even', main_gpu, tensor_parallel when the backend supports it). Verified with Qwen3.8-27B and Gemma 4.",
     "MiniMaxLLMUnload": "Releases the loaded LLM model (and optionally cached FlashSR runners) so VRAM/RAM is free for the music and artwork stages.",

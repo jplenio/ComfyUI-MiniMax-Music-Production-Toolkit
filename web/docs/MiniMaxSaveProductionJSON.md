@@ -4,7 +4,7 @@ Writes **one canonical JSON file per generated song** after the workflow has fin
 
 ## Why this node exists
 
-Older workflow versions could write a separate JSON sidecar beside every audio file. That duplicated the same production configuration in several folders. Since v1.0.4 the recommended workflow stores one consolidated JSON in a dedicated configuration directory (default: `json/`).
+Older workflow versions could write a separate JSON sidecar beside every audio file. That duplicated the same production configuration in several folders. Since v1.0.4 the recommended workflow stores one consolidated JSON in a dedicated configuration directory (default: `log/`).
 
 The node receives the save-information outputs from the original FLAC, release FLAC and release MP3 savers plus the saved artwork path. These connections are intentional dependencies: the JSON node cannot execute until those files have been written successfully.
 
@@ -13,7 +13,7 @@ The node receives the save-information outputs from the original FLAC, release F
 - **collision_mode:** `auto_increment`
 - **filename_mode:** `album - title`
 - **create_directories:** `true`
-- Configure the destination folder in **MiniMax Output Paths → configuration_subdir**. Default: `json`.
+- Configure the destination folder in **MiniMax Output Paths → configuration_subdir**. Default: `log`.
 
 ## What the JSON contains
 
@@ -36,11 +36,11 @@ Together with the `outputs` section this is enough to recreate a song (with modi
 
 With the recommended `album - title` mode, a song with album `Example Album` and title `Northern Light` becomes:
 
-`json/Example Album - Northern Light.json`
+`log/Example Album - Northern Light.json`
 
 Since 2.0.4 the node additionally writes the MiniMax prompt report beside the JSON with the **same basename**:
 
-`json/Example Album - Northern Light.md`
+`log/Example Album - Northern Light.md`
 
 The Markdown report (from the `MiniMaxPromptReport` node, wired to the new `minimax_prompt_md` input) contains the cleaned caption, the normalized lyrics, the verbatim final prompt sent to MiniMax and the FLUX.2 image prompt. When the input is empty (not wired), no `.md` file is written.
 

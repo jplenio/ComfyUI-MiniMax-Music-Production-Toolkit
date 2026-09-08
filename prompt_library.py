@@ -262,6 +262,49 @@ def save_custom_prompt(
     return f"_custom/{safe}.txt"
 
 
+def save_custom_system_prompt(
+    source: str,
+    directory: str,
+    filename: str,
+    text: str,
+    overwrite: bool = False,
+) -> str:
+    """Save an editable system-prompt text as a plain prompt file.
+
+    System prompts have no metadata block: the full text is used verbatim as
+    the LLM system prompt.  The file is written into ``<system-root>/_custom/
+    <name>.txt`` and the display-relative path is returned.  Existing files are
+    only replaced when ``overwrite`` is true.
+    """
+    from .filename_utils import safe_filename_component
+
+    root = resolve_root("system", source, directory)
+    custom_dir = root / "_custom"
+    name = (filename or "").strip()
+    if not name:
+        raise PromptLibraryError("System prompt file name is empty.")
+    if "/" in name or "\\" in name or name in {".", ".."}:
+        raise PromptLibraryError("System prompt file name must be a plain file name without folders.")
+    stem = Path(name).stem
+    safe = safe_filename_component(stem)
+    if not safe or safe == "song":
+        raise PromptLibraryError(f"System prompt file name '{name}' is invalid after sanitizing.")
+    target = custom_dir / f"{safe}.txt"
+    if target.exists() and not overwrite:
+        raise PromptLibraryError(
+            f"A custom system prompt '{safe}.txt' already exists in _custom/. "
+            "Choose another name or allow overwrite."
+        )
+
+    payload = (text or "").strip()
+    if not payload:
+        raise PromptLibraryError("System prompt text is empty.")
+    custom_dir.mkdir(parents=True, exist_ok=True)
+    target.write_text(payload + "\n", encoding="utf-8", newline="\n")
+    LOGGER.info("Saved custom system prompt: %s (%d chars)", target, len(payload))
+    return f"_custom/{safe}.txt"
+
+
 def register_routes() -> bool:
     """Register the read-only prompt-file listing route used by the frontend."""
     global _ROUTES_REGISTERED
@@ -357,6 +400,49 @@ def register_routes() -> bool:
             invalidate_library_options_cache()
         except Exception:  # pragma: no cover - option cache refresh is best-effort
             pass
+        return web.json_response({"ok": True, "file": relative})
+
+    @routes.get("/minimax_music_toolkit/prompt_text")
+    async def _prompt_text(request):
+        """Return the raw text of one prompt file (user or system)."""
+        kind = request.rel_url.query.get("kind", "user")
+        source = request.rel_url.query.get("source", "bundled_library")
+        directory = request.rel_url.query.get("directory", "")
+        selected = request.rel_url.query.get("file", "")
+        try:
+            text, _relative = load_prompt_file(kind, source, directory, selected)
+            return web.json_response({"ok": True, "text": text})
+        except (PromptLibraryError, ValueError) as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
+        except Exception as exc:  # pragma: no cover - defensive server boundary
+            LOGGER.exception("Unexpected prompt-text failure")
+            return web.json_response(
+                {"ok": False, "error": f"Unexpected prompt-text error: {type(exc).__name__}"},
+                status=500,
+            )
+
+    @routes.post("/minimax_music_toolkit/save_system_prompt")
+    async def _save_system_prompt(request):
+        """Save the current system_prompt text as a plain system prompt file."""
+        try:
+            body = await request.json()
+        except Exception:
+            return web.json_response({"ok": False, "error": "Invalid JSON body."}, status=400)
+        source = str(body.get("source") or "bundled_library")
+        directory = str(body.get("directory") or "")
+        filename = str(body.get("file") or "")
+        text = str(body.get("text") or "")
+        overwrite = bool(body.get("overwrite", False))
+        try:
+            relative = save_custom_system_prompt(source, directory, filename, text, overwrite)
+        except (PromptLibraryError, ValueError) as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
+        except Exception as exc:  # pragma: no cover - defensive server boundary
+            LOGGER.exception("Unexpected save_system_prompt failure")
+            return web.json_response(
+                {"ok": False, "error": f"Unexpected save_system_prompt error: {type(exc).__name__}"},
+                status=500,
+            )
         return web.json_response({"ok": True, "file": relative})
 
     _ROUTES_REGISTERED = True

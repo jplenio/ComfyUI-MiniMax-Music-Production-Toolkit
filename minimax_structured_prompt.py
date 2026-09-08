@@ -11,6 +11,10 @@ the LLM prompt entirely.
 The assembled user prompt is a short structured brief followed by the
 description text, and is intended to be consumed by the integrated LLM chat
 node (or any other LLM node that accepts user/system prompt strings).
+
+The system prompt mirrors the user prompt: selecting a bundled/external system
+prompt file copies its text into the editable ``system_prompt`` field, which is
+authoritative from then on (so the selection can still be tweaked by hand).
 """
 from __future__ import annotations
 
@@ -18,7 +22,11 @@ import hashlib
 import json
 from pathlib import Path
 
-from .minimax_prompt_source import DEFAULT_SYSTEM_PROMPT, _clean_source_name
+from .minimax_prompt_source import (
+    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_SYSTEM_PROMPT_FILE,
+    _clean_source_name,
+)
 from .prompt_library import (
     PLACEHOLDER,
     PromptLibraryError,
@@ -41,6 +49,9 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("structured_prompt")
 
 _SOURCES = ["manual", "bundled_library", "external_directory"]
+
+# Default user-prompt file shown by the dropdown (a bundled library entry).
+DEFAULT_USER_PROMPT_FILE = "electronic/synth-pop-vocal.txt"
 
 # Cached aggregated option values; invalidated by the frontend route when the
 # library changes while ComfyUI is running.
@@ -84,6 +95,29 @@ def _safe_choices(default: list) -> list:
     return default or [CUSTOM]
 
 
+def _resolve_system_prompt(system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt):
+    """Resolve the effective system prompt text and its origin.
+
+    The ``system_prompt`` field is authoritative in every mode: the frontend
+    copies the selected system-prompt file into it on selection (exactly like
+    ``description_override`` for the user prompt), so editing the field always
+    changes the prompt the LLM receives.  Headless/API runs without the
+    frontend prefill fall back to loading the selected file directly.
+    """
+    source = (system_prompt_source or "manual").strip().lower()
+    if source == "manual":
+        text = (system_prompt or "").strip()
+        if not text:
+            raise ValueError("Structured Song Prompt: manual system prompt is empty.")
+        return text, "<manual>"
+
+    text = (system_prompt or "").strip()
+    if text:
+        origin = (system_prompt_file or "").strip() or PLACEHOLDER
+        return text, origin
+    return resolve_prompt("system", source, system_prompt_directory, system_prompt_file)
+
+
 class MiniMaxStructuredPromptV20:
     """Structured prompt control: metadata-prefilled fields assembled into one LLM user prompt."""
 
@@ -98,7 +132,7 @@ class MiniMaxStructuredPromptV20:
             "required": {
                 "user_prompt_source": (_SOURCES, {"default": "bundled_library"}),
                 "user_prompt_directory": ("STRING", {"default": "", "multiline": False}),
-                "user_prompt_file": (user_file_options, {"default": PLACEHOLDER}),
+                "user_prompt_file": (user_file_options, {"default": DEFAULT_USER_PROMPT_FILE}),
                 "genre": (_safe_choices(_combo("genre")), {"default": CUSTOM}),
                 "tempo": (_safe_choices(_combo("tempo")), {"default": CUSTOM}),
                 "meter": (_safe_choices(_combo("meter")), {"default": CUSTOM}),
@@ -109,13 +143,11 @@ class MiniMaxStructuredPromptV20:
                 "theme": (_safe_choices(_combo("theme")), {"default": CUSTOM}),
                 "length": (_safe_choices(_combo("length")), {"default": CUSTOM}),
                 "description_override": ("STRING", {"default": "", "multiline": True}),
-                "system_prompt": ("STRING", {"default": DEFAULT_SYSTEM_PROMPT, "multiline": True}),
-                "system_prompt_source": (_SOURCES, {"default": "manual"}),
+                "system_prompt_source": (_SOURCES, {"default": "bundled_library"}),
                 "system_prompt_directory": ("STRING", {"default": "", "multiline": False}),
-                "system_prompt_file": (default_combo_values("system"), {"default": PLACEHOLDER}),
-            },
-            "optional": {
+                "system_prompt_file": (default_combo_values("system"), {"default": DEFAULT_SYSTEM_PROMPT_FILE}),
                 "source_name_override": ("STRING", {"default": "", "multiline": False}),
+                "system_prompt": ("STRING", {"default": DEFAULT_SYSTEM_PROMPT, "multiline": True}),
             },
         }
 
@@ -146,11 +178,11 @@ class MiniMaxStructuredPromptV20:
         theme,
         length,
         description_override,
-        system_prompt,
         system_prompt_source,
         system_prompt_directory,
         system_prompt_file,
         source_name_override="",
+        system_prompt="",
         **kwargs,
     ):
         # "custom" selects free mode (no file is loaded); fingerprint it as such
@@ -168,6 +200,10 @@ class MiniMaxStructuredPromptV20:
         system_fp = prompt_selection_fingerprint(
             "system", system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt
         )
+        # The system_prompt field is authoritative in every mode, so its text is
+        # part of the fingerprint even when a file is selected.
+        system_text_fp = hashlib.sha256((system_prompt or "").encode("utf-8", errors="replace")).hexdigest()[:16]
+        system_fp = f"{system_fp}|text={system_text_fp}"
         field_state = "|".join(
             f"{f}={v}" for f, v in (
                 ("genre", genre), ("tempo", tempo), ("meter", meter), ("key", key),
@@ -192,14 +228,14 @@ class MiniMaxStructuredPromptV20:
         theme,
         length,
         description_override,
-        system_prompt,
         system_prompt_source,
         system_prompt_directory,
         system_prompt_file,
         source_name_override="",
+        system_prompt="",
     ):
-        resolved_system, system_origin = resolve_prompt(
-            "system", system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt
+        resolved_system, system_origin = _resolve_system_prompt(
+            system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt
         )
 
         widget_values = {

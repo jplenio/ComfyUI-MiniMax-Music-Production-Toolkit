@@ -81,7 +81,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(llm["widgets_values_named"]["n_ctx"], 32768)
 
         paths = nodes[54]
-        self.assertEqual(paths["widgets_values_named"]["configuration_subdir"], "json")
+        self.assertEqual(paths["widgets_values_named"]["configuration_subdir"], "log/")
         self.assertIn("configuration_prefix", [o["name"] for o in paths["outputs"]])
 
         for nid in (35, 46, 52):
