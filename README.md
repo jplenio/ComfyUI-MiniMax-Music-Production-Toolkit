@@ -1,5 +1,9 @@
 # MiniMax Music Production Toolkit for ComfyUI
 
+<p align="center">
+  <img src="assets/branding/banner.png" alt="MiniMax Music Production Toolkit" width="100%" />
+</p>
+
 **Fill in a few fields — get a finished song.**
 
 Just describe what you want to hear. A genre, a mood, a few words about the
@@ -94,9 +98,12 @@ song, the machine takes care of the craft.
   completely.
 - **Structured LLM parsing** — extracts `[Caption]`, `[Lyrics]`, `[Title]` and
   `[Image_Prompt]` from the response, with manual fallbacks.
-- **Production system prompt** — tuned for MiniMax Music 3: long instrumental
-  structures, imaginative lyrics, and avoidance of smeared high frequencies.
-- **Bundled genre prompt library** — 230+ curated, unified genre templates with metadata: every template carries its Genre / Tempo / Time signature / Key / Lyrics / Language / Voice / Theme / Length as fields, so the free text never repeats them. Coverage spans Western pop/rock/electronic, plus Asian (K-Pop, City Pop, Bollywood, Chinese & Indian traditional, J-RPG / anime), European (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), African (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues), Latin American (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata) and many more world styles. The dropdown lists the categories alphabetically with their files indented beneath.
+- **Production system prompt** — a fully tuned MiniMax Music 3 production prompt
+  (long instrumental structures, imaginative lyrics, and avoidance of smeared
+  high frequencies), plus **11 bundled focus variants** for brevity, lyrics,
+  instrumentation, fantasy, genre fidelity, cinematic, dance energy, emotional
+  storytelling, minimalism and fast tempo.
+- **Bundled genre prompt library** — **239 curated, unified genre templates** with metadata: every template carries its Genre / Tempo / Time signature / Key / Lyrics / Language / Voice / Theme / Length as fields, so the free text never repeats them. Coverage spans Western pop/rock/electronic, plus Asian (K-Pop, City Pop, Bollywood, Chinese & Indian traditional, J-RPG / anime), European (Flamenco, Fado, Chanson, Schlager, Klezmer, Balkan), African (Afrobeats, Amapiano, Ethio-Jazz, Highlife, Desert Blues), Latin American (Bossa Nova, Samba, Salsa, Cumbia, Tango, Reggaeton, Bachata) and many more world styles. The dropdown lists the categories alphabetically with their files indented beneath.
 - **Reproducible generation controls** — consistent seeds and sampling values.
 - **Integrated Audio Super Resolution (FlashSR)** — the inference code is
   bundled; only the weights are fetched on first use.

@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-minimax-music-production-toolkit"
-version = "2.1.0"
+version = "2.1.1"
 description = "Production-focused ComfyUI nodes for MiniMax Music 3 prompt orchestration, audio restoration, FlashSR hybrid processing, mastering, artwork and release metadata."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,3 +32,5 @@ Documentation = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Too
 [tool.comfy]
 PublisherId = "jplenio"
 DisplayName = "MiniMax Music Production Toolkit"
+Icon = "https://raw.githubusercontent.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit/main/assets/branding/icon.png"
+Banner = "https://raw.githubusercontent.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit/main/assets/branding/banner.png"

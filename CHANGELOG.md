@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.1.1] - 2026-09-09
+
+Branding and README refresh: project icon + banner, banner at the top of the README, and an up-to-date description with exact prompt counts (239 user templates, 11 system-prompt variants).
+
+### Added
+- Branding assets `assets/branding/icon.png` (400×400) and `assets/branding/banner.png` (1680×720), wired in `pyproject.toml` as `[tool.comfy] Icon` / `Banner`.
+- README banner at the very top (centered, full-width).
+
+### Changed
+- README: production system-prompt bullet mentions the **11 focus variants**; the genre-library bullet states **239 templates** (was "230+"); description kept current.
+
 ## [2.1.0] - 2026-09-09
 
 The structured system-prompt and output-layout release: a visually separated System Prompt section in the Structured Song Prompt with file selection and an editable authoritative field, eleven bundled system-prompt focus variants, clearer output folder defaults, and removal of the dead variant-suffix inputs.
