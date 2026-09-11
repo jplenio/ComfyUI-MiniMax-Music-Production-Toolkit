@@ -101,6 +101,15 @@ def resolve_prefix(prefix: str, *, error_prefix: str = "Output") -> str:
         raise ValueError(f"{error_prefix}: filename_prefix is empty.")
     raw = expand_date_macros(raw)
     raw = os.path.expanduser(os.path.expandvars(raw))
+    # ComfyUI workflows are exchanged between Windows and Linux.  A saved
+    # relative prefix may therefore contain Windows separators even when the
+    # current runner is POSIX.  Normalize those separators before joining the
+    # relative path.  A *single* leading backslash remains relative on POSIX
+    # by policy (UNC paths with two backslashes become // and stay absolute).
+    if os.name != "nt" and raw.startswith("\\") and not raw.startswith("\\\\"):
+        raw = "\\" + raw[1:].replace("\\", "/")
+    else:
+        raw = raw.replace("\\", "/")
     if is_abs_any_platform(raw):
         return os.path.normpath(raw)
 

@@ -232,6 +232,13 @@ class PortableLengthAndSeparatorTests(unittest.TestCase):
         self.assertTrue(os.path.isabs(forward) and os.path.isabs(backward))
         self.assertEqual(os.path.normpath(forward), os.path.normpath(backward))
 
+    def test_mixed_relative_separators_resolve_consistently(self):
+        paths = ["audio\\minimax3/2026", "audio/minimax3\\2026", "audio\\minimax3\\2026"]
+        expected = os.path.normpath(self.saver._resolve_prefix("audio/minimax3/2026"))
+        for value in paths:
+            with self.subTest(value=value):
+                self.assertEqual(os.path.normpath(self.saver._resolve_prefix(value)), expected)
+
     def test_drive_and_unc_prefixes_are_absolute_for_both_savers(self):
         for value in ("C:\\Music\\MiniMax", "C:/Music/MiniMax", "\\\\server\\share\\x", "//server/share/x"):
             with self.subTest(value=value):
