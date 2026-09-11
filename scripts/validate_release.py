@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static release validation that intentionally does not import ComfyUI/Torch."""
+"""Release checks without ComfyUI imports; frontend EQ parity needs NumPy."""
 from __future__ import annotations
 
 import ast
@@ -409,6 +409,7 @@ def check_migration_logic() -> None:
     """
     import shutil
     import subprocess
+    import os
 
     node = shutil.which("node")
     if not node:
@@ -427,7 +428,10 @@ def check_migration_logic() -> None:
         test_file = ROOT / relative
         if not test_file.exists():
             fail(f"Missing {relative}")
-        result = subprocess.run([node, str(test_file)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        # Use the same environment as this validator, not an unrelated `python`
+        # executable found by the nested Node coefficient test.
+        env = dict(os.environ, PYTHON=sys.executable)
+        result = subprocess.run([node, str(test_file)], cwd=ROOT, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         if result.returncode != 0:
             fail(f"Node frontend test {relative} failed:\n" + result.stdout + result.stderr)
 

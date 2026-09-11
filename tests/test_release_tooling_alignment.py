@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,6 +34,26 @@ DEMO = load_script("update_demo_catalog.py", "_t29_update_demo_catalog")
 
 
 class ArchiveSelectionTests(unittest.TestCase):
+    def test_dry_run_without_local_planning_documents(self):
+        # A GitHub checkout has none of the maintainer's untracked handoff files.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workflow = root / "workflow.json"
+            workflow.write_text('{"nodes": [], "links": []}', encoding="utf-8")
+            buffer = io.StringIO()
+            with patch.object(PACKAGE, "ROOT", root), patch.object(PACKAGE, "WORKFLOW_SOURCE", workflow), redirect_stdout(buffer):
+                PACKAGE.print_dry_run_summary("2.5.0")
+            self.assertIn("local-only files: none", buffer.getvalue())
+
+    def test_frontend_parity_uses_validator_python(self):
+        # The nested Node test must not pick a different, dependency-free Python.
+        from types import SimpleNamespace
+        with patch("shutil.which", return_value="node"), patch("subprocess.run", return_value=SimpleNamespace(returncode=0)) as run:
+            VALIDATE.check_migration_logic()
+        parity = [call for call in run.call_args_list if "test_audio_eq_frontend.mjs" in str(call.args[0])]
+        self.assertEqual(len(parity), 1)
+        self.assertEqual(parity[0].kwargs["env"]["PYTHON"], sys.executable)
+
     def test_generated_release_assets_are_excluded(self):
         for relative in (
             "dist/SHA256SUMS.txt",
@@ -79,9 +100,10 @@ class ArchiveSelectionTests(unittest.TestCase):
         # Derived from the shared rule so adding an excluded document cannot
         # leave this guard silently stale while still asserting the intent:
         # every packaging-excluded maintainer document must be listed.
-        expected = ", ".join(sorted(release_common.PACKAGING_EXCLUDED_NAMES))
+        present = sorted(name for name in release_common.PACKAGING_EXCLUDED_NAMES if (ROOT / name).exists())
+        expected = ", ".join(present) or "none"
         self.assertIn(f"local-only files: {expected}", output)
-        for name in sorted(release_common.PACKAGING_EXCLUDED_NAMES):
+        for name in present:
             with self.subTest(document=name):
                 self.assertIn(name, output)
 

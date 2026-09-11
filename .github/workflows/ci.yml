@@ -14,32 +14,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - name: Validate release structure
-        run: python scripts/validate_release.py
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
 
       - name: Install CPU tensor runtime for audio regression tests
-        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      # This validator includes JS/Python EQ parity, which requires NumPy.
+      - name: Validate release structure and frontend
+        run: python scripts/validate_release.py
 
       - name: Run tests
         run: python -m unittest discover -s tests -v
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Run frontend regression tests
-        run: |
-          node tests/test_audio_eq_frontend.mjs
-          node tests/test_structured_prompt_frontend.mjs
-          node tests/test_workflow_migration.mjs
