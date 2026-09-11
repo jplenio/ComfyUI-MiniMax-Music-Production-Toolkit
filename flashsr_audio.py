@@ -21,7 +21,9 @@ import contextlib
 import io
 import json
 import math
+import os
 import sys
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -30,6 +32,7 @@ import numpy as np
 from .model_downloader import (
     check_file_entries,
     load_models_config,
+    normalize_model_entries,
     resolve_target,
 )
 from .progress_utils import format_progress_bar, make_progress_bar
@@ -73,26 +76,45 @@ def _resample_hq(x_cs: np.ndarray, src_sr: int, dst_sr: int) -> np.ndarray:
     return np.stack([np.interp(t_out, t_in, channel) for channel in x_cs], axis=0).astype(np.float32)
 
 
-def _to_channel_samples(audio: Any) -> Tuple[np.ndarray, int]:
-    """Normalize a ComfyUI AUDIO dict or (array, sr) tuple to [C, S] float32."""
+def _to_batch_channel_samples(audio: Any) -> Tuple[List[np.ndarray], int]:
+    """All batch items of a ComfyUI AUDIO as a list of [C, S] float32 arrays.
+
+    A01: the previous conversion silently reduced ``[B, C, T]`` to ``waveform[0]``,
+    so a batch of two produced one result.  The batch dimension is preserved here
+    and every item is processed by the caller.
+    """
     if isinstance(audio, dict) and "waveform" in audio and "sample_rate" in audio:
         waveform = audio["waveform"]
         sr = int(audio["sample_rate"])
-        if waveform.dim() == 3:
-            waveform = waveform[0]
-        if waveform.dim() != 2:
-            raise RuntimeError(f"Unexpected AUDIO tensor shape {tuple(waveform.shape)}; expected [C, T].")
-        return waveform.detach().cpu().float().numpy(), sr
+        if waveform.dim() == 2:
+            waveform = waveform.unsqueeze(0)
+        if waveform.dim() != 3:
+            raise RuntimeError(
+                f"Unexpected AUDIO tensor shape {tuple(waveform.shape)}; expected [B, C, T]."
+            )
+        return [item.detach().cpu().float().numpy() for item in waveform], sr
     if isinstance(audio, (list, tuple)) and len(audio) == 2:
         array, sr = audio
         array = np.asarray(array, dtype=np.float32)
         if array.ndim == 1:
-            return array[None, :], int(sr)
+            return [array[None, :]], int(sr)
         if array.ndim == 2:
             if array.shape[0] >= array.shape[1] and array.shape[1] <= 8:
-                return array.T.astype(np.float32), int(sr)
-            return array.astype(np.float32), int(sr)
+                return [array.T.astype(np.float32)], int(sr)
+            return [array.astype(np.float32)], int(sr)
+        if array.ndim == 3:
+            return [array[index].astype(np.float32) for index in range(array.shape[0])], int(sr)
     raise RuntimeError("MiniMax FlashSR: no valid AUDIO provided.")
+
+
+def _to_channel_samples(audio: Any) -> Tuple[np.ndarray, int]:
+    """Normalize a ComfyUI AUDIO dict or (array, sr) tuple to [C, S] float32.
+
+    Legacy helper: for a batched input it returns **item 0 only**.  The node uses
+    :func:`_to_batch_channel_samples` so no batch item is dropped.
+    """
+    items, sr = _to_batch_channel_samples(audio)
+    return items[0], sr
 
 
 def _make_audio(sr: int, samples_cs: np.ndarray) -> Dict[str, Any]:
@@ -101,6 +123,88 @@ def _make_audio(sr: int, samples_cs: np.ndarray) -> Dict[str, Any]:
     if samples.ndim == 1:
         samples = samples[None, :]
     return {"waveform": torch.from_numpy(samples).unsqueeze(0).contiguous(), "sample_rate": int(sr)}
+
+
+def _make_audio_batch(sr: int, items: List[np.ndarray]) -> Tuple[Dict[str, Any], bool]:
+    """Stack per-item [C, S] results into one ``[B, C, S]`` AUDIO tensor.
+
+    Items of different lengths are zero-padded to the longest one (a batch is a
+    single tensor); the padding is reported instead of shortening the longer
+    item.  Returns ``(audio, padded)``.
+    """
+    import torch
+
+    if not items:
+        raise RuntimeError("MiniMax FlashSR: no audio items to return.")
+    channels = max(int(item.shape[0]) for item in items)
+    length = max(int(item.shape[1]) for item in items)
+    stacked = np.zeros((len(items), channels, length), np.float32)
+    padded = False
+    for index, item in enumerate(items):
+        if item.shape != (channels, length):
+            padded = True
+        stacked[index, : item.shape[0], : item.shape[1]] = item
+    return {"waveform": torch.from_numpy(stacked).contiguous(), "sample_rate": int(sr)}, padded
+
+
+# The vendor's stochastic steps (``posterior.sample()`` plus diffusion noise) run
+# under this lock when a seed is requested: a global ``torch.manual_seed`` would
+# leak into other nodes, so the RNG state is saved and restored around the call.
+_RNG_LOCK = threading.RLock()
+
+
+def _processing_interrupted() -> bool:
+    """ComfyUI's interrupt flag, when running inside ComfyUI."""
+    try:
+        import comfy.model_management as model_management  # type: ignore
+
+        checker = getattr(model_management, "processing_interrupted", None)
+        return bool(checker()) if callable(checker) else False
+    except Exception:
+        return False
+
+
+def _interrupt_exception() -> BaseException:
+    """ComfyUI's own interrupt exception when available."""
+    try:
+        import comfy.model_management as model_management  # type: ignore
+
+        return model_management.InterruptProcessingException()
+    except Exception:
+        return RuntimeError("FlashSR generation cancelled by the user.")
+
+
+@contextlib.contextmanager
+def _deterministic_rng(seed: Optional[int]):
+    """Deterministic RNG context for the vendor's stochastic steps.
+
+    ``seed=None`` keeps the previous random semantics untouched.  With a seed the
+    whole section is serialised by :data:`_RNG_LOCK` and the previous CPU/CUDA RNG
+    state is restored afterwards, so the seed cannot leak into other nodes.
+    """
+    if seed is None:
+        yield None
+        return
+    import torch
+
+    with _RNG_LOCK:
+        cpu_state = torch.get_rng_state()
+        cuda_state = None
+        try:
+            if torch.cuda.is_available():
+                cuda_state = torch.cuda.get_rng_state_all()
+        except Exception:  # pragma: no cover - CPU-only or no CUDA runtime
+            cuda_state = None
+        try:
+            torch.manual_seed(int(seed) & ((1 << 63) - 1))
+            yield int(seed)
+        finally:
+            torch.set_rng_state(cpu_state)
+            if cuda_state is not None:  # pragma: no cover - needs a GPU
+                try:
+                    torch.cuda.set_rng_state_all(cuda_state)
+                except Exception:
+                    pass
 
 
 def _iter_chunks(total_samples: int, window: int, hop: int) -> List[Tuple[int, int]]:
@@ -115,7 +219,47 @@ def _iter_chunks(total_samples: int, window: int, hop: int) -> List[Tuple[int, i
     return spans
 
 
+def _ola_accumulate(
+    acc: np.ndarray,
+    weight_sum: np.ndarray,
+    pred: np.ndarray,
+    start: int,
+    valid_len: int,
+    window: int,
+    window_full: np.ndarray,
+) -> None:
+    """Add one chunk's contribution in place.
+
+    The arithmetic and the addition order are exactly those of the historical
+    list-then-stitch implementation, so streaming cannot change the samples.
+    """
+    pred_len = pred.shape[1]
+    length = min(valid_len, pred_len)
+    weight = window_full[:length] if length <= window else np.ones(length, np.float32)
+    acc[:, start:start + length] += pred[:, :length] * weight[None, :]
+    weight_sum[start:start + length] += weight
+
+
+def _finalize_ola(acc: np.ndarray, weight_sum: np.ndarray) -> np.ndarray:
+    """Normalize the overlap-add accumulator **in place**.
+
+    ``acc`` is our own accumulator (never a caller's buffer), so the division
+    happens with ``out=acc``: no full-size temporary and no pointless ``astype``
+    copy.  A position whose weight is zero keeps the accumulator value, which is
+    exactly what the previous ``weights[weights == 0] = 1.0`` produced - without
+    mutating the caller's ``weight_sum`` as a side effect.
+    """
+    np.divide(acc, weight_sum, out=acc, where=(weight_sum != 0))
+    return acc
+
+
 def _wola_stitch(predictions: List[Tuple[np.ndarray, int, int]], total_len: int, window: int) -> np.ndarray:
+    """Stitch a list of predictions (compatibility and testing wrapper).
+
+    ``upscale`` no longer retains the prediction list - it accumulates each
+    chunk as it is produced - but the list-based path stays available and
+    produces identical samples.
+    """
     if not predictions:
         return np.zeros((1, max(1, total_len)), np.float32)
     channels = predictions[0][0].shape[0]
@@ -123,13 +267,63 @@ def _wola_stitch(predictions: List[Tuple[np.ndarray, int, int]], total_len: int,
     weight_sum = np.zeros(total_len, np.float32)
     window_full = np.hanning(window).astype(np.float32)
     for pred, start, valid_len in predictions:
-        pred_len = pred.shape[1]
-        length = min(valid_len, pred_len)
-        weight = window_full[:length] if length <= window else np.ones(length, np.float32)
-        acc[:, start:start + length] += pred[:, :length] * weight[None, :]
-        weight_sum[start:start + length] += weight
-    weight_sum[weight_sum == 0] = 1.0
-    return (acc / weight_sum[None, :]).astype(np.float32)
+        _ola_accumulate(acc, weight_sum, pred, start, valid_len, window, window_full)
+    return _finalize_ola(acc, weight_sum)
+
+
+def _resolve_execution_device(torch_module: Any) -> str:
+    """Concrete device the runner will use.
+
+    The default rule is unchanged (CUDA when available, otherwise CPU), but the
+    identity is explicit - ``cuda:0`` instead of the generic ``cuda`` - so the
+    cache cannot be shared with a different device index by accident.  An explicit
+    choice through ``MINIMAX_FLASHSR_DEVICE`` (``cpu`` or ``cuda:N``) is honoured
+    when the runtime supports it; an unusable value warns and falls back to the
+    automatic rule instead of failing the run.
+    """
+    requested = (os.environ.get("MINIMAX_FLASHSR_DEVICE") or "").strip().lower()
+    if requested == "cpu":
+        LOGGER.info("FlashSR device explicitly set to CPU (MINIMAX_FLASHSR_DEVICE).")
+        return "cpu"
+    try:
+        cuda_available = bool(torch_module.cuda.is_available())
+    except Exception:
+        cuda_available = False
+    if requested.startswith("cuda"):
+        if not cuda_available:
+            LOGGER.warning(
+                "MINIMAX_FLASHSR_DEVICE=%s was requested but CUDA is not available; using CPU.",
+                requested,
+            )
+            return "cpu"
+        try:
+            count = int(torch_module.cuda.device_count())
+        except Exception:
+            count = 1
+        index = 0
+        if ":" in requested:
+            try:
+                index = int(requested.split(":", 1)[1])
+            except ValueError:
+                index = 0
+        if index < 0 or index >= max(1, count):
+            LOGGER.warning(
+                "MINIMAX_FLASHSR_DEVICE=%s is not a visible device (0..%d); using the default device.",
+                requested,
+                max(0, count - 1),
+            )
+        else:
+            LOGGER.info("FlashSR device explicitly set to cuda:%d (MINIMAX_FLASHSR_DEVICE).", index)
+            return f"cuda:{index}"
+    elif requested:
+        LOGGER.warning("Ignoring unknown MINIMAX_FLASHSR_DEVICE=%s; using the automatic device rule.", requested)
+    if not cuda_available:
+        return "cpu"
+    try:
+        index = int(torch_module.cuda.current_device())
+    except Exception:
+        index = 0
+    return f"cuda:{index}"
 
 
 def _ensure_flashsr_weights(auto_download: bool) -> Path:
@@ -138,29 +332,29 @@ def _ensure_flashsr_weights(auto_download: bool) -> Path:
     The inference code is bundled in ``flashsr_inference/`` and needs no
     download.  Only the three weight files (student_ldm.pth, sr_vocoder.pth,
     vae.pth) are fetched from the configured Hugging Face dataset on first use.
+
+    Missing weights fail here, with or without auto-download: this function
+    exists to prepare inference, so deferring the failure to runner construction
+    only moved the same error later with a less useful message.
     """
     config = load_models_config().get("flashsr", {})
+    weights_entries = normalize_model_entries({"flashsr": config}, minimax=False, flux2=False, llm=False)
     weights_section = config.get("weights", {})
     weights_target = weights_section.get("target", "models/audio/flashsr")
-    weights_entries = [
-        {**entry, "target": entry.get("target") or weights_target}
-        for entry in weights_section.get("files", [])
-    ]
 
     report = check_file_entries(weights_entries, base_path=None, auto_download=auto_download)
     failed = [item for item in report if item["status"] == "failed"]
     if failed:
         raise RuntimeError("FlashSR weights could not be prepared: " + "; ".join(f"{i['name']} ({i['message']})" for i in failed))
-    if auto_download:
-        for item in report:
-            if item["status"] in {"downloaded", "missing"}:
-                LOGGER.info("FlashSR model file: %s -> %s", item["status"], item["target"])
-        missing = [item for item in report if item["status"] == "missing"]
-        if missing:
-            raise RuntimeError(
-                "FlashSR weights are missing and auto-download is disabled. "
-                "Required: " + ", ".join(i["name"] for i in missing)
-            )
+    for item in report:
+        if item["status"] in {"downloaded", "missing"}:
+            LOGGER.info("FlashSR model file: %s -> %s", item["status"], item["target"])
+    missing = [item for item in report if item["status"] == "missing"]
+    if missing:
+        raise RuntimeError(
+            "FlashSR weights are missing (auto-download %s). Required: %s"
+            % ("enabled" if auto_download else "disabled", ", ".join(i["name"] for i in missing))
+        )
     return resolve_target(weights_target)
 
 
@@ -211,9 +405,16 @@ def _import_flashsr_model():
 
 
 def _get_runner(weights_dir: Path) -> Any:
-    """Return a cached FlashSR runner for the given weights location."""
+    """Return a cached FlashSR runner for the given weights location.
+
+    Construction is transactional: the concrete execution device is resolved
+    first, the required weight files are checked before the model is built, and
+    a failed device transfer is undone so the runner really is wholly on CPU
+    instead of reporting CUDA while the model sits on the host.  The cache is
+    only published once construction succeeded.
+    """
     import torch
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = _resolve_execution_device(torch)
     key = f"{weights_dir}|{device}"
     cached = _runner_cache.get(key)
     if cached is not None:
@@ -231,12 +432,40 @@ def _get_runner(weights_dir: Path) -> Any:
     LOGGER.info("Loading FlashSR model (%s, %s)", device, student.name)
     model = FlashSR(str(student), str(vocoder), str(vae))
     model.eval()
+    actual_device = device
+    rebuilt = False
     try:
         model.to(device)
-    except Exception:
-        LOGGER.warning("Could not move FlashSR model to %s; continuing on CPU", device)
+    except Exception as exc:
+        LOGGER.warning("Could not move FlashSR model to %s (%s); falling back to CPU", device, exc)
+        try:
+            # Undo a partial transfer: a half-moved model is worse than a CPU one.
+            model.to("cpu")
+        except Exception as undo_exc:
+            # Undoing is not guaranteed either.  Discard the instance and build a
+            # clean CPU model rather than publishing something half-moved - an OOM
+            # during the transfer must not poison the cache.
+            LOGGER.warning(
+                "Could not restore the half-moved FlashSR model to CPU (%s); rebuilding it from the checkpoints.",
+                undo_exc,
+            )
+            model = FlashSR(str(student), str(vocoder), str(vae))
+            model.eval()
+            rebuilt = True
+        actual_device = "cpu"
 
-    runner = {"model": model, "device": device}
+    # ``VAEWrapper`` is not an ``nn.Module``, so ``.to()`` never moves it; the
+    # vendor code places it inside ``preprocess()``.  It is deliberately not
+    # touched here - making it an ``nn.Module`` would change the state-dict keys.
+    runner = {
+        "model": model,
+        "device": actual_device,
+        "requested_device": device,
+        "fallback": actual_device != device,
+        "rebuilt_on_cpu": rebuilt,
+    }
+    if actual_device != device:
+        LOGGER.info("FlashSR runner published on %s (requested %s)", actual_device, device)
     _runner_cache[key] = runner
     return runner
 
@@ -248,6 +477,85 @@ def clear_flashsr_cache() -> int:
     if count:
         LOGGER.info("Released %d cached FlashSR model instance(s)", count)
     return count
+
+
+def _upscale_item(
+    model: Any,
+    device: str,
+    item_cs: np.ndarray,
+    lowpass_input: bool,
+    pbar: Any,
+    progress_offset: int,
+    total_progress: int,
+    label: str,
+    seed: Optional[int] = None,
+) -> np.ndarray:
+    """Upscale one batch item (``[C, S]``) with streaming overlap-add.
+
+    Each chunk is added to the accumulator as soon as it is produced, so the
+    retained memory is the output-sized accumulator instead of every padded chunk
+    output; the addition order is unchanged, which keeps the samples bit-identical
+    to the historical list-then-stitch path.  The ComfyUI interrupt flag is checked
+    between chunks, so a cancel does not have to wait for the whole item.
+    """
+    import torch
+
+    window = CHUNK_SAMPLES
+    hop = int((CHUNK_S - OVERLAP_S) * REQ_SR)
+    if hop <= 0 or hop >= window:
+        hop = window // 2
+
+    total = int(item_cs.shape[1])
+    spans = _iter_chunks(total, window, hop)
+    total_chunks = len(spans)
+    log_every = max(1, total_chunks // 10)
+    window_full = np.hanning(window).astype(np.float32)
+    acc: Optional[np.ndarray] = None
+    weight_sum = np.zeros(total, np.float32)
+    # One reused buffer pair instead of two fresh StringIO objects per chunk;
+    # the vendored tqdm bar is suppressed and the tail is kept for a diagnostic.
+    vendor_stdout = io.StringIO()
+    vendor_stderr = io.StringIO()
+    for chunk_index, (start, length) in enumerate(spans):
+        if _processing_interrupted():
+            LOGGER.info("FlashSR generation cancelled by the user during %s.", label)
+            raise _interrupt_exception()
+        chunk = item_cs[:, start:start + length]
+        if length < window:
+            chunk = np.concatenate(
+                [chunk, np.zeros((item_cs.shape[0], window - length), np.float32)], axis=1
+            )
+        x = torch.from_numpy(chunk).to(device).float()
+        vendor_stdout.seek(0)
+        vendor_stdout.truncate(0)
+        vendor_stderr.seek(0)
+        vendor_stderr.truncate(0)
+        try:
+            with _deterministic_rng(seed if seed is None else int(seed) + chunk_index):
+                with torch.inference_mode(), contextlib.redirect_stdout(vendor_stdout), contextlib.redirect_stderr(vendor_stderr):
+                    y = model(x, lowpass_input=bool(lowpass_input))
+        except Exception as exc:
+            tail = vendor_stderr.getvalue().strip()[-2000:]
+            if tail:
+                raise RuntimeError(
+                    f"FlashSR inference failed on {label} chunk {chunk_index + 1}/{total_chunks}: {exc}\n{tail}"
+                ) from exc
+            raise
+        pred = y.detach().to("cpu").float().numpy()
+        if acc is None:
+            # Channel count comes from the first prediction, exactly as the
+            # historical stitch did.
+            acc = np.zeros((pred.shape[0], total), np.float32)
+        _ola_accumulate(acc, weight_sum, pred, start, length, window, window_full)
+        del pred, y, x  # release the per-chunk tensors immediately
+        pbar.update_absolute(min(total_progress, progress_offset + chunk_index + 1))
+        done = chunk_index + 1
+        if done % log_every == 0 or done == total_chunks:
+            LOGGER.info("FlashSR progress for %s %s", label, format_progress_bar(done, total_chunks))
+
+    if acc is None:
+        return np.zeros((max(1, int(item_cs.shape[0])), max(1, total)), np.float32)
+    return _finalize_ola(acc, weight_sum)
 
 
 class MiniMaxFlashSRAudio:
@@ -269,56 +577,57 @@ class MiniMaxFlashSRAudio:
     FUNCTION = "upscale"
     CATEGORY = "MiniMax Music Production Toolkit/audio"
 
-    def upscale(self, audio=None, lowpass_input=False, output_sr="48000", auto_download=True):
-        import torch
+    def upscale(self, audio=None, lowpass_input=False, output_sr="48000", auto_download=True, seed=None):
+        """Upscale **every** batch item and return one ``[B, C, T]`` AUDIO.
 
-        in_cs, in_sr = _to_channel_samples(audio)
+        ``seed=None`` keeps the historical random semantics; an integer seed makes
+        the vendor's stochastic steps reproducible through a locked, restored RNG
+        context (determinism is only promised for the backend combination that was
+        actually tested - see the module tests).
+        """
+        batch, in_sr = _to_batch_channel_samples(audio)
         weights_dir = _ensure_flashsr_weights(bool(auto_download))
-
-        if in_sr != REQ_SR:
-            LOGGER.info("Resampling input to FlashSR rate: %d Hz -> %d Hz", in_sr, REQ_SR)
-            in_cs = _resample_hq(in_cs, in_sr, REQ_SR)
-
         runner = _get_runner(weights_dir)
         model = runner["model"]
         device = runner["device"]
-
-        window = CHUNK_SAMPLES
-        hop = int((CHUNK_S - OVERLAP_S) * REQ_SR)
-        if hop <= 0 or hop >= window:
-            hop = window // 2
-
-        total = in_cs.shape[1]
-        total_chunks = len(_iter_chunks(total, window, hop))
-        pbar = make_progress_bar(total_chunks)
-        LOGGER.info("FlashSR upscaling: %d chunks (%d samples @ %d Hz)", total_chunks, total, REQ_SR)
-        log_every = max(1, total_chunks // 10)
-        predictions: List[Tuple[np.ndarray, int, int]] = []
-        for chunk_index, (start, length) in enumerate(_iter_chunks(total, window, hop)):
-            chunk = in_cs[:, start:start + length]
-            if length < window:
-                chunk = np.concatenate([chunk, np.zeros((in_cs.shape[0], window - length), np.float32)], axis=1)
-            x = torch.from_numpy(chunk).to(device).float()
-            # The vendored diffusion wrapper prints a tqdm progress bar per
-            # chunk; the toolkit logs its own single-line ASCII progress bar
-            # (0 on the left, chunk count on the right) instead.
-            with torch.inference_mode(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                y = model(x, lowpass_input=bool(lowpass_input))
-            predictions.append((y.detach().to("cpu").float().numpy(), start, length))
-            pbar.update_absolute(chunk_index + 1)
-            done = chunk_index + 1
-            if done % log_every == 0 or done == total_chunks:
-                LOGGER.info("FlashSR progress %s", format_progress_bar(done, total_chunks))
-
-        out_48k = _wola_stitch(predictions, total_len=total, window=window)
-
         target_sr = int(output_sr)
-        if target_sr != REQ_SR:
-            out = _resample_hq(out_48k, REQ_SR, target_sr)
-        else:
-            out = out_48k
 
-        LOGGER.info("FlashSR upscale finished: %d Hz -> %d Hz, %d samples", in_sr, target_sr, out.shape[1])
+        if in_sr != REQ_SR:
+            LOGGER.info("Resampling input to FlashSR rate: %d Hz -> %d Hz", in_sr, REQ_SR)
+            batch = [_resample_hq(item, in_sr, REQ_SR) for item in batch]
+
+        total_items = len(batch)
+        per_item_chunks = [len(_iter_chunks(int(item.shape[1]), CHUNK_SAMPLES, max(1, int((CHUNK_S - OVERLAP_S) * REQ_SR)))) for item in batch]
+        pbar = make_progress_bar(max(1, sum(per_item_chunks)))
+        LOGGER.info(
+            "FlashSR upscaling: %d batch item(s), %d samples @ %d Hz on %s",
+            total_items,
+            int(batch[0].shape[1]) if batch else 0,
+            REQ_SR,
+            device,
+        )
+        outputs: List[np.ndarray] = []
+        offset = 0
+        for index, item in enumerate(batch):
+            label = f"item {index + 1}/{total_items}" if total_items > 1 else "audio"
+            out_item = _upscale_item(
+                model, device, item, bool(lowpass_input), pbar, offset,
+                max(1, sum(per_item_chunks)), label, seed,
+            )
+            offset += per_item_chunks[index]
+            if target_sr != REQ_SR:
+                out_item = _resample_hq(out_item, REQ_SR, target_sr)
+            outputs.append(out_item)
+
+        out_batch, padded = _make_audio_batch(target_sr, outputs)
+        LOGGER.info(
+            "FlashSR upscale finished: %d item(s), %d Hz -> %d Hz, %d samples on %s",
+            total_items,
+            in_sr,
+            target_sr,
+            int(out_batch["waveform"].shape[-1]),
+            device,
+        )
         settings_json = json.dumps({
             "schema": "flashsr_settings_v1",
             "inference_sr": REQ_SR,
@@ -326,9 +635,19 @@ class MiniMaxFlashSRAudio:
             "overlap_s": OVERLAP_S,
             "lowpass_input": bool(lowpass_input),
             "output_sr": target_sr,
-            "device": runner["device"],
+            "device": device,
+            "device_requested": runner.get("requested_device", device),
+            "device_fallback": bool(runner.get("fallback")),
+            "batch_items": total_items,
+            "padded": bool(padded),
+            "seed": seed,
+            "determinism": (
+                "seeded (locked RNG context); only guaranteed for the tested backend combination"
+                if seed is not None
+                else "unseeded (historical random semantics)"
+            ),
         }, ensure_ascii=False, indent=2)
-        return (_make_audio(target_sr, out), settings_json)
+        return (out_batch, settings_json)
 
 
 NODE_CLASS_MAPPINGS = {

@@ -19,15 +19,20 @@ Design goals:
 
 from __future__ import annotations
 
+from .audio_utils import validate_audio
+from .ffmpeg_utils import (
+    find_ffmpeg as _find_ffmpeg_impl,
+    prepare_samples as _prepare_samples_impl,
+    write_mp3 as _write_mp3_impl,
+)
+from .file_writes import staged_write
+from .filename_utils import MAX_COMPONENT_LENGTH, truncate_to_utf16
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("save_audio_absolute")
 
 import os
 import re
-import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -50,24 +55,8 @@ _INVALID_FILENAME_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 def _validate_audio(audio: Any) -> Tuple[torch.Tensor, int]:
-    if not isinstance(audio, dict):
-        raise ValueError("Save Audio Absolute Path: AUDIO input must be a ComfyUI AUDIO dictionary.")
-    if "waveform" not in audio or "sample_rate" not in audio:
-        raise ValueError("Save Audio Absolute Path: AUDIO input needs 'waveform' and 'sample_rate'.")
-
-    waveform = audio["waveform"]
-    sample_rate = int(audio["sample_rate"])
-
-    if not isinstance(waveform, torch.Tensor):
-        raise ValueError("Save Audio Absolute Path: audio['waveform'] must be a torch.Tensor.")
-    if waveform.ndim != 3:
-        raise ValueError(
-            f"Save Audio Absolute Path: expected waveform [B,C,T], got {tuple(waveform.shape)}."
-        )
-    if sample_rate <= 0:
-        raise ValueError(f"Save Audio Absolute Path: invalid sample rate {sample_rate}.")
-
-    return waveform, sample_rate
+    """Delegates to :func:`audio_utils.validate_audio` (same messages/policy)."""
+    return validate_audio(audio, error_label="Save Audio Absolute Path", template="separate", require_positive_rate=True)
 
 
 def _clean_filename(filename: str) -> str:
@@ -83,6 +72,12 @@ def _clean_filename(filename: str) -> str:
     # filename is deliberately a file name, not a path. The directory has its own input.
     name = _INVALID_FILENAME_CHARS.sub("_", name)
     name = name.strip(" .")
+
+    # Keep the component inside the filesystem's UTF-16 component budget; the
+    # extension stripping and the "audio" fallback above stay unchanged, so
+    # ordinary names keep their existing paths.
+    if len(name.encode("utf-16-le")) // 2 > MAX_COMPONENT_LENGTH:
+        name = truncate_to_utf16(name, MAX_COMPONENT_LENGTH).strip(" .")
 
     if not name:
         name = "audio"
@@ -144,21 +139,9 @@ def _pick_output_path(
 
 
 def _find_ffmpeg() -> str:
-    # Prefer the user's/system FFmpeg when available.
-    exe = shutil.which("ffmpeg")
-    if exe:
-        return exe
-
-    # imageio-ffmpeg provides a bundled executable on common platforms.
-    try:
-        import imageio_ffmpeg
-        exe = imageio_ffmpeg.get_ffmpeg_exe()
-        if exe and os.path.isfile(exe):
-            return exe
-    except Exception:
-        pass
-
-    raise RuntimeError(
+    # Prefer the user's/system FFmpeg when available, then the imageio-ffmpeg
+    # fallback installed by install_requirements.bat.
+    return _find_ffmpeg_impl(
         "Save Audio Absolute Path: MP3 output requires FFmpeg. "
         "Run install_requirements.bat; it installs imageio-ffmpeg as a fallback."
     )
@@ -180,22 +163,11 @@ def _subtype_for_wav(bit_depth: str) -> str:
 
 
 def _prepare_samples(samples: np.ndarray, peak_handling: str) -> Tuple[np.ndarray, float, float]:
-    samples = np.asarray(samples, dtype=np.float32)
-    input_peak = float(np.max(np.abs(samples))) if samples.size else 0.0
-    applied_gain = 1.0
-
-    if peak_handling == "normalize_only_if_clipping":
-        # Preserve the signal exactly when it is already below full scale.
-        # Reduce gain only if clipping would otherwise occur.
-        if input_peak > 1.0:
-            applied_gain = 0.999 / input_peak
-            samples = samples * np.float32(applied_gain)
-    elif peak_handling == "leave_unchanged":
-        pass
-    else:
-        raise ValueError(f"Save Audio Absolute Path: unknown peak_handling '{peak_handling}'.")
-
-    return samples, input_peak, applied_gain
+    return _prepare_samples_impl(
+        samples,
+        peak_handling,
+        unknown_peak_message="Save Audio Absolute Path: unknown peak_handling '{peak_handling}'.",
+    )
 
 
 def _write_mp3(
@@ -204,77 +176,28 @@ def _write_mp3(
     sample_rate: int,
     mp3_quality: str,
 ) -> None:
-    if sf is None:
-        raise RuntimeError(
+    """Compatibility wrapper around :func:`ffmpeg_utils.write_mp3`.
+
+    This saver keeps its historic ``-map_metadata -1``: it deliberately strips
+    any pre-existing container metadata before writing the file.
+    """
+    _write_mp3_impl(
+        target,
+        data_tc,
+        sample_rate,
+        mp3_quality,
+        not_found_message=(
+            "Save Audio Absolute Path: MP3 output requires FFmpeg. "
+            "Run install_requirements.bat; it installs imageio-ffmpeg as a fallback."
+        ),
+        failure_message="Save Audio Absolute Path: FFmpeg MP3 encoding failed:",
+        invalid_quality_message=f"Save Audio Absolute Path: unknown MP3 quality '{mp3_quality}'.",
+        strip_metadata=True,
+        soundfile_missing_message=(
             "Save Audio Absolute Path requires soundfile. "
             f"Original import error: {_SOUNDFILE_IMPORT_ERROR}"
-        )
-
-    ffmpeg = _find_ffmpeg()
-
-    # Use a FLOAT WAV as lossless temporary interchange so the node does not
-    # introduce an unnecessary 16-bit conversion before MP3 encoding.
-    temp_path = None
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-            temp_path = tmp.name
-
-        sf.write(
-            temp_path,
-            data_tc,
-            sample_rate,
-            format="WAV",
-            subtype="FLOAT",
-        )
-
-        cmd = [
-            ffmpeg,
-            "-hide_banner",
-            "-loglevel", "error",
-            "-nostdin",
-            "-y",
-            "-i", temp_path,
-            "-map_metadata", "-1",
-            "-codec:a", "libmp3lame",
-        ]
-
-        if mp3_quality == "V0 (~245 kbps)":
-            cmd += ["-q:a", "0"]
-        elif mp3_quality == "V2 (~190 kbps)":
-            cmd += ["-q:a", "2"]
-        elif mp3_quality == "320 kbps":
-            cmd += ["-b:a", "320k"]
-        elif mp3_quality == "256 kbps":
-            cmd += ["-b:a", "256k"]
-        elif mp3_quality == "192 kbps":
-            cmd += ["-b:a", "192k"]
-        else:
-            raise ValueError(f"Save Audio Absolute Path: unknown MP3 quality '{mp3_quality}'.")
-
-        cmd += ["-id3v2_version", "3", target]
-
-        creationflags = 0
-        if os.name == "nt" and hasattr(subprocess, "CREATE_NO_WINDOW"):
-            creationflags = subprocess.CREATE_NO_WINDOW
-
-        completed = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            creationflags=creationflags,
-        )
-        if completed.returncode != 0:
-            raise RuntimeError(
-                "Save Audio Absolute Path: FFmpeg MP3 encoding failed:\n"
-                + completed.stderr.strip()
-            )
-    finally:
-        if temp_path:
-            try:
-                os.remove(temp_path)
-            except OSError:
-                pass
+        ),
+    )
 
 
 class SaveAudioAbsolutePath:
@@ -399,29 +322,38 @@ class SaveAudioAbsolutePath:
                     f"batch {b + 1}: peak={peak:.4f} > 1.0; PCM FLAC/WAV or MP3 encoding may clip"
                 )
 
-            if fmt == "flac":
-                sf.write(
-                    target,
-                    data_tc,
-                    sample_rate,
-                    format="FLAC",
-                    subtype=_subtype_for_flac(flac_bit_depth),
-                )
-            elif fmt == "wav":
-                sf.write(
-                    target,
-                    data_tc,
-                    sample_rate,
-                    format="WAV",
-                    subtype=_subtype_for_wav(wav_bit_depth),
-                )
-            else:
-                _write_mp3(
-                    target,
-                    data_tc,
-                    sample_rate,
-                    mp3_quality,
-                )
+            # Stage the encode in the same directory: the final path only ever
+            # receives a finished file, and the collision policy is re-checked
+            # at publication so a name taken meanwhile is not overwritten.
+            with staged_write(
+                target,
+                reserve=lambda: _pick_output_path(directory, batch_base, fmt, collision_mode),
+                error_prefix="Save Audio Absolute Path",
+            ) as staged:
+                if fmt == "flac":
+                    sf.write(
+                        staged.staging,
+                        data_tc,
+                        sample_rate,
+                        format="FLAC",
+                        subtype=_subtype_for_flac(flac_bit_depth),
+                    )
+                elif fmt == "wav":
+                    sf.write(
+                        staged.staging,
+                        data_tc,
+                        sample_rate,
+                        format="WAV",
+                        subtype=_subtype_for_wav(wav_bit_depth),
+                    )
+                else:
+                    _write_mp3(
+                        staged.staging,
+                        data_tc,
+                        sample_rate,
+                        mp3_quality,
+                    )
+            target = staged.target
 
             saved.append(target)
             LOGGER.info(

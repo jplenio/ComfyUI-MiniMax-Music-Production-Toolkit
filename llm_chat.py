@@ -20,13 +20,28 @@ auto-download from :file:`models_config.json`).
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 import re
+import threading
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .model_downloader import check_file_entries, load_models_config, resolve_target
+from .comfy_resources import free_comfyui_model_cache
+from .llm_sampling import (
+    adapter_report,
+    build_runtime_options,
+    format_adapter_lines,
+)
+from .model_downloader import (
+    check_file_entries,
+    config_version_problem,
+    load_models_config,
+    normalize_model_entries,
+    resolve_target,
+)
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("llm")
@@ -91,7 +106,131 @@ def _split_thinking_tags(text: str) -> tuple:
 
 _loaded_models: Dict[str, Any] = {}
 _loaded_llama_cpp = None
-_sessions: Dict[str, bytes] = {}
+# Session snapshots are keyed by session id **plus** the model/context/template
+# identity, so a snapshot is never restored into a different model or context.
+# Bounded by entry count and by total bytes (see ``_remember_session``); the
+# node default (``reset_session=True``) stores no snapshots at all.
+_sessions: "OrderedDict[str, bytes]" = OrderedDict()
+SESSION_SNAPSHOT_MAX_ENTRIES = 4
+SESSION_SNAPSHOT_MAX_BYTES = 512 * 1024 * 1024
+
+# Lock order (documented, never inverted): _MODEL_LOCK -> _SESSIONS_LOCK.
+# _MODEL_LOCK serialises loading, state restore, generation, state save, close
+# and unload, so no second request can close a model while native inference is
+# running.  _SESSIONS_LOCK only guards the snapshot mapping and is never held
+# while a model is loading or generating, so the two cannot deadlock.
+_MODEL_LOCK = threading.RLock()
+_SESSIONS_LOCK = threading.RLock()
+
+
+def _model_signature(model_path: Path) -> str:
+    """File signature used in cache/session keys (name + size + mtime)."""
+    try:
+        stat = model_path.stat()
+        return f"{model_path.name}:{stat.st_size}:{stat.st_mtime_ns}"
+    except OSError:  # pragma: no cover - race with a deleted file
+        return f"{model_path.name}:missing"
+
+
+def _close_model(cache_key: str) -> None:
+    """Close and forget one cached model; failures are logged, never hidden."""
+    model = _loaded_models.pop(cache_key, None)
+    if model is None:
+        return
+    try:
+        model.close()
+    except Exception as exc:
+        LOGGER.warning("Could not close LLM model %s: %s", cache_key, exc)
+    LOGGER.info("Unloaded LLM model: %s", cache_key)
+
+
+def _session_key(session_id: str, model_name: str, n_ctx: int, chat_format: str, signature: str) -> str:
+    """Session identity: session id + model signature + context + template."""
+    return f"{session_id or 'default'}::{signature}::ctx={int(n_ctx)}::fmt={chat_format or 'auto'}"
+
+
+def _snapshot_bytes() -> int:
+    return sum(len(state) for state in _sessions.values())
+
+
+def _remember_session(key: str, state: Any) -> None:
+    """Store one snapshot inside the count/byte budget, evicting oldest first."""
+    if state is None:
+        return
+    try:
+        payload = bytes(state)
+    except Exception:
+        LOGGER.debug("Session snapshot is not bytes; not cached", exc_info=True)
+        return
+    with _SESSIONS_LOCK:
+        _sessions[key] = payload
+        _sessions.move_to_end(key)
+        while _sessions and (
+            len(_sessions) > SESSION_SNAPSHOT_MAX_ENTRIES or _snapshot_bytes() > SESSION_SNAPSHOT_MAX_BYTES
+        ):
+            evicted, _ = _sessions.popitem(last=False)
+            if evicted == key:
+                LOGGER.info("Session snapshot exceeds the snapshot byte budget; not cached.")
+                return
+            LOGGER.info("Evicted oldest LLM session snapshot: %s", evicted)
+
+
+def _restore_state(model, state: Any) -> bool:
+    """Restore a snapshot through whichever API this build actually provides.
+
+    ``load_state`` is the documented restore call; older builds only expose
+    ``set_state``.  Neither is assumed to exist.
+    """
+    for name in ("load_state", "set_state"):
+        method = getattr(model, name, None)
+        if callable(method):
+            method(state)
+            return True
+    LOGGER.warning(
+        "This llama-cpp-python build exposes neither load_state nor set_state; "
+        "session snapshots cannot be restored (generation continues without the history)."
+    )
+    return False
+
+
+def _save_state(model) -> Optional[bytes]:
+    method = getattr(model, "save_state", None)
+    if not callable(method):
+        LOGGER.debug("This llama-cpp-python build has no save_state; no snapshot is stored.")
+        return None
+    return method()
+
+
+def _processing_interrupted() -> bool:
+    """ComfyUI's interrupt flag, when running inside ComfyUI."""
+    try:
+        import comfy.model_management as model_management  # type: ignore
+
+        checker = getattr(model_management, "processing_interrupted", None)
+        return bool(checker()) if callable(checker) else False
+    except Exception:
+        return False
+
+
+def _interrupt_exception() -> BaseException:
+    """ComfyUI's own interrupt exception when available."""
+    try:
+        import comfy.model_management as model_management  # type: ignore
+
+        return model_management.InterruptProcessingException()
+    except Exception:
+        return RuntimeError("LLM generation cancelled by the user.")
+
+
+def _close_stream(stream) -> None:
+    """Close a streaming iterator so the native generator is not left open."""
+    close = getattr(stream, "close", None)
+    if callable(close):
+        try:
+            close()
+        except Exception as exc:  # pragma: no cover - generator dependent
+            LOGGER.debug("Closing the LLM stream failed: %s", exc)
+
 
 
 def _import_llama_cpp():
@@ -111,232 +250,8 @@ def _import_llama_cpp():
 
 
 def _free_comfyui_model_cache() -> None:
-    """Free ALL ComfyUI-managed GPU memory before allocating a llama.cpp model.
-
-    llama.cpp allocates CUDA memory outside PyTorch, so ComfyUI's memory
-    manager does not see those allocations and will not evict its own cached
-    models when the GGUF is loaded.  On a repeated run the MiniMax / FLUX
-    models of the previous run are still resident in VRAM; loading the LLM
-    on top overflows the GPU, which makes llama.cpp spill to CPU (generation
-    takes \"forever\") and leaves the CUDA context broken so the later
-    MiniMax CUDA graph capture fails with ``cudaErrorStreamCaptureInvalidated``.
-
-    ``unload_all_models()`` alone is NOT enough on dynamic-VRAM builds
-    (aimdo): their staged weight pages live in a VBAR and are only released
-    through ``ModelPatcher.partially_unload()`` -> ``vbar.free_memory()``,
-    the cast buffers (``VRAMBuffer`` / torch cast tensors) that grow
-    while weights stream are only destroyed by ``reset_cast_buffers()``,
-    and the MiniMax CUDA-graph/prefetch workspaces only by
-    ``cleanup_prefetch_queues()`` (ComfyUI itself never calls the last
-    two).  All of these are invisible to the torch allocator and survive
-    ``free_memory()``.  They are released explicitly here; the models
-    re-stage on demand later in the pipeline (dynamic VRAM loading), so
-    nothing is lost - this keeps a SINGLE-GPU machine working run after run.
-    A short diagnostic (aimdo usage + free VRAM per GPU) is logged at the
-    end so any remaining residency is visible instead of a mysterious hang.
-
-    Outside ComfyUI (unit tests) this is a no-op.
-    """
-    try:
-        import comfy.model_management as model_management  # type: ignore
-    except Exception:
-        return
-
-    # FlashSR runners cache torch models on the GPU outside ComfyUI's
-    # management; release them too so a previous run cannot squeeze the LLM.
-    try:
-        from .flashsr_audio import clear_flashsr_cache as _clear_flashsr
-        _clear_flashsr()
-    except Exception:
-        pass
-
-    # Collect dynamic (staged) models BEFORE unload_all_models(): unload
-    # detaches them and drops them from current_loaded_models, but their
-    # VBAR staging pages stay resident - we must release them afterwards.
-    dynamic_models = []
-    try:
-        for entry in list(getattr(model_management, "current_loaded_models", None) or []):
-            model = getattr(entry, "model", None)
-            if model is None:  # weakref already dead
-                continue
-            try:
-                if callable(getattr(model, "is_dynamic", None)) and model.is_dynamic():
-                    dynamic_models.append(model)
-            except Exception as exc:
-                LOGGER.debug("Could not inspect model dynamism before freeing cache: %s", exc)
-    except Exception as exc:
-        LOGGER.debug("Could not collect dynamic models before freeing cache: %s", exc)
-
-    # Diagnostic: list what is actually resident, so a leftover residency
-    # can be attributed to its model instead of guessed at.
-    try:
-        for entry in list(getattr(model_management, "current_loaded_models", None) or []):
-            model = getattr(entry, "model", None)
-            if model is None:
-                continue
-            try:
-                LOGGER.info(
-                    "Model resident before LLM cleanup: %s (dynamic=%s, loaded=%.2f GB)",
-                    type(getattr(model, "model", model)).__name__,
-                    bool(model.is_dynamic()),
-                    float(getattr(model, "loaded_size", lambda: 0.0)() or 0) / (2**30),
-                )
-            except Exception as exc:
-                LOGGER.debug("Could not describe resident model: %s", exc)
-    except Exception as exc:
-        LOGGER.debug("Could not list resident models: %s", exc)
-
-    # CUDA-graph / prefetch pools of the music models (model_prefetch.py)
-    # hold their workspace in VRAM after a run; ComfyUI never calls
-    # cleanup_prefetch_queues() itself, so the graphs stay resident.
-    # Release them first: the graphs reference the staged pages below.
-    try:
-        from comfy import model_prefetch as _model_prefetch  # type: ignore
-        cleanup_prefetch = getattr(_model_prefetch, "cleanup_prefetch_queues", None)
-        if cleanup_prefetch is None:
-            LOGGER.debug("comfy.model_prefetch has no cleanup_prefetch_queues(); skipping prefetch free.")
-        else:
-            cleanup_prefetch()
-            LOGGER.info("Released ComfyUI prefetch queues / CUDA graphs before LLM load.")
-    except Exception as exc:
-        LOGGER.debug("Could not clean ComfyUI prefetch queues: %s", exc)
-
-    # Cast buffers (aimdo VRAMBuffer + torch cast tensors) grow while the
-    # music models stream weights and are NEVER released by
-    # unload_all_models() or partially_unload() - they stay resident for the
-    # whole process (observed: ~5 GB left on the GPU after a run, which then
-    # overflows the card when the GGUF loads).  reset_cast_buffers() is the
-    # only path that destroys them; it also clears cross-step state and
-    # dirty mmaps.  Called BEFORE unload_all_models() so it can still reset
-    # the pin state of the loaded dynamic models.
-    try:
-        reset = getattr(model_management, "reset_cast_buffers", None)
-        if reset is None:
-            LOGGER.debug("comfy.model_management has no reset_cast_buffers(); skipping cast buffer free.")
-        else:
-            reset()
-            LOGGER.info("Released ComfyUI cast buffers before LLM load.")
-    except Exception as exc:
-        LOGGER.debug("Could not reset ComfyUI cast buffers: %s", exc)
-
-    try:
-        unload = getattr(model_management, "unload_all_models", None)
-        if unload is None:
-            unload = getattr(model_management, "unload_all", None)
-        if unload is None:
-            LOGGER.debug("comfy.model_management has no unload_all_models(); skipping cache free.")
-        else:
-            unload()
-            LOGGER.info("Freed ComfyUI model cache before LLM load.")
-    except Exception as exc:
-        LOGGER.debug("Could not free ComfyUI model cache before LLM load: %s", exc)
-
-    released_staging = 0
-    for model in dynamic_models:
-        try:
-            offload = getattr(model, "offload_device", None)
-            if offload is None:
-                import torch as _torch  # type: ignore
-                offload = _torch.device("cpu")
-            freed = model.partially_unload(offload, 1e32)
-            released_staging += int(freed or 0)
-            name = type(getattr(model, "model", model)).__name__
-            if freed:
-                LOGGER.info(
-                    "Released dynamic VRAM staging for %s: %.2f GB",
-                    name,
-                    freed / (2**30),
-                )
-            else:
-                LOGGER.warning(
-                    "partially_unload freed nothing for %s (loaded_size=%.2f GB).",
-                    name,
-                    float(getattr(model, "loaded_size", lambda: 0.0)() or 0) / (2**30),
-                )
-        except Exception as exc:
-            LOGGER.warning("Could not release dynamic VRAM staging: %s", exc)
-    if released_staging:
-        LOGGER.info("Total dynamic VRAM staging released before LLM load: %.2f GB", released_staging / (2**30))
-    elif dynamic_models:
-        LOGGER.warning("No dynamic VRAM staging could be released before LLM load.")
-
-    try:
-        import torch  # type: ignore
-        torch.cuda.empty_cache()
-        soft_empty = getattr(model_management, "soft_empty_cache", None)
-        if soft_empty is not None:
-            try:
-                soft_empty(force=True)
-            except TypeError:
-                soft_empty()
-    except Exception:
-        pass
-
-    # Diagnostic: report what still holds GPU memory after the cleanup, so a
-    # remaining residency is visible in the log instead of a mysterious hang.
-    aimdo_usage = 0
-    try:
-        import comfy_aimdo.control as _aimdo  # type: ignore
-        aimdo_usage = _aimdo.get_total_vram_usage()
-        if aimdo_usage:
-            LOGGER.info("Aimdo VRAM usage after cleanup: %.2f GB", aimdo_usage / (2**30))
-    except Exception:
-        pass
-    try:
-        import torch as _torch  # type: ignore
-        for index in range(_torch.cuda.device_count()):
-            free_bytes, total_bytes = _torch.cuda.mem_get_info(index)
-            LOGGER.info(
-                "GPU %d after cleanup: %.2f GB free of %.2f GB",
-                index,
-                free_bytes / (2**30),
-                total_bytes / (2**30),
-            )
-    except Exception:
-        pass
-    # If aimdo still holds a meaningful amount, find the live VBARs, name
-    # their owner models, and force-release their pages directly.  The pages
-    # re-fault on demand the next time the model runs, so this is safe.
-    if aimdo_usage > 200 * (2**20):
-        try:
-            import gc as _gc
-            import torch as _torch_mod  # type: ignore
-            for vbar in [obj for obj in _gc.get_objects() if type(obj).__name__ == "ModelVBAR"]:
-                owner = None
-                try:
-                    for ref in _gc.get_referrers(vbar):
-                        if isinstance(ref, dict):
-                            for holder in _gc.get_referrers(ref):
-                                if isinstance(holder, _torch_mod.nn.Module):
-                                    owner = type(holder).__name__
-                                    break
-                        if owner:
-                            break
-                except Exception:
-                    pass
-                try:
-                    deprioritize = getattr(vbar, "deprioritize", None)
-                    if deprioritize is not None:
-                        deprioritize()
-                    freed = vbar.free_memory(1e32)
-                except Exception as exc:
-                    freed = 0
-                    LOGGER.warning("Could not force-release orphan VBAR: %s", exc)
-                LOGGER.warning(
-                    "Live aimdo VBAR after cleanup: owner=%s device=%s loaded=%.2f GB watermark=%.2f GB force_freed=%.2f GB",
-                    owner or "unknown",
-                    getattr(vbar, "device", "?"),
-                    float(getattr(vbar, "loaded_size", lambda: 0)() or 0) / (2**30),
-                    float(getattr(vbar, "get_watermark", lambda: 0)() or 0) / (2**30),
-                    freed / (2**30),
-                )
-        except Exception:
-            pass
-        try:
-            import comfy_aimdo.control as _aimdo2  # type: ignore
-            LOGGER.info("Aimdo VRAM usage after force release: %.2f GB", _aimdo2.get_total_vram_usage() / (2**30))
-        except Exception:
-            pass
+    """Compatibility wrapper around :func:`comfy_resources.free_comfyui_model_cache`."""
+    return free_comfyui_model_cache()
 
 
 def _llm_directories() -> List[Path]:
@@ -379,18 +294,134 @@ def _llm_directories() -> List[Path]:
     return directories
 
 
+# ---------------------------------------------------------------------------
+# GGUF discovery classification (D01)
+#
+# A models/llm folder usually also holds projector files (vision/mmproj) and
+# multi-part ("split") models.  Offering those as standalone chat models makes
+# the combo box lie; a split model belongs in the list exactly once, under its
+# first shard, and a missing part must be visible.
+# ---------------------------------------------------------------------------
+GGUF_PROJECTOR_MARKERS = ("mmproj", "projector", "vision-encoder", "vision_encoder")
+GGUF_MTP_MARKERS = ("mtp",)
+_GGUF_SHARD_RE = re.compile(r"^(?P<stem>.+?)-(?P<index>\d{5})-of-(?P<total>\d{5})\.gguf$", re.IGNORECASE)
+GGUF_STAT_CACHE_MAX = 32
+# (size, mtime) cache for the shard scan - metadata only, never weights.
+_GGUF_STAT_CACHE: "OrderedDict[str, tuple]" = OrderedDict()
+
+
+def classify_gguf(name: str) -> str:
+    """Classify one file name: ``model``, ``projector``, ``mtp`` or ``shard``."""
+    lowered = (name or "").lower()
+    if not lowered.endswith(GGUF_SUFFIX):
+        return "mtp"
+    if any(marker in lowered for marker in GGUF_PROJECTOR_MARKERS):
+        return "projector"
+    if _GGUF_SHARD_RE.match(name or ""):
+        return "shard"
+    if any(marker in lowered for marker in GGUF_MTP_MARKERS):
+        return "mtp"
+    return "model"
+
+
+def cached_gguf_size(path: Path) -> Optional[int]:
+    """File size cached by path + size + mtime.
+
+    The shard scan only stats files; it never opens them, so no weights are
+    read and no model is loaded.
+    """
+    key = str(path)
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    signature = (stat.st_size, stat.st_mtime_ns)
+    cached = _GGUF_STAT_CACHE.get(key)
+    if cached is not None and cached[0] == signature:
+        _GGUF_STAT_CACHE.move_to_end(key)
+        return cached[1]
+    _GGUF_STAT_CACHE[key] = (signature, stat.st_size)
+    _GGUF_STAT_CACHE.move_to_end(key)
+    while len(_GGUF_STAT_CACHE) > GGUF_STAT_CACHE_MAX:
+        _GGUF_STAT_CACHE.popitem(last=False)
+    return stat.st_size
+
+
+def group_gguf_files(names: List[str]) -> Dict[str, Any]:
+    """Group a flat GGUF file list into usable models, projectors and shard sets.
+
+    Returns ``{"models", "projectors", "mtp", "split_models", "incomplete"}``.
+    Each ``split_models`` entry names the first shard plus how many parts are
+    present of how many are expected, so an incomplete download is visible
+    instead of looking like a complete model.
+    """
+    models: List[str] = []
+    projectors: List[str] = []
+    mtp: List[str] = []
+    shards: Dict[str, List[tuple]] = {}
+    for name in names:
+        kind = classify_gguf(name)
+        if kind == "projector":
+            projectors.append(name)
+        elif kind == "mtp":
+            mtp.append(name)
+        elif kind == "shard":
+            match = _GGUF_SHARD_RE.match(name)
+            assert match is not None
+            shards.setdefault(match.group("stem"), []).append(
+                (int(match.group("index")), int(match.group("total")), name)
+            )
+        else:
+            models.append(name)
+
+    split_models: List[Dict[str, Any]] = []
+    incomplete: List[Dict[str, Any]] = []
+    for _stem, parts in shards.items():
+        parts.sort(key=lambda item: item[0])
+        expected = parts[0][1]
+        present = {item[0] for item in parts}
+        entry = {
+            "name": parts[0][2],
+            "files": [item[2] for item in parts],
+            "parts_present": len(present),
+            "parts_expected": expected,
+        }
+        missing = [index for index in range(1, expected + 1) if index not in present]
+        if missing:
+            entry["missing_parts"] = missing
+            incomplete.append(entry)
+        split_models.append(entry)
+
+    split_models.sort(key=lambda entry: entry["name"].lower())
+    return {
+        "models": sorted(models, key=str.lower),
+        "projectors": sorted(projectors, key=str.lower),
+        "mtp": sorted(mtp, key=str.lower),
+        "split_models": split_models,
+        "incomplete": incomplete,
+    }
+
+
 def list_llm_models() -> List[str]:
-    """GGUF files available in the ComfyUI models/llm folders."""
+    """Chat models available in the ComfyUI models/llm folders.
+
+    Projectors, MTP heads and the trailing parts of split models are not offered
+    as standalone chat models; a split model appears once, under its first
+    shard.  Manually installed files are kept - they are only classified, never
+    renamed or moved.
+    """
     names: List[str] = []
     seen = set()
-    for directory in _llm_directories():
+    for directory in _llm_search_directories():
         if not directory.is_dir():
             continue
         for path in sorted(directory.glob(f"*{GGUF_SUFFIX}")):
             if path.name not in seen:
                 seen.add(path.name)
                 names.append(path.name)
-    return names
+    grouped = group_gguf_files(names)
+    offered = set(grouped["models"]) | {entry["name"] for entry in grouped["split_models"]}
+    return [name for name in names if name in offered]
 
 
 _ENVIRONMENT_LOGGED = False
@@ -436,6 +467,8 @@ def log_llm_environment_once() -> None:
     _ENVIRONMENT_LOGGED = True
     import json as _json
     LOGGER.info("LLM environment: %s", _json.dumps(collect_llm_diagnostics(), ensure_ascii=False))
+    for line in describe_llm_profile():
+        LOGGER.info("%s", line)
     if _gpu_device_count() <= 1:
         LOGGER.info(
             "Single-GPU mode: ComfyUI models and the LLM share one GPU. "
@@ -446,8 +479,67 @@ def log_llm_environment_once() -> None:
         )
 
 
+def _catalog_llm_directories() -> List[Path]:
+    """Directories the model catalog points at for LLM artifacts.
+
+    The check node, the downloader and the loader must agree on where an LLM
+    file lives, so the catalog's resolved targets are part of the search path
+    instead of being a second, separate truth.  A broken catalog config is
+    reported and then ignored - the folder scan still works.
+    """
+    try:
+        config = load_models_config()
+        problem = config_version_problem(config)
+        if problem:
+            LOGGER.warning("%s", problem)
+            return []
+        entries = normalize_model_entries(config, minimax=False, flux2=False, flashsr=False)
+    except Exception as exc:
+        LOGGER.debug("Model catalog could not be read for the LLM search path: %s", exc)
+        return []
+    directories: List[Path] = []
+    for entry in entries:
+        target = entry.get("target")
+        if not target:
+            continue
+        try:
+            path = resolve_target(str(target))
+        except Exception:  # pragma: no cover - defensive
+            continue
+        if path not in directories:
+            directories.append(path)
+    return directories
+
+
+def _llm_search_directories() -> List[Path]:
+    """Folder scan plus the catalog targets, in that order (deduplicated)."""
+    directories = list(_llm_directories())
+    for directory in _catalog_llm_directories():
+        if directory not in directories:
+            directories.append(directory)
+    return directories
+
+
+def describe_llm_profile() -> List[str]:
+    """Recommended model class for this machine (L01) - advisory and read-only.
+
+    Logged once with the LLM environment and available for the UI; it never
+    changes a generation setting and never downloads anything.  A missing or
+    unreadable resource reading is reported as such instead of raising.
+    """
+    try:
+        from . import llm_profiles
+
+        names, sizes = llm_profiles.installed_llm_files()
+        recommendation = llm_profiles.recommend_llm_setup(installed=names, sizes_by_name=sizes)
+        return llm_profiles.format_llm_profile_lines(recommendation)
+    except Exception as exc:  # pragma: no cover - advisory path must never break a run
+        LOGGER.debug("LLM profile recommendation unavailable: %s: %s", type(exc).__name__, exc)
+        return ["LLM profile: not available (" + f"{type(exc).__name__})"]
+
+
 def _find_model_path(name: str) -> Optional[Path]:
-    for directory in _llm_directories():
+    for directory in _llm_search_directories():
         candidate = directory / name
         if candidate.is_file():
             return candidate
@@ -613,6 +705,21 @@ def _pick_llm_main_gpu(
         return 0
 
 
+def _configured_runtime_options() -> Dict[str, Any]:
+    """Optional runtime parameters from the model catalog (opt-in, no widget).
+
+    Reading them from ``models_config.json`` keeps the node's widget list - and
+    therefore every saved workflow - untouched while still letting a user ask
+    for ``n_ubatch``, ``flash_attn`` or a KV type explicitly.
+    """
+    try:
+        llm_section = load_models_config().get("llm", {}) or {}
+        options = llm_section.get("runtime_options")
+        return dict(options) if isinstance(options, dict) else {}
+    except Exception:  # pragma: no cover - defensive
+        return {}
+
+
 def _get_model(
     model_name: str,
     auto_download: bool,
@@ -623,9 +730,17 @@ def _get_model(
     tensor_split: str = "",
     main_gpu: int = 0,
     tensor_parallel: bool = False,
+    runtime_options: Optional[Dict[str, Any]] = None,
 ):
-    """Return a loaded Llama instance for ``model_name``, loading it if needed."""
-    global _loaded_models
+    """Return a loaded Llama instance for ``model_name``, loading it if needed.
+
+    Model lifetimes are serialised by :data:`_MODEL_LOCK`.  A model switch
+    closes the no-longer-active model *before* the new one is constructed, so
+    the two never hold VRAM at the same time and a failed load cannot leave a
+    stale entry behind.  The cache key carries the checkpoint's file signature,
+    so replacing a GGUF on disk invalidates the cached instance instead of
+    silently reusing the old one.
+    """
     llama_cpp = _import_llama_cpp()
     model_path = _find_model_path(model_name)
 
@@ -684,41 +799,59 @@ def _get_model(
                 getattr(llama_cpp, "__version__", "unknown"),
             )
 
-    cache_key = f"{model_path}|" + "|".join(f"{key}={value}" for key, value in sorted(options.items()))
-    cached = _loaded_models.get(cache_key)
-    if cached is not None:
-        return cached
-
-    LOGGER.info(
-        "Loading LLM model: %s (n_ctx=%d, n_gpu_layers=%d, chat_format=%s, split_mode=%s, main_gpu=%d, gpus=%d)",
-        model_path, options["n_ctx"], options["n_gpu_layers"],
-        options.get("chat_format", "none"), options["split_mode"], options["main_gpu"], device_count,
+    # Optional runtime parameters are only passed when this build declares them,
+    # and they are part of ``options`` - so they are part of the cache key below:
+    # two runtime configurations are two different model instances.
+    requested_runtime = runtime_options if runtime_options is not None else _configured_runtime_options()
+    runtime = build_runtime_options(
+        requested_runtime, lambda name: _accepts_kwarg(llama_cpp.Llama.__init__, name)
     )
-    # verbose=False keeps llama.cpp's per-token debug output out of the log;
-    # the chat format makes Qwen-style models emit their reasoning as <think>
-    # tags so it can be split off from the real answer.
-    _free_comfyui_model_cache()
-    try:
-        model = llama_cpp.Llama(model_path=str(model_path), verbose=False, **options)
-    except Exception as exc:
-        raise RuntimeError(
-            f"Failed to load LLM model '{model_path.name}' into llama.cpp "
-            f"(n_gpu_layers={options['n_gpu_layers']}, n_ctx={options['n_ctx']}, main_gpu={options['main_gpu']}). "
-            "If this happens on a repeated run, VRAM was likely exhausted by models "
-            "cached from the previous run; restart ComfyUI or free the cache first. "
-            "Otherwise reduce n_ctx or set n_gpu_layers to a positive number to keep "
-            "part of the model on CPU. Underlying error: {type(exc).__name__}: {exc}"
-        ) from exc
-    # Keep only the most recently used model loaded to limit memory usage.
-    for other_key, other_model in list(_loaded_models.items()):
-        if other_key != cache_key:
-            LOGGER.info("Unloading previous LLM model: %s", other_key)
-            try:
-                other_model.close()
-            except Exception:
-                pass
-    _loaded_models = {cache_key: model}
-    return model
+    if runtime["options"]:
+        LOGGER.info(
+            "LLM runtime options: %s", ", ".join(f"{k}={v}" for k, v in sorted(runtime["options"].items()))
+        )
+    for name, problem in sorted(runtime["unsupported"].items()):
+        LOGGER.warning("Ignoring LLM runtime option %s: %s", name, problem)
+    options.update(runtime["options"])
+
+    cache_key = f"{model_path}|{_model_signature(model_path)}|" + "|".join(
+        f"{key}={value}" for key, value in sorted(options.items())
+    )
+    with _MODEL_LOCK:
+        cached = _loaded_models.get(cache_key)
+        if cached is not None:
+            return cached
+
+        LOGGER.info(
+            "Loading LLM model: %s (n_ctx=%d, n_gpu_layers=%d, chat_format=%s, split_mode=%s, main_gpu=%d, gpus=%d)",
+            model_path, options["n_ctx"], options["n_gpu_layers"],
+            options.get("chat_format", "none"), options["split_mode"], options["main_gpu"], device_count,
+        )
+        # Close the previous model first: keeping it as a "rollback" would mean two
+        # models resident at once, which is exactly the peak this loop must avoid.
+        for other_key in [key for key in _loaded_models if key != cache_key]:
+            _close_model(other_key)
+        # verbose=False keeps llama.cpp's per-token debug output out of the log;
+        # the chat format makes Qwen-style models emit their reasoning as <think>
+        # tags so it can be split off from the real answer.
+        _free_comfyui_model_cache()
+        try:
+            model = llama_cpp.Llama(model_path=str(model_path), verbose=False, **options)
+        except Exception as exc:
+            # Do not declare one cause ("VRAM") for every failure: report the
+            # settings, the likely causes and the real error instead.
+            raise RuntimeError(
+                f"Failed to load LLM model '{model_path.name}' into llama.cpp "
+                f"(n_gpu_layers={options['n_gpu_layers']}, n_ctx={options['n_ctx']}, "
+                f"main_gpu={options['main_gpu']}, split_mode={options['split_mode']}). "
+                "Possible causes: not enough free memory for these settings (reduce n_ctx, "
+                "set n_gpu_layers to a positive number to keep part of the model on CPU, "
+                "pick another main_gpu), an incompatible or damaged GGUF file, or a "
+                "llama-cpp-python build that does not support this backend. "
+                f"The previous model was already released. Underlying error: {type(exc).__name__}: {exc}"
+            ) from exc
+        _loaded_models[cache_key] = model
+        return model
 
 
 def _accepts_cache_prompt(model) -> bool:
@@ -737,6 +870,45 @@ def _accepts_cache_prompt(model) -> bool:
         return "cache_prompt" in inspect.signature(method).parameters
     except (TypeError, ValueError):
         return False
+
+
+def _usage_from_response(response: Any, chunks: Optional[int] = None) -> Dict[str, Any]:
+    """Token statistics from the backend's own usage report, when it has one.
+
+    A streaming chunk is not a token, so a chunk count is reported *as* a chunk
+    count (``source='chunks'``) instead of being presented as an exact token
+    count.  Missing values stay ``None`` rather than becoming 0.
+    """
+    usage = (response or {}).get("usage") or {}
+    prompt = usage.get("prompt_tokens")
+    completion = usage.get("completion_tokens")
+    total = usage.get("total_tokens")
+    if prompt is not None or completion is not None:
+        return {
+            "prompt_tokens": prompt,
+            "completion_tokens": completion,
+            "total_tokens": total,
+            "source": "backend",
+            "chunks": chunks,
+        }
+    return {
+        "prompt_tokens": None,
+        "completion_tokens": None,
+        "total_tokens": None,
+        "source": "chunks" if chunks is not None else "unknown",
+        "chunks": chunks,
+    }
+
+
+def _empty_answer_message(thinking: str) -> str:
+    """Explain an empty answer, and say so when it was all reasoning."""
+    base = "LLM returned empty assistant text. Check the LLM log for generation errors."
+    if not thinking:
+        return base
+    return (
+        base + " The model produced reasoning but no answer text - raise max_tokens, or use a build/family "
+        "that can really switch thinking off (see the family line in the log)."
+    )
 
 
 def _run_chat(
@@ -799,8 +971,8 @@ def _run_chat(
     text, tag_thinking = _split_thinking_tags(text)
     thinking = (reasoning + "\n" + tag_thinking).strip() if reasoning or tag_thinking else ""
     if not text:
-        raise RuntimeError("LLM returned empty assistant text. Check the LLM log for generation errors.")
-    return text, thinking
+        raise RuntimeError(_empty_answer_message(thinking))
+    return text, thinking, _usage_from_response(response)
 
 
 def _run_chat_streamed(model, kwargs: dict, max_tokens: int) -> tuple:
@@ -823,44 +995,68 @@ def _run_chat_streamed(model, kwargs: dict, max_tokens: int) -> tuple:
     text_parts: List[str] = []
     reasoning_parts: List[str] = []
     total_tokens = 0
+    usage_payload = None
     log_every = max(64, max_tokens // 10)
     pbar = make_progress_bar(max_tokens)
-    for chunk in stream:
-        choices = chunk.get("choices") or []
-        if not choices:
-            continue
-        delta = choices[0].get("delta") or {}
-        content = str(delta.get("content") or "")
-        reasoning = str(delta.get("reasoning_content") or "")
-        if content:
-            text_parts.append(content)
-        if reasoning:
-            reasoning_parts.append(reasoning)
-        total_tokens += 1
-        pbar.update_absolute(min(total_tokens, max_tokens))
-        if total_tokens % log_every == 0 or total_tokens >= max_tokens:
-            LOGGER.info("LLM progress %s", format_progress_bar(total_tokens, max_tokens))
+    try:
+        for chunk in stream:
+            if _processing_interrupted():
+                # ComfyUI's cancel button must stop generation between chunks
+                # instead of running to max_tokens first.
+                LOGGER.info("LLM generation cancelled by the user after %d chunk(s).", total_tokens)
+                raise _interrupt_exception()
+            if chunk.get("usage"):
+                # Some builds report the authoritative usage on the last chunk.
+                usage_payload = chunk
+            choices = chunk.get("choices") or []
+            if not choices:
+                continue
+            delta = choices[0].get("delta") or {}
+            content = str(delta.get("content") or "")
+            reasoning = str(delta.get("reasoning_content") or "")
+            if content:
+                text_parts.append(content)
+            if reasoning:
+                reasoning_parts.append(reasoning)
+            total_tokens += 1
+            pbar.update_absolute(min(total_tokens, max_tokens))
+            if total_tokens % log_every == 0 or total_tokens >= max_tokens:
+                LOGGER.info("LLM progress %s", format_progress_bar(total_tokens, max_tokens))
+    finally:
+        # The native generator is closed on every path - completion, error and
+        # cancellation - so a request is never left open in llama.cpp.
+        _close_stream(stream)
     LOGGER.info("LLM progress %s", format_progress_bar(total_tokens, max_tokens))
-    LOGGER.info("LLM streaming finished: %d tokens.", total_tokens)
+    # A streaming chunk is not guaranteed to be one token, so report the chunk
+    # count together with the token budget instead of claiming exact tokens.
+    LOGGER.info(
+        "LLM streaming finished: %d stream chunk(s) (token budget %d).", total_tokens, max_tokens
+    )
     reasoning = "".join(reasoning_parts).strip()
     text = "".join(text_parts).strip()
     text, tag_thinking = _split_thinking_tags(text)
     thinking = (reasoning + "\n" + tag_thinking).strip() if reasoning or tag_thinking else ""
     if not text:
-        raise RuntimeError("LLM returned empty assistant text. Check the LLM log for generation errors.")
-    return text, thinking
+        raise RuntimeError(_empty_answer_message(thinking))
+    return text, thinking, _usage_from_response(usage_payload, chunks=total_tokens)
 
 
 def unload_llm_models() -> int:
-    """Release all loaded LLM models; returns how many were released."""
+    """Release all loaded LLM models; returns how many were released.
+
+    Serialised by :data:`_MODEL_LOCK`, so it can never close a model while
+    another request is generating with it (``close()`` during native inference
+    is the failure mode this lock exists to prevent).
+    """
+    with _MODEL_LOCK:
+        return _unload_llm_models_locked()
+
+
+def _unload_llm_models_locked() -> int:
+    """Release all loaded LLM models. The caller must hold :data:`_MODEL_LOCK`."""
     count = len(_loaded_models)
-    for path, model in list(_loaded_models.items()):
-        try:
-            model.close()
-        except Exception:
-            pass
-        LOGGER.info("Unloaded LLM model: %s", path)
-    _loaded_models.clear()
+    for path in list(_loaded_models):
+        _close_model(path)
     if count:
         # Return the freed GPU memory to the allocator pools so the music
         # stage (MiniMax TE, DAV, FLUX) can claim it without fragmentation.
@@ -885,7 +1081,8 @@ def unload_llm_models() -> int:
 
 
 def _clear_llm_sessions() -> None:
-    _sessions.clear()
+    with _SESSIONS_LOCK:
+        _sessions.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -992,41 +1189,70 @@ class MiniMaxLLMChat:
             main_gpu=main_gpu, tensor_parallel=bool(tensor_parallel),
         )
 
+        # Which family is this, and can this build actually switch its thinking
+        # off?  Reported, not assumed: removing reasoning afterwards is not a
+        # speedup, and the log must not imply one.
+        family = adapter_report(model, lambda name: _accepts_kwarg(loaded.create_chat_completion, name))
+        for line in format_adapter_lines(family):
+            LOGGER.info("%s", line)
+
         if reset_session:
             state_key = None
         else:
-            state_key = str(session_id or "default")
-            saved = _sessions.get(state_key)
-            if saved is not None:
-                try:
-                    loaded.set_state(saved)
-                except Exception:
-                    LOGGER.debug("Could not restore LLM session state", exc_info=True)
+            # The snapshot key carries the model signature, context and template
+            # identity, so a snapshot is never restored into a different model or
+            # context (which would silently reuse an incompatible KV state).
+            resolved = getattr(loaded, "model_path", None)
+            signature = _model_signature(Path(resolved)) if resolved else "unknown"
+            state_key = _session_key(str(session_id or "default"), model, n_ctx, chat_format, signature)
 
-        text, thinking_text = _run_chat(
-            loaded, effective_system, user_text,
-            max_tokens, temperature, top_p, top_k, min_p, repeat_penalty,
-            presence_penalty, frequency_penalty, seed, thinking_mode,
-        )
-        if thinking_mode == "off" and thinking_text:
-            LOGGER.warning(
-                "LLM emitted reasoning although thinking=off; it was split off and recorded separately."
+        # One lock acquisition covers restore, generation and state save: a
+        # concurrent request may neither switch the model nor unload it while
+        # this turn is running.
+        with _MODEL_LOCK:
+            if state_key is not None:
+                with _SESSIONS_LOCK:
+                    saved = _sessions.get(state_key)
+                if saved is not None:
+                    try:
+                        _restore_state(loaded, saved)
+                    except Exception:
+                        LOGGER.debug("Could not restore LLM session state", exc_info=True)
+
+            text, thinking_text, usage = _run_chat(
+                loaded, effective_system, user_text,
+                max_tokens, temperature, top_p, top_k, min_p, repeat_penalty,
+                presence_penalty, frequency_penalty, seed, thinking_mode,
+            )
+            if thinking_mode == "off" and thinking_text:
+                LOGGER.warning(
+                    "LLM emitted reasoning although thinking=off; it was split off and recorded separately%s.",
+                    ""
+                    if (family.get("thinking") or {}).get("supported")
+                    else " - note that this build cannot switch thinking off",
+                )
+            LOGGER.info(
+                "LLM token statistics: %s",
+                json.dumps(usage, ensure_ascii=False),
             )
 
-        if thinking_text:
-            LOGGER.info("LLM thinking (%d chars):\n%s", len(thinking_text), thinking_text)
-        LOGGER.info("LLM assistant output (%d chars):\n%s", len(text), text)
+            if thinking_text:
+                LOGGER.info("LLM thinking (%d chars):\n%s", len(thinking_text), thinking_text)
+            LOGGER.info("LLM assistant output (%d chars):\n%s", len(text), text)
 
-        if state_key is not None:
-            try:
-                _sessions[state_key] = loaded.save_state()
-            except Exception:
-                LOGGER.debug("Could not save LLM session state", exc_info=True)
+            if state_key is not None:
+                try:
+                    _remember_session(state_key, _save_state(loaded))
+                except Exception:
+                    LOGGER.debug("Could not save LLM session state", exc_info=True)
 
         status = (
             f"LLM ok: model={model}, session={state_key or 'reset'}, "
             f"chars={len(text)}, thinking_chars={len(thinking_text)}, "
-            f"thinking={thinking_mode}, chat_format={chat_format}, "
+            f"thinking={thinking_mode} "
+            f"({'generation-controlled' if (family.get('thinking') or {}).get('supported') else 'output-split-only'}), "
+            f"tokens={usage.get('completion_tokens') if usage.get('completion_tokens') is not None else usage.get('chunks')} "
+            f"({usage.get('source')}), chat_format={chat_format}, "
             f"max_tokens={max_tokens}, n_ctx={n_ctx}"
         )
         LOGGER.info(status)

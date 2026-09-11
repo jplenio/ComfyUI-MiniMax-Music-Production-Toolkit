@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .audio_utils import validate_audio
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("audio_declip")
@@ -16,13 +17,8 @@ except ImportError:  # torch ships with ComfyUI; absent only in bare CI/test env
 
 
 def _validate_audio(audio: Any, label: str = "audio") -> Tuple[torch.Tensor, int]:
-    if not isinstance(audio, dict) or "waveform" not in audio or "sample_rate" not in audio:
-        raise ValueError(f"{label}: expected ComfyUI AUDIO with waveform and sample_rate.")
-    waveform = audio["waveform"]
-    sr = int(audio["sample_rate"])
-    if not isinstance(waveform, torch.Tensor) or waveform.ndim != 3:
-        raise ValueError(f"{label}: waveform must be torch.Tensor [B,C,T].")
-    return waveform, sr
+    """Delegates to :func:`audio_utils.validate_audio` (same messages/policy)."""
+    return validate_audio(audio, error_label=label, template="compact", require_positive_rate=False)
 
 
 def _db_to_gain(db: float) -> float:
@@ -125,8 +121,20 @@ def _hermite_repair(x: np.ndarray, start: int, end: int, context: int,
 
 def _repair_channel(x: np.ndarray, sr: int, threshold_pct: float, plateau_tol_pct: float,
                     min_flat_samples: int, context_samples: int, max_repair_ms: float,
-                    max_extension_db: float, analyze_only: bool) -> Tuple[np.ndarray, Dict[str, Any]]:
-    y = x.copy()
+                    max_extension_db: float, analyze_only: bool,
+                    out=None) -> Tuple[np.ndarray, Dict[str, Any]]:
+    """Repair one channel; ``out`` may supply a reusable scratch buffer.
+
+    Without ``out`` the function owns a fresh copy of ``x``.  With ``out`` it
+    writes into ``out[:len(x)]`` and **returns that aliased array** - the caller
+    must consume it before the next call, which ``process`` does (it blends the
+    result into its own output immediately).  ``x`` itself is never modified.
+    """
+    if out is None:
+        y = x.copy()
+    else:
+        y = out[: x.shape[0]]
+        y[...] = x
     mag = np.abs(x)
     peak = float(np.max(mag)) if mag.size else 0.0
     if peak <= 1e-12:
@@ -153,6 +161,7 @@ def _repair_channel(x: np.ndarray, sr: int, threshold_pct: float, plateau_tol_pc
     plateau_samples_total = 0
     candidate_count = 0
     max_run = 0
+    regions_for_review = []
 
     for s, e in runs:
         # Split a threshold run if it crosses zero/sign; a real clipped crest is same-sign.
@@ -187,6 +196,21 @@ def _repair_channel(x: np.ndarray, sr: int, threshold_pct: float, plateau_tol_pc
                 continue
             candidate_count += 1
             clipped_samples += run_len
+            if len(regions_for_review) < 64:
+                regions_for_review.append({
+                    "start_sample": int(ss),
+                    "end_sample": int(ee),
+                    "samples": int(run_len),
+                    "plateau_samples": int(flat_samples),
+                    "start_ms": round(ss / max(1, sr) * 1000.0, 2),
+                    "classification": (
+                        "long_plateau"
+                        if run_len > max_samples
+                        else "edge_of_signal"
+                        if (ss <= context_samples or ee >= x.size - context_samples - 1)
+                        else "flat_top"
+                    ),
+                })
             if run_len > max_samples or ss <= context_samples or ee >= x.size - context_samples - 1:
                 skipped_long += 1
                 continue
@@ -200,9 +224,40 @@ def _repair_channel(x: np.ndarray, sr: int, threshold_pct: float, plateau_tol_pc
             y[ss:ee + 1] = repaired_vals
             repaired += 1
 
+    # Q01: make the finding traceable instead of promising a repair.  A long
+    # plateau is the signature of limiter processing or deliberate distortion,
+    # not of clipped crests - and Hermite interpolation guesses the waveform, it
+    # does not restore the original samples.
+    if candidate_count == 0:
+        confidence, confidence_reason = "none", "no clipping candidates at this threshold"
+    elif skipped_long and skipped_long >= max(1, candidate_count // 2):
+        confidence, confidence_reason = (
+            "low",
+            "most candidates are long plateaus or sit at the signal edge - likely limiter processing or "
+            "intentional distortion rather than safely repairable clipping",
+        )
+    elif skipped_long:
+        confidence, confidence_reason = "medium", "some candidates were skipped (long plateau or signal edge)"
+    else:
+        confidence, confidence_reason = "high", "short flat-topped crests with context on both sides"
+    caveats = [
+        "Hermite reconstruction interpolates the surrounding waveform; it does not restore the original samples.",
+        "Candidates are listed with start/end samples - audition them against the original before trusting a repair.",
+    ]
+    if confidence in ("low", "none"):
+        caveats.append(
+            "Limiter-processed or intentionally distorted material is not safely repairable clipping; prefer the "
+            "'Analyze only' mode and listen first."
+        )
+
     return y, {
         "input_peak_linear": peak,
         "threshold_linear": float(threshold),
+        "confidence": confidence,
+        "confidence_reason": confidence_reason,
+        "caveats": caveats,
+        "regions_for_review": regions_for_review,
+        "regions_truncated": bool(len(regions_for_review) >= 64),
         "flat_step_limit_linear": float(flat_step_limit),
         "candidate_regions": int(candidate_count),
         "repaired_regions": int(repaired),
@@ -255,15 +310,22 @@ class AudioDeclipRepair:
         )
         analyze_only = mode == "Analyze only"
         x = waveform.detach().to("cpu", torch.float32).numpy()
+        # One deliberately owned output array (never ``x``: ``.numpy()`` may share
+        # memory with the caller's tensor, and ComfyUI caches node outputs), plus
+        # one scratch buffer reused across every channel and batch item (A03).
         y = x.copy()
+        scratch = None
         channel_reports: List[Dict[str, Any]] = []
 
         for b in range(x.shape[0]):
             batch_channels = []
             for c in range(x.shape[1]):
+                channel = x[b, c]
+                if scratch is None or scratch.shape[0] < channel.shape[0]:
+                    scratch = np.empty(channel.shape[0], dtype=np.float32)
                 repaired, stats = _repair_channel(
-                    x[b, c], sr, threshold_pct, plateau_tol_pct, min_flat, context,
-                    max_ms, extension_db, analyze_only,
+                    channel, sr, threshold_pct, plateau_tol_pct, min_flat, context,
+                    max_ms, extension_db, analyze_only, out=scratch,
                 )
                 if not analyze_only:
                     y[b, c] = x[b, c] * np.float32(1.0 - wet) + repaired * np.float32(wet)

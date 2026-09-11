@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
-from .metadata_schema import CURRENT_PRODUCTION_METADATA_SCHEMA
+from .production_metadata import parse_legacy_object
+from .metadata_schema import CURRENT_PRODUCTION_METADATA_SCHEMA, migrate_metadata_payload_if_known
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("metadata")
 
 
 class MiniMaxSongMetadata:
@@ -58,34 +63,13 @@ class MiniMaxSongMetadata:
               ksampler_seed, ksampler_steps, ksampler_cfg, sampler_name, scheduler, denoise,
               pre_preset, pre_settings_json, post_preset, post_settings_json,
               flashsr_lowpass_input, workflow_name, llm_system_prompt="", release_prep_json="", hybrid_crossover_json="", hf_repair_json="", declip_json=""):
-        try:
-            provenance = json.loads(prompt_provenance_json) if prompt_provenance_json else {}
-        except Exception:
-            provenance = {"raw": prompt_provenance_json}
-        try:
-            pre_settings = json.loads(pre_settings_json) if pre_settings_json else {}
-        except Exception:
-            pre_settings = {"raw": pre_settings_json}
-        try:
-            post_settings = json.loads(post_settings_json) if post_settings_json else {}
-        except Exception:
-            post_settings = {"raw": post_settings_json}
-        try:
-            release_prep = json.loads(release_prep_json) if release_prep_json else {}
-        except Exception:
-            release_prep = {"raw": release_prep_json}
-        try:
-            hybrid_crossover = json.loads(hybrid_crossover_json) if hybrid_crossover_json else {}
-        except Exception:
-            hybrid_crossover = {"raw": hybrid_crossover_json}
-        try:
-            hf_repair = json.loads(hf_repair_json) if hf_repair_json else {}
-        except Exception:
-            hf_repair = {"raw": hf_repair_json}
-        try:
-            declip = json.loads(declip_json) if declip_json else {}
-        except Exception:
-            declip = {"raw": declip_json}
+        provenance = parse_legacy_object(prompt_provenance_json)
+        pre_settings = parse_legacy_object(pre_settings_json)
+        post_settings = parse_legacy_object(post_settings_json)
+        release_prep = parse_legacy_object(release_prep_json)
+        hybrid_crossover = parse_legacy_object(hybrid_crossover_json)
+        hf_repair = parse_legacy_object(hf_repair_json)
+        declip = parse_legacy_object(declip_json)
 
         data = {
             "schema": CURRENT_PRODUCTION_METADATA_SCHEMA,
@@ -149,10 +133,41 @@ class MiniMaxSongMetadata:
         return (metadata_json, summary)
 
 
+def _resolve_metadata_path(raw: str) -> Path:
+    """Resolve the loader's metadata path exactly like the node always has."""
+    p = Path((raw or "").strip()).expanduser()
+    if not p.is_absolute():
+        try:
+            import folder_paths
+            p = Path(folder_paths.get_output_directory()) / p
+        except Exception:
+            p = Path.cwd() / p
+    return p
+
+
 class MiniMaxMetadataLoader:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {"metadata_file": ("STRING", {"default": "", "multiline": False})}}
+
+    @classmethod
+    def IS_CHANGED(cls, metadata_file):
+        """Re-run when the referenced file's *content* changes.
+
+        Without this, editing a metadata file in place left cached outputs
+        stale.  A missing or unreadable file yields a deterministic fingerprint
+        so the failure is cached too instead of re-running forever, and graph
+        construction never sees an exception from here.
+        """
+        raw = (metadata_file or "").strip()
+        if not raw:
+            return "empty"
+        path = _resolve_metadata_path(raw)
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            return f"unreadable:{path}:{type(exc).__name__}"
+        return f"content:{path}:{digest}"
 
     RETURN_TYPES = (
         "STRING", "STRING", "STRING", "STRING", "FLOAT", "INT", "INT", "FLOAT", "INT", "INT", "INT",
@@ -170,14 +185,18 @@ class MiniMaxMetadataLoader:
         raw = (metadata_file or "").strip()
         if not raw:
             raise ValueError("MiniMax Metadata Loader: metadata_file is empty.")
-        p = Path(raw).expanduser()
-        if not p.is_absolute():
-            try:
-                import folder_paths
-                p = Path(folder_paths.get_output_directory()) / p
-            except Exception:
-                p = Path.cwd() / p
+        p = _resolve_metadata_path(raw)
         data = json.loads(p.read_text(encoding="utf-8"))
+
+        # Loader policy: known schemas migrate forward, unknown or unversioned
+        # payloads stay readable and are passed through with a note.  The
+        # returned metadata_json is the payload actually used below.
+        data, applied, note = migrate_metadata_payload_if_known(data)
+        if note:
+            LOGGER.info("MiniMax Metadata Loader: %s", note)
+        elif applied:
+            LOGGER.info("MiniMax Metadata Loader: migrated %s -> %s", ", ".join(applied), data.get("schema"))
+
         mm = data.get("minimax_music3", {})
         te = mm.get("text_encode", {})
         ks = mm.get("ksampler", {})

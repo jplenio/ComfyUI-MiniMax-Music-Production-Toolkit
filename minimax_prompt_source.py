@@ -8,10 +8,24 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .prompt_library import (PLACEHOLDER, PromptLibraryError, default_combo_values, load_prompt_file, prompt_selection_fingerprint)
+from .prompt_sources import (
+    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_SYSTEM_PROMPT_FILE,
+    DEFAULT_USER_PROMPT,
+    clean_source_name as _clean_source_name_impl,
+    iter_prompt_files,
+    iter_variants,
+    load_bundled_default_system_prompt as _load_bundled_default_system_prompt,
+    new_seed as _new_seed_impl,
+    normalize_extensions,
+    read_prompt_text as _read_text_impl,
+    resolve_prompt_directory as _resolve_prompt_directory_impl,
+)
 from .prompt_budget import (
     DEFAULT_PROMPT_TOKEN_BUDGET,
     MINIMAX_MAX_PROMPT_TOKENS,
     estimate_prompt_tokens,
+    token_counter,
     trim_prompt_to_budget,
 )
 from .toolkit_logging import get_logger
@@ -19,69 +33,36 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("prompts")
 
 _SECTION_RE = re.compile(r"^\s*\[(Title|Caption|Lyrics|Count|Song-Count|Image[_ ]Prompt)\]\s*$", re.IGNORECASE)
-_WINDOWS_INVALID = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
-DEFAULT_SYSTEM_PROMPT_FILE = "minimax-music3-production.txt"
-
-
-def _load_bundled_default_system_prompt() -> str:
-    """Load the shipped production prompt from its canonical library file.
-
-    Keeping the large prompt in one file avoids silent drift between the default
-    text shown in the node and the bundled system-prompt library.  A concise
-    fallback keeps node discovery alive if an installation is incomplete; file
-    mode will still surface the precise missing-file error at execution time.
-    """
-    path = Path(__file__).resolve().parent / "prompts" / "system" / DEFAULT_SYSTEM_PROMPT_FILE
-    try:
-        text = path.read_text(encoding="utf-8-sig").strip()
-        if not text:
-            raise ValueError("bundled system prompt is empty")
-        return text
-    except Exception as exc:
-        LOGGER.warning("Could not load bundled default system prompt %s: %s", path, exc)
-        return (
-            "You are a music-production prompt rewriter for MiniMax Music 3. "
-            "Return only [Caption], [Lyrics], [Title], and [Image_Prompt], in that order."
-        )
-
-
-DEFAULT_SYSTEM_PROMPT = _load_bundled_default_system_prompt()
-DEFAULT_USER_PROMPT = 'Instrumental Progressive House with melodic and subtle trance influences, highly atmospheric and spacious, driven by memorable signature motifs and distinctive recurring synth riffs. Emotional, smooth, modern, with strong progression and evolving layers. create a 4–5 minutes long melodic story in the track.'
+# The default prompt constants, their loader and the small source helpers live in
+# prompt_sources so the structured-prompt node no longer has to import them from
+# this module.  The names stay re-exported here for compatibility.
+__all__ = [
+    "DEFAULT_SYSTEM_PROMPT",
+    "DEFAULT_SYSTEM_PROMPT_FILE",
+    "DEFAULT_USER_PROMPT",
+    "_load_bundled_default_system_prompt",
+]
 
 
 def _clean_source_name(value: str) -> str:
-    name = _WINDOWS_INVALID.sub("_", (value or "").strip()).strip(" .")
-    return name or "song"
+    """Compatibility wrapper around :func:`prompt_sources.clean_source_name`."""
+    return _clean_source_name_impl(value)
 
 
 def _new_seed() -> int:
-    return secrets.randbelow(2**63 - 1)
+    """Compatibility wrapper around :func:`prompt_sources.new_seed`."""
+    return _new_seed_impl()
 
 
 def _resolve_prompt_directory(value: str) -> Path:
-    raw = os.path.expandvars(os.path.expanduser((value or "").strip()))
-    if not raw:
-        raise ValueError("MiniMax Prompt Source: prompt_directory is empty while source_mode='folder'.")
-    p = Path(raw)
-    if not p.is_absolute():
-        try:
-            import folder_paths
-            p = Path(folder_paths.base_path) / p
-        except Exception:
-            p = Path.cwd() / p
-    return p.resolve()
+    """Compatibility wrapper around :func:`prompt_sources.resolve_prompt_directory`."""
+    return _resolve_prompt_directory_impl(value, error_prefix="MiniMax Prompt Source")
 
 
 def _read_text(path: Path) -> str:
-    data = path.read_bytes()
-    for encoding in ("utf-8-sig", "utf-8", "cp1252"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            pass
-    raise UnicodeDecodeError("utf-8", data, 0, 1, f"Could not decode {path}")
-
+    """Compatibility wrapper around :func:`prompt_sources.read_prompt_text`."""
+    return _read_text_impl(path)
 
 NO_TEXT_PROHIBITION = (
     "No text, no letters, no words, no numbers, no digits, no symbols, no typography, no logo, "
@@ -326,16 +307,8 @@ class MiniMaxPromptSourceArtworkV16:
             directory = _resolve_prompt_directory(prompt_directory)
             if not directory.exists() or not directory.is_dir():
                 raise ValueError(f"MiniMax Prompt Source: invalid prompt directory: {directory}")
-            allowed = set()
-            for ext in (extensions or "").split(","):
-                ext = ext.strip().lower()
-                if not ext:
-                    continue
-                if not ext.startswith("."):
-                    ext = "." + ext
-                allowed.add(ext)
-            iterator = directory.rglob("*") if recursive else directory.glob("*")
-            files = sorted([p for p in iterator if p.is_file() and p.suffix.lower() in allowed], key=lambda p: str(p).lower())
+            allowed = normalize_extensions(extensions)
+            files = iter_prompt_files(directory, allowed, recursive, relative_sort=False)
             if not files:
                 raise ValueError(f"MiniMax Prompt Source: no prompt files found in {directory}")
             errors = []
@@ -373,23 +346,25 @@ class MiniMaxPromptSourceArtworkV16:
             })
 
         out = {k: [] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"]}
-        global_index = 0
-        for entry in entries:
-            count = entry.get("count_override") or int(song_count)
-            for variant in range(1, count + 1):
-                seed = _new_seed() if seed_mode == "random_each_song" else (int(base_seed) + global_index) % (2**63 - 1)
-                out["caption"].append(entry["caption"])
-                out["lyrics"].append(entry["lyrics"])
-                out["title"].append(entry["title"])
-                out["image_prompt"].append(entry["image_prompt"])
-                out["source_name"].append(_clean_source_name(entry["source_name"]))
-                out["generation_seed"].append(seed)
-                out["run_index"].append(variant)
-                out["variant_count"].append(count)
-                out["source_path"].append(entry["source_path"])
-                out["prompt_origin"].append(entry["prompt_origin"])
-                out["prompt_provenance_json"].append(json.dumps(entry["provenance"], ensure_ascii=False))
-                global_index += 1
+        for entry, variant, count, seed, _global_index in iter_variants(
+            entries,
+            song_count=song_count,
+            seed_mode=seed_mode,
+            base_seed=base_seed,
+            # Tolerant count: a falsy [Count] override falls back to song_count.
+            count_of=lambda e: e.get("count_override") or int(song_count),
+        ):
+            out["caption"].append(entry["caption"])
+            out["lyrics"].append(entry["lyrics"])
+            out["title"].append(entry["title"])
+            out["image_prompt"].append(entry["image_prompt"])
+            out["source_name"].append(_clean_source_name(entry["source_name"]))
+            out["generation_seed"].append(seed)
+            out["run_index"].append(variant)
+            out["variant_count"].append(count)
+            out["source_path"].append(entry["source_path"])
+            out["prompt_origin"].append(entry["prompt_origin"])
+            out["prompt_provenance_json"].append(json.dumps(entry["provenance"], ensure_ascii=False))
         return tuple(out[k] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"])
 
 
@@ -631,37 +606,66 @@ class MiniMaxParseExternalLLMOutputV16:
     def _apply_prompt_budget(caption: str, lyrics: str, max_prompt_tokens: int, trim_long_prompt: bool):
         """Keep the combined Caption+Lyrics inside the MiniMax token budget.
 
-        When the conservative estimate exceeds the budget, the prompt is
-        trimmed softly (whole lines from the end, orphan section tags removed,
-        caption intact) or, with trim_long_prompt disabled, a clear error is
-        raised instead of letting the MiniMax encoder fail cryptically.
+        The decision counts with the real MiniMax tokenizer when its checkpoint
+        is readable (exact) and with the documented conservative estimate
+        otherwise; the returned provenance names which one was used, so an
+        estimate is never presented as a measurement.
+
+        When the count exceeds the budget, the prompt is trimmed softly (whole
+        lines from the end, orphan section tags removed, caption intact) or,
+        with trim_long_prompt disabled, a clear error is raised instead of
+        letting the MiniMax encoder fail cryptically.
         """
-        estimate = estimate_prompt_tokens(caption, lyrics)
-        if estimate <= max_prompt_tokens:
-            return caption, lyrics, {"prompt_tokens_estimated": estimate, "prompt_trimmed": False}
+        counter, tokenizer_id = token_counter()
+        count = counter or estimate_prompt_tokens
+        method = "tokenizer" if counter is not None else "estimate"
+        count_now = count(caption, lyrics)
+        if count_now <= max_prompt_tokens:
+            return caption, lyrics, {
+                "prompt_tokens": count_now,
+                "prompt_tokens_estimated": estimate_prompt_tokens(caption, lyrics),
+                "prompt_token_count_method": method,
+                "prompt_tokenizer": tokenizer_id,
+                "prompt_trimmed": False,
+            }
         if not trim_long_prompt:
             raise ValueError(
-                f"LLM prompt exceeds the MiniMax token budget: estimated {estimate} tokens "
+                f"LLM prompt exceeds the MiniMax token budget: {count_now} "
+                f"{'tokens (measured)' if method == 'tokenizer' else 'estimated tokens'} "
                 f"(budget {max_prompt_tokens}, MiniMax hard limit {MINIMAX_MAX_PROMPT_TOKENS}). "
                 "Shorten the source prompt, lower the LLM response length, or enable trim_long_prompt."
             )
-        trimmed = trim_prompt_to_budget(caption, lyrics, max_prompt_tokens)
+        trimmed = trim_prompt_to_budget(caption, lyrics, max_prompt_tokens, counter=counter)
         hard_cut = bool(trimmed["hard_cut_used"])
+        if not (trimmed["caption"] or trimmed["lyrics"]):
+            raise ValueError(
+                f"The MiniMax token budget ({max_prompt_tokens}) is too small for any content: "
+                f"trimming removed everything. Raise max_prompt_tokens or shorten the prompt."
+            )
         LOGGER.warning(
-            "LLM prompt exceeded the MiniMax token budget: trimmed from %d to %d estimated tokens%s. "
-            "Shorten the source prompt for a cleaner result.",
+            "LLM prompt exceeded the MiniMax token budget: trimmed from %d to %d %s "
+            "(%d lines and %d section tags removed)%s. Shorten the source prompt for a cleaner result.",
             trimmed["original_estimated_tokens"],
             trimmed["estimated_tokens"],
+            "measured tokens" if method == "tokenizer" else "estimated tokens",
+            int(trimmed.get("removed_lines", 0)),
+            int(trimmed.get("removed_sections", 0)),
             " (hard cut in an oversized single line)" if hard_cut else "",
         )
         return (
             trimmed["caption"],
             trimmed["lyrics"],
             {
-                "prompt_tokens_estimated": trimmed["estimated_tokens"],
+                "prompt_tokens": trimmed["estimated_tokens"],
+                "prompt_tokens_estimated": estimate_prompt_tokens(trimmed["caption"], trimmed["lyrics"]),
+                "original_prompt_tokens": trimmed["original_estimated_tokens"],
+                "original_prompt_tokens_estimated": estimate_prompt_tokens(caption, lyrics),
+                "prompt_token_count_method": method,
+                "prompt_tokenizer": tokenizer_id,
                 "prompt_trimmed": True,
-                "original_prompt_tokens_estimated": trimmed["original_estimated_tokens"],
                 "hard_cut_used": hard_cut,
+                "removed_lines": int(trimmed.get("removed_lines", 0)),
+                "removed_sections": int(trimmed.get("removed_sections", 0)),
             },
         )
 

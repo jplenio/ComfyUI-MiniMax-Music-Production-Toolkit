@@ -177,3 +177,214 @@ export function structuredPromptWidgetRepairs({ widgetNames, widgetsValues, widg
     }
     return { valuesByName };
 }
+
+// ---------------------------------------------------------------------------
+// Graph/widget mutation adapters.
+//
+// These operate on plain, duck-typed node objects (``id``, ``inputs``,
+// ``widgets``, ``widgets_values``, ``widgets_values_named``, ``graph.links``,
+// ``graph.getNodeById``) and deliberately import nothing from ComfyUI, so the
+// exact mutations the extension performs can be unit-tested with plain Node.
+// ``node.setDirtyCanvas`` is optional-chained; tests may omit it.
+// ---------------------------------------------------------------------------
+
+const PARSER_NODE_TYPE = "MiniMaxParseExternalLLMOutputV16";
+const JSON_NODE_TYPE = "MiniMaxSaveProductionJSON";
+const STRUCTURED_PROMPT_TYPE = "MiniMaxStructuredPromptV20";
+
+function inputIndexByName(node, name) {
+    return node.inputs?.findIndex((input) => input?.name === name) ?? -1;
+}
+
+function linkEntries(node) {
+    const links = node.graph?.links;
+    if (!links) return [];
+    return Array.isArray(links) ? links.filter(Boolean) : Object.values(links).filter(Boolean);
+}
+
+function markDirty(node) {
+    node.setDirtyCanvas?.(true, true);
+    node.graph?.setDirtyCanvas?.(true, true);
+}
+
+/**
+ * Move a pre-2.0.0 parser STRING link onto the structured_llm_output slot.
+ *
+ * @returns {boolean} whether anything changed
+ */
+export function repairParserNodeLinks(node) {
+    try {
+        const targetIndex = inputIndexByName(node, PARSER_INPUT_NAME);
+        if (targetIndex < 0) return false;
+        const links = linkEntries(node);
+        if (!links.length) return false;
+
+        const structuredInput = node.inputs[targetIndex];
+        let structuredLinked = Boolean(structuredInput?.link != null);
+        let repaired = false;
+        for (const link of links) {
+            if (!link || link.target_id !== node.id) continue;
+            const slotInput = node.inputs[link.target_slot];
+            if (!slotInput) continue;
+            if (link.target_slot === targetIndex) {
+                structuredLinked = true;
+                continue;
+            }
+            if (!shouldRepairParserLink(link.type, slotInput.name, slotInput.type, structuredLinked)) {
+                continue;
+            }
+            const oldIndex = link.target_slot;
+            link.target_slot = targetIndex;
+            if (structuredInput) structuredInput.link = link.id;
+            if (node.inputs[oldIndex]) node.inputs[oldIndex].link = null;
+            structuredLinked = true;
+            repaired = true;
+            console.info(
+                `[MiniMax Music Production Toolkit] Migrated old ${PARSER_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${PARSER_INPUT_NAME}).`
+            );
+        }
+        if (repaired) markDirty(node);
+        return repaired;
+    } catch (error) {
+        console.warn(`[MiniMax Music Production Toolkit] Workflow migration failed for ${PARSER_NODE_TYPE}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Move an old metadata_json link onto the metadata_json slot.
+ *
+ * @returns {boolean} whether anything changed
+ */
+export function repairJsonNodeLinks(node) {
+    try {
+        const targetIndex = inputIndexByName(node, JSON_METADATA_INPUT_NAME);
+        if (targetIndex < 0) return false;
+        const links = linkEntries(node);
+        if (!links.length) return false;
+
+        const metadataInput = node.inputs[targetIndex];
+        let metadataLinked = Boolean(metadataInput?.link != null);
+        let repaired = false;
+        for (const link of links) {
+            if (!link || link.target_id !== node.id) continue;
+            if (link.target_slot === targetIndex) {
+                metadataLinked = true;
+                continue;
+            }
+            const originNode = node.graph?.getNodeById?.(link.origin_id);
+            const originOutput = originNode?.outputs?.[link.origin_slot];
+            const originOutputName = typeof originOutput?.name === "string" ? originOutput.name : null;
+            const slotInput = node.inputs[link.target_slot];
+            if (!slotInput) continue;
+            if (!shouldRepairJsonMetadataLink(originOutputName, slotInput.name, metadataLinked)) {
+                continue;
+            }
+            const oldIndex = link.target_slot;
+            link.target_slot = targetIndex;
+            if (metadataInput) metadataInput.link = link.id;
+            if (node.inputs[oldIndex]) node.inputs[oldIndex].link = null;
+            metadataLinked = true;
+            repaired = true;
+            console.info(
+                `[MiniMax Music Production Toolkit] Migrated old ${JSON_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${JSON_METADATA_INPUT_NAME}).`
+            );
+        }
+        if (repaired) markDirty(node);
+        return repaired;
+    } catch (error) {
+        console.warn(`[MiniMax Music Production Toolkit] Workflow migration failed for ${JSON_NODE_TYPE}:`, error);
+        return false;
+    }
+}
+
+/**
+ * Re-apply MiniMaxStructuredPromptV20 widget values after the meter insertion
+ * and the system-prompt field reorder.
+ *
+ * The named map keeps its own values (including a valid saved meter); only a
+ * named serialization that predates the meter field gets `meter = "custom"`.
+ * The stored positional array is rebuilt in the current widget order and the
+ * named map is kept in sync with the value that was actually applied.
+ *
+ * @returns {boolean} whether anything changed
+ */
+export function repairStructuredPromptWidgets(node) {
+    try {
+        const widgetNames = [];
+        for (const w of node.widgets || []) {
+            if (!w || !w.name || w.type === "button") continue;
+            widgetNames.push(w.name);
+        }
+        const result = structuredPromptWidgetRepairs({
+            widgetNames,
+            widgetsValues: node.widgets_values,
+            widgetsValuesNamed: node.widgets_values_named,
+        });
+        if (!result || !result.valuesByName) return false;
+
+        let applied = 0;
+        for (const [name, value] of Object.entries(result.valuesByName)) {
+            const w = node.widgets?.find((widget) => widget?.name === name);
+            if (w && w.value !== value) {
+                w.value = value;
+                applied += 1;
+            }
+        }
+        if (Array.isArray(node.widgets_values)) {
+            const rebuilt = [];
+            for (const w of node.widgets || []) {
+                if (w.type === "button") {
+                    rebuilt.push(null);
+                } else if (w.name in result.valuesByName) {
+                    rebuilt.push(result.valuesByName[w.name]);
+                } else {
+                    rebuilt.push(w.value ?? null);
+                }
+            }
+            node.widgets_values = rebuilt;
+        }
+        if (node.widgets_values_named && typeof node.widgets_values_named === "object") {
+            // Keep the value that was actually resolved/applied; never reset a
+            // saved meter back to "custom".
+            const resolved = result.valuesByName.meter;
+            if (resolved !== undefined && resolved !== null) {
+                node.widgets_values_named.meter = resolved;
+            }
+        }
+        markDirty(node);
+        console.info(
+            `[MiniMax Music Production Toolkit] Repaired ${STRUCTURED_PROMPT_TYPE} widget values (${applied} value(s) corrected).`
+        );
+        return true;
+    } catch (error) {
+        console.warn(`[MiniMax Music Production Toolkit] Structured Song Prompt widget repair failed:`, error);
+        return false;
+    }
+}
+
+/**
+ * Map invalid LLM chat widget values back to their defaults.
+ *
+ * @returns {boolean} whether anything changed
+ */
+export function repairLLMChatWidgets(node) {
+    try {
+        const values = {};
+        for (const name of ["split_mode", "tensor_split", "main_gpu"]) {
+            values[name] = node.widgets?.find((w) => w.name === name)?.value;
+        }
+        const repairs = llmWidgetRepairs(values);
+        if (Object.keys(repairs).length === 0) return false;
+        for (const [name, value] of Object.entries(repairs)) {
+            const w = node.widgets?.find((widget) => widget.name === name);
+            if (w) w.value = value;
+        }
+        markDirty(node);
+        console.info("[MiniMax Music Production Toolkit] Repaired LLM chat widget values:", repairs);
+        return true;
+    } catch (error) {
+        console.warn("[MiniMax Music Production Toolkit] LLM chat widget repair failed:", error);
+        return false;
+    }
+}

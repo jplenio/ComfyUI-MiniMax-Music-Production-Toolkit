@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "note": "Required measurement matrix for IMPROVE-TODO B01. This file describes WHAT must be measured (axes, repetitions, hardware classes) - it contains no results. Every entry starts as untested and may only be marked tested with a real measurement on that hardware.",
+  "audio": {
+    "axes": {
+      "seconds": [10, 60, 300],
+      "channels": [1, 2],
+      "sample_rate": [44100, 48000, 96000],
+      "batch": [1, 2]
+    },
+    "default_profile": {
+      "seconds": 10,
+      "channels": 2,
+      "sample_rate": 48000,
+      "batch": 1
+    },
+    "note": "The full axis product is 36 workloads; the default profile is the fast smoke measurement."
+  },
+  "llm": {
+    "briefs_file": "benchmark_briefs.json",
+    "minimum_briefs": 20,
+    "repetitions": 3,
+    "cold_and_warm": true,
+    "note": "Fixed seeds per brief. Cold start and warm start are reported separately; model switches are part of the run."
+  },
+  "hardware": {
+    "vram_gib_classes": [4, "6-8", "10-12", 16, 24, "32+"],
+    "ram_gib_classes": [8, 16, 32, 64],
+    "multi_gpu": ["unequal pair (e.g. 24 GiB + 8 GiB)", "single GPU of the same total"],
+    "status": "untested",
+    "note": "Mocked detection tests the decisions; it never replaces a real measurement. Hardware that does not exist on the measuring machine stays untested."
+  },
+  "metrics": [
+    "wall_time_ms per stage",
+    "cold_start_ms and warm_start_ms separately",
+    "process_rss_bytes and process_peak_rss_bytes",
+    "system_ram_available_bytes",
+    "device_vram_free_bytes and device_vram_total_bytes per visible GPU",
+    "backend version, effective device, precision",
+    "model identity, context, chunk size and sampler values (LLM runs)"
+  ],
+  "honesty_rules": [
+    "torch.cuda allocated/reserved alone does not account for llama.cpp or aimdo allocations",
+    "no full private prompts or audio content in standard telemetry",
+    "CUDA synchronisation happens at benchmark boundaries only, never in the normal hot path",
+    "unmeasured hardware is reported as untested, never as a result"
+  ]
+}

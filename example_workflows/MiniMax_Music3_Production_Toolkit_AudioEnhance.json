@@ -1,19 +1,19 @@
 {
   "id": "4dc88fb5-7e0b-4d5b-97e6-fbf56d436ced",
-  "revision": 0,
-  "last_node_id": 24,
-  "last_link_id": 27,
+  "revision": 3,
+  "last_node_id": 28,
+  "last_link_id": 39,
   "nodes": [
     {
       "id": 8,
       "type": "LoadAudio",
       "pos": [
-        -149.18422585750886,
-        568.4181871220486
+        0,
+        680
       ],
       "size": [
-        447,
-        255.890625
+        540,
+        310
       ],
       "flags": {},
       "order": 0,
@@ -71,19 +71,20 @@
         "audio": "",
         "upload": null
       },
-      "color": "#432",
-      "bgcolor": "#653"
+      "color": "#486679",
+      "bgcolor": "#252b33",
+      "title": "Load source audio"
     },
     {
       "id": 9,
       "type": "AudioDeclipRepair",
       "pos": [
-        407.92758757049205,
-        569.6684319180512
+        1300,
+        80
       ],
       "size": [
-        366.75,
-        384.25
+        420,
+        450
       ],
       "flags": {},
       "order": 5,
@@ -200,7 +201,7 @@
           "links": []
         }
       ],
-      "title": "Source Declip / Overload Repair – before FlashSR",
+      "title": "A · Declip",
       "properties": {
         "Node name for S&R": "AudioDeclipRepair"
       },
@@ -226,19 +227,19 @@
         "output_ceiling_dbfs": -1,
         "mix": 1
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#686587",
+      "bgcolor": "#252b33"
     },
     {
       "id": 10,
       "type": "FlashSRLowpassLab",
       "pos": [
-        821.8583054545652,
-        566.8448194047716
+        1780,
+        80
       ],
       "size": [
-        284,
-        298
+        420,
+        350
       ],
       "flags": {},
       "order": 8,
@@ -359,7 +360,7 @@
           "links": []
         }
       ],
-      "title": "PRE Lowpass",
+      "title": "B · PRE low-pass",
       "properties": {
         "Node name for S&R": "FlashSRLowpassLab"
       },
@@ -377,19 +378,19 @@
         "custom_phase_mode": "zero_phase",
         "bypass": false
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#686587",
+      "bgcolor": "#252b33"
     },
     {
       "id": 11,
       "type": "MiniMaxFlashSRAudio",
       "pos": [
-        1161.8583054545652,
-        566.8448194047716
+        2260,
+        80
       ],
       "size": [
-        336.84375,
-        213.75
+        420,
+        280
       ],
       "flags": {
         "collapsed": false
@@ -462,19 +463,20 @@
         "output_sr": "48000",
         "auto_download": true
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#686587",
+      "bgcolor": "#252b33",
+      "title": "C · FlashSR"
     },
     {
       "id": 12,
       "type": "FlashSRHybridCrossover",
       "pos": [
-        1551.8583054545652,
-        566.8448194047716
+        2740,
+        80
       ],
       "size": [
-        378,
-        219.875
+        420,
+        280
       ],
       "flags": {},
       "order": 10,
@@ -551,7 +553,7 @@
           "links": []
         }
       ],
-      "title": "FlashSR Hybrid – Preserve Original + Controlled Air",
+      "title": "D · Crossover",
       "properties": {
         "Node name for S&R": "FlashSRHybridCrossover"
       },
@@ -567,19 +569,19 @@
         "transition_hz": 2000,
         "flashsr_hf_mix": 0.45
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#686587",
+      "bgcolor": "#252b33"
     },
     {
       "id": 13,
       "type": "HFCymbalShimmerRepair",
       "pos": [
-        1983.0936008653393,
-        567.0137751957018
+        3220,
+        80
       ],
       "size": [
-        320.875,
-        378
+        420,
+        450
       ],
       "flags": {},
       "order": 11,
@@ -688,7 +690,7 @@
           "name": "audio",
           "type": "AUDIO",
           "links": [
-            14
+            32
           ]
         },
         {
@@ -731,19 +733,20 @@
         "min_hf_level_dbfs": -58,
         "mix": 1
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#686587",
+      "bgcolor": "#252b33",
+      "title": "E · HF repair"
     },
     {
       "id": 14,
       "type": "AudioReleasePrep",
       "pos": [
-        1851.8583054545652,
-        1066.8448194047714
+        3140,
+        1500
       ],
       "size": [
-        436.5,
-        272.125
+        560,
+        310
       ],
       "flags": {},
       "order": 13,
@@ -753,7 +756,7 @@
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 13
+          "link": 37
         },
         {
           "localized_name": "target_sample_rate",
@@ -798,7 +801,7 @@
           "name": "audio",
           "type": "AUDIO",
           "links": [
-            15
+            38
           ]
         },
         {
@@ -814,35 +817,35 @@
           "links": []
         }
       ],
-      "title": "Release Prep – 44.1 kHz / STATIC LUFS / True Peak",
+      "title": "4 · Output rate · 44100 / 48000",
       "properties": {
         "Node name for S&R": "AudioReleasePrep"
       },
       "widgets_values": [
         "44100",
-        "Streaming Safe -14 LUFS / -1 dBTP",
+        "Resample only",
         -14,
         -1
       ],
       "widgets_values_named": {
         "target_sample_rate": "44100",
-        "processing": "Streaming Safe -14 LUFS / -1 dBTP",
+        "processing": "Resample only",
         "custom_target_lufs": -14,
         "custom_true_peak_dbtp": -1
       },
-      "color": "#324",
-      "bgcolor": "#546"
+      "color": "#4e7064",
+      "bgcolor": "#252b33"
     },
     {
       "id": 15,
       "type": "FlashSRLowpassLab",
       "pos": [
-        1491.8583054545652,
-        1066.8448194047714
+        3220,
+        700
       ],
       "size": [
-        284,
-        298
+        420,
+        350
       ],
       "flags": {},
       "order": 12,
@@ -852,7 +855,7 @@
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 14
+          "link": 32
         },
         {
           "localized_name": "preset_override",
@@ -941,7 +944,8 @@
           "name": "audio",
           "type": "AUDIO",
           "links": [
-            13
+            33,
+            34
           ]
         },
         {
@@ -963,7 +967,7 @@
           "links": []
         }
       ],
-      "title": "POST Lowpass",
+      "title": "H · POST low-pass",
       "properties": {
         "Node name for S&R": "FlashSRLowpassLab"
       },
@@ -981,19 +985,19 @@
         "custom_phase_mode": "causal",
         "bypass": false
       },
-      "color": "#323",
-      "bgcolor": "#535"
+      "color": "#4e7064",
+      "bgcolor": "#252b33"
     },
     {
       "id": 16,
       "type": "SaveAudioSmartPrefix",
       "pos": [
-        3245.986316478129,
-        1060.6675387276887
+        4580,
+        1500
       ],
       "size": [
-        397.421875,
-        466
+        540,
+        540
       ],
       "flags": {},
       "order": 14,
@@ -1003,7 +1007,7 @@
           "localized_name": "audio",
           "name": "audio",
           "type": "AUDIO",
-          "link": 15
+          "link": 39
         },
         {
           "localized_name": "filename_prefix",
@@ -1167,7 +1171,7 @@
           "links": []
         }
       ],
-      "title": "44.1 kHz Release FLAC – Album - Title + Full Metadata",
+      "title": "Release FLAC · final master rate",
       "properties": {
         "Node name for S&R": "SaveAudioSmartPrefix"
       },
@@ -1197,19 +1201,19 @@
         "filename_mode": "album - title",
         "embedded_cover_size": 1536
       },
-      "color": "#232",
-      "bgcolor": "#353"
+      "color": "#4b766a",
+      "bgcolor": "#252b33"
     },
     {
       "id": 18,
       "type": "MiniMaxOutputPaths",
       "pos": [
-        2555.30596969479,
-        569.6536030763042
+        620,
+        80
       ],
       "size": [
-        544,
-        434
+        540,
+        460
       ],
       "flags": {},
       "order": 7,
@@ -1324,7 +1328,7 @@
           "links": []
         }
       ],
-      "title": "Central Output Paths",
+      "title": "Output folders",
       "properties": {
         "Node name for S&R": "MiniMaxOutputPaths"
       },
@@ -1344,19 +1348,19 @@
         "artwork_subdir": "artwork/",
         "configuration_subdir": "log/"
       },
-      "color": "#432",
-      "bgcolor": "#653"
+      "color": "#486679",
+      "bgcolor": "#252b33"
     },
     {
       "id": 19,
       "type": "MiniMaxStandardAudioTags",
       "pos": [
-        3157.084785851344,
-        575.8579034225795
+        620,
+        610
       ],
       "size": [
-        488.625,
-        402
+        540,
+        440
       ],
       "flags": {},
       "order": 6,
@@ -1451,7 +1455,7 @@
           ]
         }
       ],
-      "title": "Standard MP3 / FLAC Metadata",
+      "title": "Release tags",
       "properties": {
         "Node name for S&R": "MiniMaxStandardAudioTags"
       },
@@ -1475,19 +1479,19 @@
         "album_artist": "Example Artist",
         "composer": "Example Composer"
       },
-      "color": "#432",
-      "bgcolor": "#653"
+      "color": "#486679",
+      "bgcolor": "#252b33"
     },
     {
       "id": 20,
       "type": "PrimitiveString",
       "pos": [
-        2569.175482220935,
-        1297.3192678021514
+        0,
+        1060
       ],
       "size": [
-        424.40625,
-        116.265625
+        540,
+        140
       ],
       "flags": {},
       "order": 1,
@@ -1514,7 +1518,7 @@
           ]
         }
       ],
-      "title": "Title",
+      "title": "Song title",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.34.0",
@@ -1526,19 +1530,19 @@
       "widgets_values_named": {
         "value": "standard"
       },
-      "color": "#432",
-      "bgcolor": "#653"
+      "color": "#486679",
+      "bgcolor": "#252b33"
     },
     {
       "id": 21,
       "type": "PrimitiveString",
       "pos": [
-        2154.473629630269,
-        245.43952503990073
+        620,
+        1120
       ],
       "size": [
-        270,
-        70
+        540,
+        110
       ],
       "flags": {},
       "order": 2,
@@ -1574,18 +1578,21 @@
       ],
       "widgets_values_named": {
         "value": "n/a"
-      }
+      },
+      "color": "#486679",
+      "bgcolor": "#252b33",
+      "title": "Source prefix"
     },
     {
       "id": 23,
       "type": "PrimitiveInt",
       "pos": [
-        2152.6837251601164,
-        365.07757252911665
+        620,
+        1300
       ],
       "size": [
-        270,
-        82
+        540,
+        120
       ],
       "flags": {},
       "order": 3,
@@ -1624,36 +1631,573 @@
       "widgets_values_named": {
         "value": 0,
         "fixed": "fixed"
-      }
+      },
+      "color": "#486679",
+      "bgcolor": "#252b33",
+      "title": "Song index / count"
     },
     {
       "id": 24,
       "type": "MarkdownNote",
       "pos": [
-        -105.56500371734819,
-        935.992031808051
+        0,
+        80
       ],
       "size": [
-        397,
-        226.5
+        540,
+        530
       ],
       "flags": {},
       "order": 14,
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "Info",
+      "title": "Start here · enhancement",
       "properties": {
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Quick Experimentation with Audio Enhancement Settings\n\nAllows quick test of various audio enhancement settings.\n\nJust add your original 32khz File from Minimax (or other not perfect quality audio)."
+        "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This resample-only stage also runs with mastering bypassed. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
       ],
       "widgets_values_named": {
-        "text": "## Quick Experimentation with Audio Enhancement Settings\n\nAllows quick test of various audio enhancement settings.\n\nJust add your original 32khz File from Minimax (or other not perfect quality audio)."
+        "text": "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This resample-only stage also runs with mastering bypassed. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
       },
-      "color": "#432",
-      "bgcolor": "#653"
+      "color": "#486679",
+      "bgcolor": "#252b33"
+    },
+    {
+      "id": 25,
+      "type": "MiniMaxParametricEQ",
+      "pos": [
+        1780,
+        1500
+      ],
+      "size": [
+        620,
+        700
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 34
+        },
+        {
+          "localized_name": "eq_settings_json",
+          "name": "eq_settings_json",
+          "type": "STRING",
+          "widget": {
+            "name": "eq_settings_json"
+          },
+          "link": 35
+        },
+        {
+          "localized_name": "bypass",
+          "name": "bypass",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bypass"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            36
+          ]
+        },
+        {
+          "localized_name": "eq_report_json",
+          "name": "eq_report_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node Name for S&R": "MiniMaxParametricEQ"
+      },
+      "widgets_values": [
+        "{\"schema\":\"minimax_eq_v1\",\"preamp_db\":0,\"bands\":[]}",
+        false
+      ],
+      "color": "#4e7064",
+      "bgcolor": "#252b33",
+      "title": "2 · Apply Auto-EQ · linked settings",
+      "widgets_values_named": {
+        "eq_settings_json": "{\"schema\":\"minimax_eq_v1\",\"preamp_db\":0,\"bands\":[]}",
+        "bypass": false
+      }
+    },
+    {
+      "id": 26,
+      "type": "MiniMaxMasteringCompressor",
+      "pos": [
+        3760,
+        1500
+      ],
+      "size": [
+        640,
+        700
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 38
+        },
+        {
+          "localized_name": "bypass",
+          "name": "bypass",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bypass"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "target_lufs",
+          "name": "target_lufs",
+          "type": "FLOAT",
+          "widget": {
+            "name": "target_lufs"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ceiling_dbtp",
+          "name": "ceiling_dbtp",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ceiling_dbtp"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "target_sample_rate",
+          "name": "target_sample_rate",
+          "type": "COMBO",
+          "widget": {
+            "name": "target_sample_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "compressor_enabled",
+          "name": "compressor_enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "compressor_enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "threshold_db",
+          "name": "threshold_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "threshold_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ratio",
+          "name": "ratio",
+          "type": "FLOAT",
+          "widget": {
+            "name": "ratio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "knee_db",
+          "name": "knee_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "knee_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "attack_ms",
+          "name": "attack_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "attack_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "release_ms",
+          "name": "release_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "release_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sidechain_hz",
+          "name": "sidechain_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "sidechain_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "detector",
+          "name": "detector",
+          "type": "COMBO",
+          "widget": {
+            "name": "detector"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "input_gain_db",
+          "name": "input_gain_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "input_gain_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_makeup_db",
+          "name": "max_makeup_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_makeup_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_limiter_reduction_db",
+          "name": "max_limiter_reduction_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_limiter_reduction_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "lookahead_ms",
+          "name": "lookahead_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "lookahead_ms"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "limiter_release_ms",
+          "name": "limiter_release_ms",
+          "type": "FLOAT",
+          "widget": {
+            "name": "limiter_release_ms"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            39
+          ]
+        },
+        {
+          "localized_name": "mastering_json",
+          "name": "mastering_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node Name for S&R": "MiniMaxMasteringCompressor"
+      },
+      "widgets_values": [
+        false,
+        -14,
+        -1,
+        "keep",
+        true,
+        -18,
+        1.5,
+        6,
+        20,
+        150,
+        80,
+        "RMS",
+        0,
+        18,
+        6,
+        3,
+        100
+      ],
+      "color": "#4e7064",
+      "bgcolor": "#252b33",
+      "title": "5 · Master · compression / LUFS / peak",
+      "widgets_values_named": {
+        "bypass": false,
+        "target_lufs": -14,
+        "ceiling_dbtp": -1,
+        "target_sample_rate": "keep",
+        "compressor_enabled": true,
+        "threshold_db": -18,
+        "ratio": 1.5,
+        "knee_db": 6,
+        "attack_ms": 20,
+        "release_ms": 150,
+        "sidechain_hz": 80,
+        "detector": "RMS",
+        "input_gain_db": 0,
+        "max_makeup_db": 18,
+        "max_limiter_reduction_db": 6,
+        "lookahead_ms": 3,
+        "limiter_release_ms": 100
+      }
+    },
+    {
+      "id": 27,
+      "type": "MiniMaxAutoEQAnalyze",
+      "pos": [
+        1300,
+        1500
+      ],
+      "size": [
+        420,
+        430
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 33
+        },
+        {
+          "localized_name": "target_mode",
+          "name": "target_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "target_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "strength_percent",
+          "name": "strength_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "strength_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_gain_db",
+          "name": "max_gain_db",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_gain_db"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_bands",
+          "name": "max_bands",
+          "type": "INT",
+          "widget": {
+            "name": "max_bands"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_frequency_hz",
+          "name": "min_frequency_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "min_frequency_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "max_frequency_hz",
+          "name": "max_frequency_hz",
+          "type": "FLOAT",
+          "widget": {
+            "name": "max_frequency_hz"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "reference_audio",
+          "name": "reference_audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "eq_settings_json",
+          "name": "eq_settings_json",
+          "type": "STRING",
+          "links": [
+            35
+          ]
+        },
+        {
+          "localized_name": "analysis_json",
+          "name": "analysis_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node Name for S&R": "MiniMaxAutoEQAnalyze"
+      },
+      "widgets_values": [
+        "Warm tilt",
+        35,
+        2,
+        4,
+        40,
+        16000,
+        true
+      ],
+      "color": "#4e7064",
+      "bgcolor": "#252b33",
+      "title": "1 · Auto-EQ · enabled = on/off",
+      "widgets_values_named": {
+        "target_mode": "Warm tilt",
+        "strength_percent": 35,
+        "max_gain_db": 2,
+        "max_bands": 4,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000,
+        "enabled": true
+      }
+    },
+    {
+      "id": 28,
+      "type": "MiniMaxParametricEQ",
+      "pos": [
+        2460,
+        1500
+      ],
+      "size": [
+        620,
+        700
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 36
+        },
+        {
+          "localized_name": "eq_settings_json",
+          "name": "eq_settings_json",
+          "type": "STRING",
+          "widget": {
+            "name": "eq_settings_json"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bypass",
+          "name": "bypass",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "bypass"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            37
+          ]
+        },
+        {
+          "localized_name": "eq_report_json",
+          "name": "eq_report_json",
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node Name for S&R": "MiniMaxParametricEQ"
+      },
+      "widgets_values": [
+        "{\"schema\":\"minimax_eq_v1\",\"preamp_db\":0,\"bands\":[]}",
+        false
+      ],
+      "widgets_values_named": {
+        "eq_settings_json": "{\"schema\":\"minimax_eq_v1\",\"preamp_db\":0,\"bands\":[]}",
+        "bypass": false
+      },
+      "color": "#4e7064",
+      "bgcolor": "#252b33",
+      "title": "3 · Manual EQ · bypass = off"
     }
   ],
   "links": [
@@ -1694,30 +2238,6 @@
       12,
       0,
       13,
-      0,
-      "AUDIO"
-    ],
-    [
-      13,
-      15,
-      0,
-      14,
-      0,
-      "AUDIO"
-    ],
-    [
-      14,
-      13,
-      0,
-      15,
-      0,
-      "AUDIO"
-    ],
-    [
-      15,
-      14,
-      0,
-      16,
       0,
       "AUDIO"
     ],
@@ -1784,45 +2304,150 @@
       19,
       0,
       "STRING"
+    ],
+    [
+      32,
+      13,
+      0,
+      15,
+      0,
+      "AUDIO"
+    ],
+    [
+      33,
+      15,
+      0,
+      27,
+      0,
+      "AUDIO"
+    ],
+    [
+      34,
+      15,
+      0,
+      25,
+      0,
+      "AUDIO"
+    ],
+    [
+      35,
+      27,
+      0,
+      25,
+      1,
+      "STRING"
+    ],
+    [
+      36,
+      25,
+      0,
+      28,
+      0,
+      "AUDIO"
+    ],
+    [
+      37,
+      28,
+      0,
+      14,
+      0,
+      "AUDIO"
+    ],
+    [
+      38,
+      14,
+      0,
+      26,
+      0,
+      "AUDIO"
+    ],
+    [
+      39,
+      26,
+      0,
+      16,
+      0,
+      "AUDIO"
     ]
   ],
   "groups": [
     {
       "id": 1,
-      "title": "05 Audio enhancement and reduce Minimax weaknesses",
+      "title": "01 · START / Source & release details",
+      "color": "#486679",
       "bounding": [
-        371.9930742438462,
-        478.75858499626406,
-        2005.0775526470104,
-        1147.0574481009141
+        -35,
+        -5,
+        1230,
+        1460
       ],
-      "color": "#88A",
+      "font_size": 28,
       "flags": {}
     },
     {
       "id": 2,
-      "title": "06 Save Audio",
+      "title": "02 · RESTORE / A → E",
+      "color": "#686587",
       "bounding": [
-        2499.3330731689502,
-        482.4162310800826,
-        1224.8020031473075,
-        1153.9731463365274
+        1265,
+        -5,
+        2410,
+        570
       ],
-      "color": "#8A8",
+      "font_size": 28,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "03 · POST / Finish restoration",
+      "color": "#4e7064",
+      "bounding": [
+        3185,
+        615,
+        490,
+        470
+      ],
+      "font_size": 28,
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "05 · EXPORT / Final audio",
+      "color": "#4b766a",
+      "bounding": [
+        4545,
+        1415,
+        610,
+        660
+      ],
+      "font_size": 28,
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "MASTERING · Auto-EQ → Manual EQ → Rate → Dynamics",
+      "color": "#4e7064",
+      "bounding": [
+        1265,
+        1415,
+        3170,
+        820
+      ],
+      "font_size": 28,
       "flags": {}
     }
   ],
   "config": {},
   "extra": {
     "ds": {
-      "scale": 1.5863092971714992,
+      "scale": 0.65,
       "offset": [
-        401.5301207472603,
-        -759.18236940423
+        60,
+        80
       ]
     },
-    "workflow_name": "MiniMax Music Production Toolkit - Audio Enhancement Lab",
-    "workflow_version": "2.1.1"
+    "workflow_name": "MiniMax Audio Enhancement Lab 2.5",
+    "workflow_version": "2.5.0"
   },
   "version": 0.4
 }

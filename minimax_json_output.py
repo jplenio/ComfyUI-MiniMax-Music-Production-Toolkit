@@ -21,188 +21,66 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .file_writes import reserve_target, staged_write, write_text_staged
 from .filename_utils import apply_filename_mode
 from .metadata_schema import CURRENT_PRODUCTION_METADATA_SCHEMA
-from .save_audio_smart_prefix import _pick_path, _resolve_prefix
+from .production_metadata import (
+    DEFAULT_WORKFLOW_NAME,
+    build_generation_metadata,
+    overlay,
+    parse_object,
+)
+from .output_paths import pick_path as _pick_path_impl, resolve_prefix as _resolve_prefix_impl
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("production_json")
 
-DEFAULT_WORKFLOW_NAME = "MiniMax Music Production Toolkit 2.0.0"
 
 
-def _parse_object(text: str, label: str) -> Dict[str, Any]:
-    raw = (text or "").strip()
-    if not raw:
-        return {}
-    try:
-        value = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Save Production JSON: invalid {label}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError(f"Save Production JSON: {label} must contain a JSON object.")
-    return value
+def _resolve_prefix(prefix: str) -> str:
+    """Resolve the configuration prefix with this node's error label."""
+    return _resolve_prefix_impl(prefix, error_prefix="Save Production JSON")
+
+
+def _pick_path(prefix: str, ext: str, collision_mode: str, exists=None) -> str:
+    """Select the artifact path with this node's error label."""
+    return _pick_path_impl(prefix, ext, collision_mode, error_prefix="Save Production JSON", exists=exists)
+
+
+def _pair_is_taken(candidate: str) -> bool:
+    """Report a JSON target as taken when its Markdown companion is taken too.
+
+    A standalone ``Album - Title.md`` left by another producer must not be
+    silently overwritten by the canonical JSON's companion.  The predicate uses
+    the same "exists already" semantics as ``output_paths.pick_path``.
+    """
+    return (
+        os.path.exists(candidate)
+        or os.path.exists(str(Path(candidate).with_suffix(".md")))
+    )
 
 
 def _artifact_from_save_info(text: str, fallback_label: str) -> Dict[str, Any]:
+    """Da zum Saver-Output-Format gehörender Adapter bleibt im Node."""
     info = _parse_object(text, fallback_label)
     # SaveAudioSmartPrefix emits a stable object. Preserve it as-is so future
     # fields can be added without changing this aggregation node.
     return info
 
 
+def _parse_object(text: str, label: str) -> Dict[str, Any]:
+    """Compatibility wrapper around :func:`production_metadata.parse_object`."""
+    return parse_object(text, label)
+
+
 def _overlay(base: Dict[str, Any], key: str, value: Any) -> None:
-    """Set ``base[key]`` only when the value carries real content."""
-    if isinstance(value, str):
-        value = value.strip()
-    if value is None or value == "":
-        return
-    base[key] = value
+    """Compatibility wrapper around :func:`production_metadata.overlay`."""
+    return overlay(base, key, value)
 
 
-def _generation_metadata(
-    legacy_metadata: Dict[str, Any],
-    *,
-    llm_system_prompt: str = "",
-    llm_user_prompt: str = "",
-    llm_output: str = "",
-    llm_status: str = "",
-    llm_thinking: str = "",
-    structured_summary_json: str = "",
-    caption: str = "",
-    lyrics: str = "",
-    image_prompt: str = "",
-    source_name: str = "",
-    source_path: str = "",
-    prompt_origin: str = "",
-    prompt_provenance_json: str = "",
-    generation_seed: Optional[int] = None,
-    run_index: Optional[int] = None,
-    variant_count: Optional[int] = None,
-    max_duration: Optional[float] = None,
-    text_seed: Optional[int] = None,
-    text_cfg_scale: Optional[float] = None,
-    text_top_k: Optional[int] = None,
-    ksampler_seed: Optional[int] = None,
-    ksampler_steps: Optional[int] = None,
-    ksampler_cfg: Optional[float] = None,
-    denoise: Optional[float] = None,
-    flashsr_settings_json: str = "",
-    pre_preset: str = "",
-    pre_settings_json: str = "",
-    post_preset: str = "",
-    post_settings_json: str = "",
-    hybrid_crossover_json: str = "",
-    hf_repair_json: str = "",
-    declip_json: str = "",
-    release_prep_json: str = "",
-    workflow_name: str = DEFAULT_WORKFLOW_NAME,
-) -> Dict[str, Any]:
-    """Assemble the complete generation metadata payload (schema v7).
-
-    A legacy ``metadata_json`` payload (pre-2.0.0 song-metadata node) is used
-    as the base; every directly wired input overlays it.  The schema key is
-    rewritten to the current version at the end.
-    """
-    payload: Dict[str, Any] = dict(legacy_metadata)
-
-    payload["schema"] = CURRENT_PRODUCTION_METADATA_SCHEMA
-    _overlay(payload, "workflow", workflow_name or DEFAULT_WORKFLOW_NAME)
-
-    llm: Dict[str, Any] = dict(payload.get("llm") or {})
-    _overlay(llm, "system_prompt", llm_system_prompt)
-    _overlay(llm, "user_prompt", llm_user_prompt)
-    _overlay(llm, "output", llm_output)
-    _overlay(llm, "status", llm_status)
-    _overlay(llm, "thinking", llm_thinking)
-    if llm:
-        payload["llm"] = llm
-
-    structured = _parse_object(structured_summary_json, "structured_summary_json")
-    if structured:
-        payload["structured_prompt"] = structured
-
-    _overlay(payload, "caption", caption)
-    _overlay(payload, "lyrics", lyrics)
-    _overlay(payload, "image_prompt", image_prompt)
-
-    source: Dict[str, Any] = dict(payload.get("source") or {})
-    _overlay(source, "name", source_name)
-    _overlay(source, "path", source_path)
-    _overlay(source, "origin", prompt_origin)
-    if run_index is not None:
-        source["run_index"] = int(run_index)
-    if variant_count is not None:
-        source["variant_count"] = int(variant_count)
-    provenance = _parse_object(prompt_provenance_json, "prompt_provenance_json")
-    if provenance:
-        source["prompt_provenance"] = provenance
-    if source:
-        payload["source"] = source
-
-    if generation_seed is not None:
-        payload["generation_seed"] = int(generation_seed)
-
-    minimax: Dict[str, Any] = dict(payload.get("minimax_music3") or {})
-    if max_duration is not None:
-        minimax["max_duration"] = float(max_duration)
-    text_encode: Dict[str, Any] = dict(minimax.get("text_encode") or {})
-    if text_seed is not None:
-        text_encode["seed"] = int(text_seed)
-    if text_cfg_scale is not None:
-        text_encode["cfg_scale"] = float(text_cfg_scale)
-    if text_top_k is not None:
-        text_encode["top_k"] = int(text_top_k)
-    if text_encode:
-        minimax["text_encode"] = text_encode
-    ksampler: Dict[str, Any] = dict(minimax.get("ksampler") or {})
-    if ksampler_seed is not None:
-        ksampler["seed"] = int(ksampler_seed)
-    if ksampler_steps is not None:
-        ksampler["steps"] = int(ksampler_steps)
-    if ksampler_cfg is not None:
-        ksampler["cfg"] = float(ksampler_cfg)
-    if denoise is not None:
-        ksampler["denoise"] = float(denoise)
-    if ksampler:
-        minimax["ksampler"] = ksampler
-    if minimax:
-        payload["minimax_music3"] = minimax
-
-    flashsr: Dict[str, Any] = dict(payload.get("flashsr") or {})
-    flashsr_settings = _parse_object(flashsr_settings_json, "flashsr_settings_json")
-    if flashsr_settings:
-        flashsr["settings"] = flashsr_settings
-    pre_settings = _parse_object(pre_settings_json, "pre_settings_json")
-    if pre_preset or pre_settings:
-        flashsr["pre_lowpass"] = {
-            "preset": (pre_preset or "").strip(),
-            "settings": pre_settings,
-        }
-    post_settings = _parse_object(post_settings_json, "post_settings_json")
-    if post_preset or post_settings:
-        flashsr["post_lowpass"] = {
-            "preset": (post_preset or "").strip(),
-            "settings": post_settings,
-        }
-    hybrid = _parse_object(hybrid_crossover_json, "hybrid_crossover_json")
-    if hybrid:
-        flashsr["hybrid_crossover"] = hybrid
-    hf_repair = _parse_object(hf_repair_json, "hf_repair_json")
-    if hf_repair:
-        flashsr["hf_cymbal_shimmer_repair"] = hf_repair
-    if flashsr:
-        payload["flashsr"] = flashsr
-
-    declip = _parse_object(declip_json, "declip_json")
-    if declip:
-        payload.setdefault("restoration", {})["declip"] = declip
-
-    release_prep = _parse_object(release_prep_json, "release_prep_json")
-    if release_prep:
-        payload["release_prep"] = release_prep
-
-    return payload
+def _generation_metadata(*args, **kwargs) -> Dict[str, Any]:
+    """Compatibility wrapper around :func:`production_metadata.build_generation_metadata`."""
+    return build_generation_metadata(*args, **kwargs)
 
 
 class MiniMaxSaveProductionJSON:
@@ -268,6 +146,19 @@ class MiniMaxSaveProductionJSON:
                 # Since 2.0.4: the MiniMax prompt report (Markdown) is written
                 # next to the canonical JSON with the same basename.
                 "minimax_prompt_md": ("STRING", {"forceInput": True}),
+                # V01 additive reports.  The EQ / auto-EQ / mastering nodes emit
+                # self-describing JSON (``minimax_eq_report_v1``,
+                # ``minimax_auto_eq_report_v1``, ``minimax_mastering_v1``), and
+                # the runtime stages report what they actually used.  All seven
+                # are optional and appended at the end on purpose: a stored
+                # workflow keeps its existing input slots and widget values.
+                "eq_report_json": ("STRING", {"forceInput": True}),
+                "auto_eq_analysis_json": ("STRING", {"forceInput": True}),
+                "mastering_json": ("STRING", {"forceInput": True}),
+                "resource_profile_json": ("STRING", {"forceInput": True}),
+                "llm_runtime_json": ("STRING", {"forceInput": True}),
+                "model_identity_json": ("STRING", {"forceInput": True}),
+                "template_version": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -323,6 +214,13 @@ class MiniMaxSaveProductionJSON:
         hf_repair_json: str = "",
         declip_json: str = "",
         release_prep_json: str = "",
+        eq_report_json: str = "",
+        auto_eq_analysis_json: str = "",
+        mastering_json: str = "",
+        resource_profile_json: str = "",
+        llm_runtime_json: str = "",
+        model_identity_json: str = "",
+        template_version: str = "",
         workflow_name: str = DEFAULT_WORKFLOW_NAME,
         minimax_prompt_md: str = "",
     ):
@@ -362,6 +260,13 @@ class MiniMaxSaveProductionJSON:
             hf_repair_json=hf_repair_json,
             declip_json=declip_json,
             release_prep_json=release_prep_json,
+            eq_report_json=eq_report_json,
+            auto_eq_analysis_json=auto_eq_analysis_json,
+            mastering_json=mastering_json,
+            resource_profile_json=resource_profile_json,
+            llm_runtime_json=llm_runtime_json,
+            model_identity_json=model_identity_json,
+            template_version=template_version,
             workflow_name=workflow_name,
         )
         audio_tags = _parse_object(audio_tags_json, "audio_tags_json")
@@ -377,7 +282,19 @@ class MiniMaxSaveProductionJSON:
             else:
                 raise FileNotFoundError(f"Save Production JSON: directory does not exist: {directory}")
 
-        target = _pick_path(resolved_prefix, "json", collision_mode)
+        # The MiniMax prompt report is written as a Markdown file beside the
+        # canonical JSON with exactly the same basename (Album - Title.md).
+        markdown_text = (minimax_prompt_md or "").strip()
+
+        # A standalone Markdown companion left by another producer must count as
+        # a collision too - otherwise the JSON would take a free "Album - Title"
+        # name and silently overwrite that Markdown.
+        if markdown_text and collision_mode != "overwrite":
+            target = _pick_path(
+                resolved_prefix, "json", collision_mode, _pair_is_taken,
+            )
+        else:
+            target = _pick_path(resolved_prefix, "json", collision_mode)
 
         if title and not payload.get("title"):
             payload["title"] = title
@@ -399,46 +316,31 @@ class MiniMaxSaveProductionJSON:
             },
         }
 
-        # The MiniMax prompt report is written as a Markdown file beside the
-        # canonical JSON, using exactly the same basename (Album - Title.md).
-        markdown_text = (minimax_prompt_md or "").strip()
         prompt_report_target: Optional[str] = None
         if markdown_text:
             prompt_report_target = str(Path(target).with_suffix(".md"))
-            markdown_tmp = prompt_report_target + ".tmp"
-            try:
-                with open(markdown_tmp, "w", encoding="utf-8", newline="\n") as handle:
-                    handle.write(markdown_text)
-                    if not markdown_text.endswith("\n"):
-                        handle.write("\n")
-                os.replace(markdown_tmp, prompt_report_target)
-            except Exception:
-                try:
-                    if os.path.exists(markdown_tmp):
-                        os.remove(markdown_tmp)
-                except OSError:
-                    pass
-                raise
             outputs["prompt_report"] = {
                 "path": os.path.abspath(prompt_report_target),
                 "file": os.path.basename(prompt_report_target),
             }
-            LOGGER.info("Saved MiniMax prompt report: %s", prompt_report_target)
         payload["outputs"] = outputs
 
-        tmp = target + ".tmp"
-        try:
-            with open(tmp, "w", encoding="utf-8", newline="\n") as handle:
-                json.dump(payload, handle, ensure_ascii=False, indent=2)
-                handle.write("\n")
-            os.replace(tmp, target)
-        except Exception:
-            try:
-                if os.path.exists(tmp):
-                    os.remove(tmp)
-            except OSError:
-                pass
-            raise
+        # Publish the canonical JSON first and its Markdown companion second.
+        # A filesystem offers no multi-file atomicity: this order guarantees a
+        # companion file can never exist without its JSON, at the cost of a
+        # possible JSON without its companion if the second write fails.  The
+        # recorded path is part of the JSON, so it must be complete *before*
+        # the payload is serialized.
+        write_text_staged(
+            target,
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+            reserve=lambda: reserve_target(resolved_prefix, "json", collision_mode, error_prefix="Save Production JSON"),
+            error_prefix="Save Production JSON",
+        )
+        if prompt_report_target:
+            body = markdown_text if markdown_text.endswith("\n") else markdown_text + "\n"
+            write_text_staged(prompt_report_target, body, error_prefix="Save Production JSON")
+            LOGGER.info("Saved MiniMax prompt report: %s", prompt_report_target)
 
         rendered = json.dumps(payload, ensure_ascii=False, indent=2)
         LOGGER.info("Saved canonical production JSON: %s", target)

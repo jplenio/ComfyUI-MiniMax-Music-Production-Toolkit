@@ -1,7 +1,7 @@
 // Unit test for the workflow-migration decision logic (plain Node, ESM).
 // Run:  node tests/test_workflow_migration.mjs
 import assert from "node:assert/strict";
-import { JSON_METADATA_INPUT_NAME, PARSER_INPUT_NAME, llmWidgetRepairs, shouldRepairJsonMetadataLink, shouldRepairParserLink, structuredPromptWidgetRepairs } from "../web/migration_utils.js";
+import { JSON_METADATA_INPUT_NAME, PARSER_INPUT_NAME, llmWidgetRepairs, repairJsonNodeLinks, repairLLMChatWidgets, repairParserNodeLinks, repairStructuredPromptWidgets, shouldRepairJsonMetadataLink, shouldRepairParserLink, structuredPromptWidgetRepairs } from "../web/migration_utils.js";
 
 const STRING = "STRING";
 const INT = "INT";
@@ -306,3 +306,110 @@ assert.equal(
 );
 
 console.log("test_workflow_migration.mjs: all assertions passed");
+
+// ---------------------------------------------------------------------------
+// Adapter mutations (the exact changes the ComfyUI extension applies).
+// ---------------------------------------------------------------------------
+
+function structuredNode(overrides = {}) {
+    const widgets = STRUCTURED_WIDGETS.map((name) => ({ name, value: undefined }));
+    return {
+        id: 80,
+        type: "MiniMaxStructuredPromptV20",
+        widgets,
+        widgets_values: null,
+        widgets_values_named: null,
+        ...overrides,
+    };
+}
+
+// A. A named serialization with a valid meter keeps that meter on the named
+//    map and on the widget (regression: it was reset to "custom").
+{
+    const node = structuredNode({
+        widgets_values_named: {
+            genre: "House",
+            meter: "3/4 (waltz)",
+            tempo: "Midtempo (100-120 BPM)",
+            system_prompt: "SYS",
+        },
+    });
+    assert.equal(repairStructuredPromptWidgets(node), true, "named repair must report a change");
+    assert.equal(node.widgets_values_named.meter, "3/4 (waltz)", "saved meter must not be reset");
+    assert.equal(node.widgets.find((w) => w.name === "meter").value, "3/4 (waltz)");
+    assert.equal(node.widgets.find((w) => w.name === "genre").value, "House");
+}
+
+// B. A named pre-2.0.5 serialization (no meter key) gets meter = "custom".
+{
+    const node = structuredNode({
+        widgets_values_named: { genre: "House", tempo: "Midtempo (100-120 BPM)" },
+    });
+    repairStructuredPromptWidgets(node);
+    assert.equal(node.widgets_values_named.meter, "custom", "missing meter defaults to custom");
+}
+
+// C. Repeated load/repair is idempotent: the second pass applies the same
+//    values and keeps the stored array aligned with the current widget order.
+{
+    const node = structuredNode({
+        widgets_values: STRUCTURED_WIDGETS.map(() => null).slice(0, -1),
+        widgets_values_named: { genre: "House", meter: "4/4 (common time)" },
+    });
+    repairStructuredPromptWidgets(node);
+    const first = { named: { ...node.widgets_values_named }, values: [...node.widgets_values] };
+    repairStructuredPromptWidgets(node);
+    assert.deepEqual(node.widgets_values_named, first.named, "named map must be stable");
+    assert.deepEqual(node.widgets_values, first.values, "positional array must be stable");
+    assert.equal(node.widgets_values_named.meter, "4/4 (common time)");
+}
+
+// D. A current positional serialization is already aligned and stays untouched.
+{
+    const node = structuredNode({
+        widgets_values: ["bundled_library", "", "<select a prompt>", "custom", "custom",
+            "4/4 (common time)", "custom", "custom", "custom", "custom", "custom", "custom",
+            "", "bundled_library", "", "minimax-music3-production.txt", "", "SYS"],
+    });
+    const before = [...node.widgets_values];
+    repairStructuredPromptWidgets(node);
+    assert.deepEqual(node.widgets_values, before, "current serialization must not shift");
+}
+
+// E. Parser adapter: an old STRING link on the INT song_count slot moves onto
+//    structured_llm_output; unrelated links stay where they are.
+{
+    const node = {
+        id: 53,
+        type: "MiniMaxParseExternalLLMOutputV16",
+        inputs: [
+            { name: "structured_llm_output", type: "STRING", link: null },
+            { name: "song_count", type: "INT", link: null },
+            { name: "user_prompt", type: "STRING", link: 178 },
+        ],
+        graph: {
+            links: {
+                190: { id: 190, type: "STRING", origin_id: 85, origin_slot: 0, target_id: 53, target_slot: 1 },
+                178: { id: 178, type: "STRING", origin_id: 80, origin_slot: 1, target_id: 53, target_slot: 2 },
+            },
+            getNodeById: () => undefined,
+        },
+    };
+    assert.equal(repairParserNodeLinks(node), true, "old parser link must be repaired");
+    assert.equal(node.graph.links[190].target_slot, 0, "LLM text moves to structured_llm_output");
+    assert.equal(node.graph.links[178].target_slot, 2, "user_prompt link must not move");
+    assert.equal(repairParserNodeLinks(node), false, "second pass is a no-op");
+}
+
+// F. LLM chat adapter repairs only broken widget values.
+{
+    const widgets = [
+        { name: "split_mode", value: "" },
+        { name: "tensor_split", value: "0" },
+        { name: "main_gpu", value: false },
+    ];
+    const node = { id: 81, widgets, graph: {} };
+    assert.equal(repairLLMChatWidgets(node), true);
+    assert.deepEqual(widgets.map((w) => w.value), ["none", "", 0]);
+    assert.equal(repairLLMChatWidgets(node), false, "already-repaired values are a no-op");
+}

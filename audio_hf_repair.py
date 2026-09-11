@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .audio_utils import resample_kaiser_polyphase, validate_audio
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("audio_hf_repair")
@@ -25,13 +26,8 @@ else:
 
 
 def _validate_audio(audio: Any, label: str = "audio") -> Tuple[torch.Tensor, int]:
-    if not isinstance(audio, dict) or "waveform" not in audio or "sample_rate" not in audio:
-        raise ValueError(f"{label}: expected ComfyUI AUDIO with waveform and sample_rate.")
-    waveform = audio["waveform"]
-    sr = int(audio["sample_rate"])
-    if not isinstance(waveform, torch.Tensor) or waveform.ndim != 3:
-        raise ValueError(f"{label}: waveform must be torch.Tensor [B,C,T].")
-    return waveform, sr
+    """Delegates to :func:`audio_utils.validate_audio` (same messages/policy)."""
+    return validate_audio(audio, error_label=label, template="compact", require_positive_rate=False)
 
 
 def _require_scipy():
@@ -40,13 +36,9 @@ def _require_scipy():
 
 
 def _resample_hq(x_bct: np.ndarray, sr_in: int, sr_out: int) -> np.ndarray:
+    """Delegates the kernel to :func:`audio_utils.resample_kaiser_polyphase`."""
     _require_scipy()
-    if sr_in == sr_out:
-        return np.asarray(x_bct, dtype=np.float32)
-    frac = Fraction(sr_out, sr_in).limit_denominator(10000)
-    y = resample_poly(x_bct, frac.numerator, frac.denominator, axis=-1, window=("kaiser", 14.769656459379492))
-    return np.asarray(y, dtype=np.float32)
-
+    return resample_kaiser_polyphase(x_bct, sr_in, sr_out, resample_poly=resample_poly)
 
 def _match_length(x: np.ndarray, n: int) -> np.ndarray:
     if x.shape[-1] == n:
@@ -58,7 +50,15 @@ def _match_length(x: np.ndarray, n: int) -> np.ndarray:
     return y
 
 
-def _fir_lowpass(x: np.ndarray, sr: int, cutoff_hz: float, transition_hz: float, attenuation_db: float = 90.0) -> Tuple[np.ndarray, int]:
+def _design_lowpass(
+    sr: int, cutoff_hz: float, transition_hz: float, attenuation_db: float = 90.0
+) -> Tuple[np.ndarray, int]:
+    """Design the shared linear-phase Kaiser FIR low-pass.
+
+    Identical maths to the previous inline design, but callable once per node
+    run so both branches of the crossover share one coefficient set instead of
+    designing the same kernel twice.
+    """
     _require_scipy()
     nyq = sr * 0.5
     cutoff_hz = float(np.clip(cutoff_hz, 100.0, nyq * 0.96))
@@ -69,11 +69,22 @@ def _fir_lowpass(x: np.ndarray, sr: int, cutoff_hz: float, transition_hz: float,
     if taps % 2 == 0:
         taps += 1
     h = firwin(taps, cutoff_hz, fs=sr, window=("kaiser", beta), pass_zero="lowpass")
+    return h, taps
+
+
+def _apply_fir(x: np.ndarray, h: np.ndarray) -> np.ndarray:
+    """Apply one designed kernel to every batch/channel row."""
     y = np.empty_like(x, dtype=np.float32)
     for b in range(x.shape[0]):
         for c in range(x.shape[1]):
             y[b, c] = oaconvolve(x[b, c], h, mode="same").astype(np.float32, copy=False)
-    return y, taps
+    return y
+
+
+def _fir_lowpass(x: np.ndarray, sr: int, cutoff_hz: float, transition_hz: float, attenuation_db: float = 90.0) -> Tuple[np.ndarray, int]:
+    """Compatibility wrapper: design one kernel and filter one signal."""
+    h, taps = _design_lowpass(sr, cutoff_hz, transition_hz, attenuation_db)
+    return _apply_fir(x, h), taps
 
 
 def _db_to_gain(db: float) -> float:
@@ -122,10 +133,15 @@ class FlashSRHybridCrossover:
         elif mode == "FlashSR only":
             y = f
         else:
-            low_o, taps = _fir_lowpass(o48, fsr, crossover_hz, transition_hz)
-            low_f, _ = _fir_lowpass(f, fsr, crossover_hz, transition_hz)
+            # One kernel design per run, reused by both branches.  The two
+            # previous designs were identical, and "Original + FlashSR air"
+            # never used low_o - so that whole-signal convolution is skipped
+            # there.  The report still carries the same tap count.
+            kernel, taps = _design_lowpass(fsr, crossover_hz, transition_hz)
+            low_f = _apply_fir(f, kernel)
             high_f = f - low_f
             if mode == "Hybrid replace above crossover":
+                low_o = _apply_fir(o48, kernel)
                 y = low_o + np.float32(mix) * high_f
             else:  # Original + FlashSR air
                 # Preserve all real source information after clean SRC and add only a restrained
@@ -226,6 +242,10 @@ class HFCymbalShimmerRepair:
 
         for b in range(x.shape[0]):
             # One shared envelope for all channels avoids stereo image movement.
+            # A03 measured a block-wise float64 accumulation here: it lowered the
+            # peak by ~49 MB on a 5-minute stereo band but cost ~2.5 s instead of
+            # ~0.37 s (6-7x) with a bit-identical result, so the fast full-array
+            # expression stays.  The measurement is recorded in IMPROVE-TODO A03.
             mono_energy = np.sqrt(np.mean(np.square(hf[b], dtype=np.float64), axis=0) + 1e-18).astype(np.float32)
             fast = _ema_envelope(mono_energy, sr, fast_ms)
             slow = _ema_envelope(mono_energy, sr, slow_ms)

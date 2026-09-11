@@ -1,23 +1,49 @@
 """Serialized workflow schema migration helpers.
 
-ComfyUI validates stored input slots positionally, so changing the input order
-of a node breaks older saved workflows.  In 2.0.0 the parser node
-``MiniMaxParseExternalLLMOutputV16`` moved ``structured_llm_output`` from the
-first required input to an optional input (so the LLM section can be bypassed
-without a validation error).  This module repairs pre-2.0.0 workflows by
-remapping link slots by input *name* instead of relying on positions.
+ComfyUI resolves stored input slots positionally: a serialized link's
+``target_slot`` indexes the target node's stored ``inputs`` array, and the
+frontend re-derives that array from the node definition when a graph is
+loaded.  Changing the input order of a node therefore breaks older saved
+workflows.
 
-The same helpers also report remaining dependencies on external custom nodes,
-so release validation can enforce that the bundled workflow is self-contained.
+In 2.0.0 the parser node ``MiniMaxParseExternalLLMOutputV16`` moved
+``structured_llm_output`` from the first required input to an optional input
+(so the LLM section can be bypassed without a validation error), and
+``MiniMaxSaveProductionJSON`` moved ``metadata_json`` from the first required
+input to the optional section.  This module repairs such workflows by
+remapping link slots **by input name** instead of relying on positions.
+
+Repair rules (identical to ``web/migration_utils.js``):
+
+* The stored ``inputs`` array is rebuilt group-aware - socket inputs first,
+  widget inputs second, each in canonical definition order - which is exactly
+  the serialization ComfyUI's frontend produces.  Rebuilding is idempotent, so
+  current workflows stay untouched.
+* Unknown/future input entries are preserved in their original group; nothing
+  is dropped.
+* A link is only moved when the slot it currently targets cannot be the input
+  it was wired to (a STRING link on a non-STRING slot for the parser; a link
+  whose origin output is named ``metadata_json`` for the JSON node).  A slot
+  is never written outside ``range(len(inputs))``; unresolvable links are
+  reported instead of being guessed.
+* Traversal covers the top-level graph *and* ``definitions.subgraphs``, whose
+  links are object-form rather than array-form.
+
+The same helpers report remaining dependencies on external custom nodes, so
+release validation can enforce that the bundled workflow is self-contained.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 PARSER_NODE_TYPE = "MiniMaxParseExternalLLMOutputV16"
 JSON_NODE_TYPE = "MiniMaxSaveProductionJSON"
+PARSER_STRUCTURED_INPUT = "structured_llm_output"
+JSON_METADATA_INPUT = "metadata_json"
 
-# Canonical input order since 2.0.0 (required first, then optional).
+# Canonical *definition* order since 2.0.0 (required first, then optional).
+# The stored serialization regroups these into socket inputs first and widget
+# inputs second; both groups follow this order.
 PARSER_NEW_INPUT_ORDER = (
     "song_count",
     "seed_mode",
@@ -36,9 +62,6 @@ PARSER_NEW_INPUT_ORDER = (
     "trim_long_prompt",
 )
 
-# Since 2.0.0 ``metadata_json`` moved from the first required input to the
-# optional section (the song-metadata node is no longer part of the example
-# workflow).
 JSON_NEW_INPUT_ORDER = (
     "configuration_prefix",
     "audio_tags_json",
@@ -88,6 +111,18 @@ JSON_NEW_INPUT_ORDER = (
     # Since 2.0.4 the canonical JSON writer also emits the MiniMax prompt
     # report as a Markdown file next to the JSON.
     "minimax_prompt_md",
+    # Since V01 the writer also accepts the additive report inputs.  They are
+    # appended after every existing entry on purpose: the stored workflow keeps
+    # its link slots, and the public workflow carries them unlinked because the
+    # production graph has no EQ/mastering stage yet (the new audio-only
+    # workflows wire them).
+    "eq_report_json",
+    "auto_eq_analysis_json",
+    "mastering_json",
+    "resource_profile_json",
+    "llm_runtime_json",
+    "model_identity_json",
+    "template_version",
 )
 
 # External custom nodes the toolkit replaced with integrated implementations.
@@ -102,86 +137,228 @@ EXTERNAL_NODE_TYPES = {
 }
 
 
-def _node_inputs_are_old_order(node: Dict[str, Any]) -> bool:
-    if node.get("type") == PARSER_NODE_TYPE:
-        inputs = node.get("inputs") or []
-        if not inputs:
-            return False
-        first_name = inputs[0].get("name")
-        return first_name == "structured_llm_output" and first_name != PARSER_NEW_INPUT_ORDER[0]
-    if node.get("type") == JSON_NODE_TYPE:
-        inputs = node.get("inputs") or []
-        if not inputs:
-            return False
-        first_name = inputs[0].get("name")
-        return first_name == "metadata_json" and first_name != JSON_NEW_INPUT_ORDER[0]
-    return False
+class Link:
+    """Read-only view over one serialized link (array or object form)."""
+
+    __slots__ = ("raw", "object_form", "id", "origin_id", "origin_slot", "target_id", "target_slot", "type")
+
+    def __init__(self, raw: Any):
+        self.raw = raw
+        self.object_form = isinstance(raw, dict)
+        if self.object_form:
+            self.id = raw.get("id")
+            self.origin_id = raw.get("origin_id")
+            self.origin_slot = raw.get("origin_slot")
+            self.target_id = raw.get("target_id")
+            self.target_slot = raw.get("target_slot")
+            self.type = raw.get("type")
+        elif isinstance(raw, (list, tuple)) and len(raw) >= 5:
+            self.id = raw[0]
+            self.origin_id = raw[1]
+            self.origin_slot = raw[2]
+            self.target_id = raw[3]
+            self.target_slot = raw[4]
+            self.type = raw[5] if len(raw) > 5 else None
+        else:
+            raise ValueError("unsupported link shape")
+
+    def set_target_slot(self, slot: int) -> None:
+        if self.object_form:
+            self.raw["target_slot"] = slot
+        else:  # list/tuple: the caller supplies a list
+            self.raw[4] = slot
+
+    @property
+    def target_slot_index(self) -> Optional[int]:
+        if isinstance(self.target_slot, bool):
+            return None
+        return self.target_slot if isinstance(self.target_slot, int) else None
 
 
-def _input_order_for(node_type: str) -> Optional[Tuple[str, ...]]:
+def _iter_graphs(workflow: Any) -> Iterator[Dict[str, Any]]:
+    """Yield the graph itself and every nested subgraph definition."""
+    if not isinstance(workflow, dict):
+        return
+    yield workflow
+    definitions = workflow.get("definitions")
+    if not isinstance(definitions, dict):
+        return
+    for subgraph in definitions.get("subgraphs") or []:
+        if isinstance(subgraph, dict):
+            yield from _iter_graphs(subgraph)
+
+
+def _iter_links(graph: Dict[str, Any]) -> Iterator[Link]:
+    for raw in graph.get("links") or []:
+        try:
+            yield Link(raw)
+        except ValueError:
+            continue
+
+
+def _node_by_id(graph: Dict[str, Any]) -> Dict[Any, Dict[str, Any]]:
+    return {
+        node.get("id"): node
+        for node in graph.get("nodes") or []
+        if isinstance(node, dict) and node.get("id") is not None
+    }
+
+
+def _origin_output_name(graph: Dict[str, Any], link: Link, nodes: Dict[Any, Dict[str, Any]]) -> Optional[str]:
+    origin = nodes.get(link.origin_id)
+    if not isinstance(origin, dict):
+        return None
+    outputs = origin.get("outputs") or []
+    slot = link.origin_slot
+    if isinstance(slot, bool) or not isinstance(slot, int) or not 0 <= slot < len(outputs):
+        return None
+    entry = outputs[slot]
+    if not isinstance(entry, dict):
+        return None
+    name = entry.get("name")
+    return name if isinstance(name, str) else None
+
+
+def _rebuild_inputs(entries: List[Dict[str, Any]], canonical: Tuple[str, ...]) -> List[Dict[str, Any]]:
+    """Group-aware canonical rebuild that preserves unknown inputs.
+
+    Serialized inputs are grouped socket-first, then widgets, matching the
+    ComfyUI frontend.  Known names follow the canonical definition order inside
+    their group; unknown/future names keep their original relative order and
+    stay in the group they were serialized in.
+    """
+    known = [entry for entry in entries if entry.get("name") in canonical]
+    unknown = [entry for entry in entries if entry.get("name") not in canonical]
+    rank = {name: index for index, name in enumerate(canonical)}
+
+    def sort_key(entry: Dict[str, Any]) -> int:
+        return rank.get(entry.get("name"), len(canonical))
+
+    def group(entries_in_group: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return sorted(entries_in_group, key=sort_key)
+
+    sockets_known = [e for e in known if "widget" not in e]
+    widgets_known = [e for e in known if "widget" in e]
+    sockets_unknown = [e for e in unknown if "widget" not in e]
+    widgets_unknown = [e for e in unknown if "widget" in e]
+    return group(sockets_known) + sockets_unknown + group(widgets_known) + widgets_unknown
+
+
+def _repair_node(
+    node: Dict[str, Any],
+    graph: Dict[str, Any],
+    links: List[Link],
+    nodes: Dict[Any, Dict[str, Any]],
+    changes: List[str],
+    diagnostics: Optional[List[str]] = None,
+) -> None:
+    node_type = node.get("type")
     if node_type == PARSER_NODE_TYPE:
-        return PARSER_NEW_INPUT_ORDER
-    if node_type == JSON_NODE_TYPE:
-        return JSON_NEW_INPUT_ORDER
-    return None
+        canonical = PARSER_NEW_INPUT_ORDER
+        wanted_name = PARSER_STRUCTURED_INPUT
+    elif node_type == JSON_NODE_TYPE:
+        canonical = JSON_NEW_INPUT_ORDER
+        wanted_name = JSON_METADATA_INPUT
+    else:
+        return
+
+    old_inputs = [entry for entry in (node.get("inputs") or []) if isinstance(entry, dict)]
+    if not old_inputs:
+        return
+
+    # The stored array is the only witness for which input a link was wired to,
+    # so capture the slot->name mapping *before* rebuilding.
+    old_name_by_slot = [entry.get("name") for entry in old_inputs]
+    rebuilt = _rebuild_inputs(old_inputs, canonical)
+    slot_by_name: Dict[Any, int] = {}
+    for index, entry in enumerate(rebuilt):
+        slot_by_name.setdefault(entry.get("name"), index)
+
+    node_id = node.get("id")
+    inbound = [link for link in links if link.target_id == node_id]
+    wanted_slots = {index for index, name in enumerate(old_name_by_slot) if name == wanted_name}
+    already_linked = any(link.target_slot_index in wanted_slots for link in inbound) or any(
+        old_inputs[index].get("link") not in (None, 0) for index in wanted_slots
+    )
+
+    moved = 0
+    skipped: List[str] = []
+    for link in inbound:
+        slot = link.target_slot_index
+        if slot is None:
+            skipped.append(f"link {link.id}: non-integer target_slot {link.target_slot!r}")
+            continue
+        if not 0 <= slot < len(old_inputs):
+            skipped.append(f"link {link.id}: target_slot {slot} outside 0..{len(old_inputs) - 1}")
+            continue
+
+        intended = old_name_by_slot[slot]
+        if node_type == PARSER_NODE_TYPE:
+            artifact = (
+                link.type == "STRING"
+                and intended != wanted_name
+                and old_inputs[slot].get("type") != "STRING"
+                and not already_linked
+            )
+        else:
+            artifact = (
+                _origin_output_name(graph, link, nodes) == JSON_METADATA_INPUT
+                and intended != wanted_name
+                and not already_linked
+            )
+        if artifact:
+            intended = wanted_name
+            already_linked = True
+
+        new_slot = slot_by_name.get(intended)
+        if new_slot is None:  # pragma: no cover - unknown names are preserved
+            skipped.append(f"link {link.id}: input '{intended}' not present")
+            continue
+        if new_slot == slot:
+            continue
+        link.set_target_slot(new_slot)
+        if artifact:
+            old_inputs[slot]["link"] = None
+            rebuilt[new_slot]["link"] = link.id
+        moved += 1
+
+    if rebuilt != old_inputs:
+        node["inputs"] = rebuilt
+    if moved or rebuilt != old_inputs:
+        changes.append(
+            f"migrated node {node_id} ({node_type}): rebuilt input groups and "
+            f"remapped {moved} inbound link slot(s)"
+        )
+    if skipped and diagnostics is not None:
+        diagnostics.extend(
+            f"node {node_id} ({node_type}): {note}" for note in skipped
+        )
 
 
-def migrate_workflow(workflow: Dict[str, Any]) -> List[str]:
-    """Repair pre-2.0.0 parser-node input ordering inside a workflow dict.
+def migrate_workflow(workflow: Dict[str, Any], diagnostics: Optional[List[str]] = None) -> List[str]:
+    """Repair serialized link slots for the 2.0.0 parser/JSON input reorders.
 
     Mutates the workflow in place and returns the list of applied changes.
-    Link target slots are remapped by input name; the node's stored ``inputs``
-    array is rebuilt in the canonical order.
+    Valid graphs - including both bundled workflows - produce no changes and
+    are left byte-for-byte identical.  Links whose slot cannot be resolved are
+    never guessed at; pass a list as *diagnostics* to collect those notes.
     """
     changes: List[str] = []
-    if not isinstance(workflow, dict):
-        return changes
-
-    links = workflow.get("links") or []
-    links_by_id = {link[0]: link for link in links if isinstance(link, (list, tuple)) and len(link) >= 5}
-
-    for node in workflow.get("nodes") or []:
-        if not isinstance(node, dict) or not _node_inputs_are_old_order(node):
-            continue
-        node_id = node.get("id")
-        node_type = node.get("type")
-        order = _input_order_for(node_type)
-        if order is None:  # pragma: no cover - guarded by the caller check
-            continue
-        old_inputs = node.get("inputs") or []
-        old_by_name = {item.get("name"): item for item in old_inputs if isinstance(item, dict)}
-        old_slot_by_name = {item.get("name"): slot for slot, item in enumerate(old_inputs)}
-
-        # Rebuild the stored inputs array in the canonical order, keeping entries.
-        new_inputs = []
-        for name in order:
-            if name in old_by_name:
-                new_inputs.append(old_by_name[name])
-        new_slot_by_name = {name: slot for slot, name in enumerate(order)}
-        node["inputs"] = new_inputs
-
-        # Remap links that target this node.
-        for link in links:
-            if len(link) >= 5 and link[3] == node_id:
-                old_slot = link[4]
-                if not isinstance(old_slot, int) or old_slot >= len(old_inputs):
-                    continue
-                input_name = old_inputs[old_slot].get("name")
-                if input_name in new_slot_by_name:
-                    link[4] = new_slot_by_name[input_name]
-
-        changes.append(
-            f"migrated node {node_id} ({node_type}): reordered inputs and remapped "
-            f"{len([l for l in links if len(l) >= 5 and l[3] == node_id])} inbound link(s) by name"
-        )
+    for graph in _iter_graphs(workflow):
+        nodes = _node_by_id(graph)
+        links = list(_iter_links(graph))
+        for node in graph.get("nodes") or []:
+            if isinstance(node, dict):
+                _repair_node(node, graph, links, nodes, changes, diagnostics)
     return changes
 
 
 def find_external_node_dependencies(workflow: Dict[str, Any]) -> List[Tuple[Any, str]]:
     """Return ``(node_id, replacement_hint)`` for external-node usages."""
     found: List[Tuple[Any, str]] = []
-    for node in workflow.get("nodes") or []:
-        node_type = node.get("type") if isinstance(node, dict) else None
-        if node_type in EXTERNAL_NODE_TYPES:
-            found.append((node.get("id"), EXTERNAL_NODE_TYPES[node_type]))
+    for graph in _iter_graphs(workflow):
+        for node in graph.get("nodes") or []:
+            node_type = node.get("type") if isinstance(node, dict) else None
+            if node_type in EXTERNAL_NODE_TYPES:
+                found.append((node.get("id"), EXTERNAL_NODE_TYPES[node_type]))
     return found

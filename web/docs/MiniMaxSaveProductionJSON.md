@@ -24,6 +24,7 @@ The node assembles the **complete generation record** from direct inputs (no sep
 - the parsed Caption / Lyrics / Title / Image_Prompt with source provenance, seeds, run/variant counters;
 - the MiniMax Music 3 generation settings (max duration, text seed/CFG/top-k, sampler seed/steps/CFG/denoise);
 - every audio-enhancement report: de-clipping, PRE/POST low-pass, FlashSR settings, hybrid crossover, HF cymbal/shimmer repair and release preparation;
+- (V01) the EQ / auto-EQ / mastering reports under `mastering`, the **effective** resource and LLM runtime under `runtime`, the model identity under `models` and the system-prompt template version under `llm.template_version`;
 - the standard audio tags,
 - original-audio / release FLAC / release MP3 save information,
 - the artwork path, the configuration-file path and (since 2.0.4) the MiniMax prompt-report path.
@@ -31,6 +32,34 @@ The node assembles the **complete generation record** from direct inputs (no sep
 Audio save information includes format, sample rate, peak before final file writing, any constant safety gain applied by the saver, filename mode and embedded-cover size.
 
 Together with the `outputs` section this is enough to recreate a song (with modified settings) from the JSON file alone - the optional `MiniMaxMetadataLoader` node (used in a separate restore workflow) reads the same schema.
+
+## Reproducibility and the V01 additions
+
+Seven optional inputs were appended to the node (all `forceInput` sockets, so no
+stored widget value moves): `eq_report_json`, `auto_eq_analysis_json`,
+`mastering_json`, `resource_profile_json`, `llm_runtime_json`,
+`model_identity_json` and `template_version`. Wire them from the corresponding
+nodes when you want the record to be reproducible:
+
+- `mastering.eq` / `mastering.auto_eq` / `mastering.chain` store the JSON reports
+  the DSP nodes already emit (`minimax_eq_report_v1`,
+  `minimax_auto_eq_report_v1`, `minimax_mastering_v1`) verbatim;
+- `runtime.resource_profile` must describe what the run **actually used**
+  (`effective`), never only what was suggested (`recommended`) - the two live in
+  separate keys so they cannot be confused;
+- `runtime.llm` records model, device and context; `models` records the model
+  revisions/hashes; `llm.template_version` records which system-prompt template
+  produced the run.
+
+All seven are optional. Left unwired, they add no keys, so a payload written
+without them is identical to what earlier versions produced and every reader of
+schema `v7` keeps working - additions do not need a schema bump or a migration.
+
+The canonical JSON beside your rendered files legitimately contains your own
+paths. Before a payload is pasted into a bug report or embedded in a public
+example, pass it through `production_metadata.public_safe_payload()`: it removes
+secret-named keys and replaces absolute paths with `<path>/<file name>`, keeping
+the processing parameters intact.
 
 ## File naming
 

@@ -3,16 +3,24 @@
 ``MiniMaxModelAutodownload`` verifies the model files referenced by the
 bundled workflow before the generation stages run.  Files with a configured
 download URL are fetched automatically when missing (with progress logging);
-files without a URL (gated MiniMax / FLUX.2 weights) are reported with
-guidance instead.  The run continues afterwards; only download failures with
-auto_download enabled raise an error.
+files without a URL are reported with guidance instead.  The run continues
+afterwards; only download failures with auto_download enabled raise an error.
+
+The node is the *deliberately triggered* setup action (D04): the same
+inventory/space report is available as
+``model_downloader.preflight_models()`` for scripts and HTTP routes, and it is
+never executed at import time or inside ``INPUT_TYPES()``.
 """
 from __future__ import annotations
 
+import json
+
 from .model_downloader import (
-    check_file_entries,
     format_check_report,
+    format_preflight_report,
     load_models_config,
+    normalize_model_entries,
+    preflight_models,
 )
 from .toolkit_logging import get_logger
 
@@ -40,38 +48,42 @@ class MiniMaxModelAutodownload:
     CATEGORY = "MiniMax Music Production Toolkit/utilities"
 
     def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True):
-        config = load_models_config()
-        entries = []
+        # Group notes and the FlashSR default target live in one place
+        # (model_downloader.normalize_model_entries) so this node, the FlashSR
+        # runtime and the diagnostics script resolve identical entries.
+        entries = normalize_model_entries(
+            load_models_config(),
+            minimax=bool(minimax_models),
+            flux2=bool(flux2_models),
+            flashsr=bool(flashsr_models),
+            llm=bool(llm_model),
+        )
 
-        if minimax_models:
-            note = config.get("minimax", {}).get("note", "")
-            for entry in config.get("minimax", {}).get("files", []):
-                entries.append({**entry, "note": entry.get("note") or note})
-        if flux2_models:
-            note = config.get("flux2", {}).get("note", "")
-            for entry in config.get("flux2", {}).get("files", []):
-                entries.append({**entry, "note": entry.get("note") or note})
-        if flashsr_models:
-            weights = config.get("flashsr", {}).get("weights", {})
-            default_target = weights.get("target", "models/audio/flashsr")
-            for entry in weights.get("files", []):
-                entries.append({**entry, "target": entry.get("target") or default_target})
-        if llm_model:
-            example = config.get("llm", {}).get("example", {})
-            entries.append({**example, "note": example.get("note") or config.get("llm", {}).get("note", "")})
-
-        report = check_file_entries(entries, base_path=None, auto_download=bool(auto_download))
-        text = format_check_report(report)
-        for line in text.splitlines():
+        # The preflight is the inventory/space report; it downloads only because
+        # the node's own auto_download widget asks for it.  Only the selected
+        # branches are in ``entries``, and optional artifacts (the int8 DiT) are
+        # never pulled in implicitly.
+        preflight = preflight_models(entries, base_path=None, auto_download=bool(auto_download))
+        text = format_check_report(preflight["entries"])
+        for line in format_preflight_report(preflight):
             LOGGER.info("%s", line)
 
-        failed = [item for item in report if item["status"] == "failed"]
+        failed = [item for item in preflight["entries"] if item["status"] == "failed"]
         if failed and auto_download:
             raise RuntimeError(
                 "Model auto-download failed for: "
                 + ", ".join(f"{item['name']} ({item['message']})" for item in failed)
             )
-        return (text,)
+        # The single STRING output stays exactly as before (workflow compatible);
+        # the structured report is offered through the node's UI payload so a
+        # frontend can show counts, missing bytes and space without parsing text.
+        return {
+            "ui": {
+                "text": (text,),
+                "preflight_json": (json.dumps(preflight, ensure_ascii=False),),
+            },
+            "result": (text,),
+        }
 
 
 NODE_CLASS_MAPPINGS = {

@@ -35,21 +35,33 @@ DOWNLOADER = load_model_downloader()
 class ModelsConfigTests(unittest.TestCase):
     def test_config_is_valid_and_complete(self):
         config = DOWNLOADER.load_models_config()
-        self.assertEqual(config["version"], 2)
+        self.assertEqual(config["version"], 3)
         flashsr = config["flashsr"]
         self.assertEqual(len(flashsr["weights"]["files"]), 3)
         for entry in flashsr["weights"]["files"]:
-            self.assertTrue(entry["url"].startswith("https://"))
             self.assertTrue(entry["name"].endswith(".pth"))
+            self.assertEqual(entry["repo_id"], "jakeoneijk/FlashSR_weights")
+            self.assertEqual(entry["repo_type"], "dataset")
+            self.assertRegex(entry["revision"], r"^[0-9a-f]{40}$")
+            self.assertGreater(entry["bytes"], 0)
         # The inference code is bundled with the toolkit, not downloaded.
         self.assertNotIn("inference_repo", flashsr)
         self.assertNotIn("torchjaekwon_repo", flashsr)
-        self.assertEqual(len(config["minimax"]["files"]), 3)
+        required_minimax = [entry for entry in config["minimax"]["files"] if not entry.get("optional")]
+        self.assertEqual(len(required_minimax), 3)
         self.assertEqual(len(config["flux2"]["files"]), 3)
-        # Entries without a verified URL must remain empty so nothing unverified is downloaded.
+        # Every downloadable artifact is pinned to a verified revision (immutable
+        # commit sha) and an exact size, so the resolve URL cannot drift and a
+        # truncated download is detectable.  A hash may only appear when it was
+        # read from the artifact itself - the rule is pinned, not its absence.
         for group in ("minimax", "flux2"):
             for entry in config[group]["files"]:
-                self.assertEqual(entry["url"], "")
+                with self.subTest(entry=entry["name"]):
+                    self.assertTrue(entry["filename"])
+                    self.assertRegex(entry["revision"], r"^[0-9a-f]{40}$")
+                    self.assertGreater(entry["bytes"], 0)
+                    if "sha256" in entry:
+                        self.assertRegex(entry["sha256"], r"^[0-9a-f]{64}$")
 
     def test_resolve_target_with_explicit_base(self):
         base = Path(tempfile.gettempdir())

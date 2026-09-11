@@ -63,3 +63,37 @@ While streaming, the log shows a single ASCII progress bar that mirrors the node
 ## Memory
 
 Only the most recently used model stays loaded. Wire `MiniMaxLLMUnload` after this node to release it before music generation.
+
+## Templates and thinking per family
+
+The node picks a versioned family adapter (`llm_sampling.py`, adapter version 1) from the model file name:
+
+- **Qwen 3.8 / 3.5 / Qwen (generic):** ChatML template; `thinking=off` is enforced with `reasoning_budget=0` where the build accepts it. The Qwen 3.8 non-thinking sampler values (temperature 0.7, top_p 0.8, top_k 20, repeat_penalty 1.0) are documented but **not applied automatically** - they belong to an explicitly chosen profile, never to a saved workflow.
+- **Gemma 4 / Llama 3 / generic:** the model's own embedded template is used (`chat_format=none`) or the documented named format. These families have **no** thinking switch in the bindings.
+
+The log states per run whether thinking control is `supported` or `NOT supported`. Where it is not supported, the toggle only separates reasoning from the answer afterwards and is **not a speedup** - the node says so instead of implying one, and an empty answer that consisted only of reasoning is reported with that explanation.
+
+## Token statistics
+
+`llm_chat` reports the backend's own usage when the build provides it (`source: backend`, with prompt/completion/total tokens). A streaming response without usage is reported as a **chunk count** (`source: chunks`): a stream chunk is not a token, so it is never presented as an exact token count. The status string carries the number together with its source, and unknown values stay unknown.
+
+## Runtime options (opt-in, no widget change)
+
+`n_batch`, `n_ubatch`, `flash_attn`, `type_k`, `type_v` and `n_threads` are passed only when the installed `llama-cpp-python` build declares the parameter. Anything unsupported - or invalid, or a typo in the name - is reported in the log instead of being dropped silently. They are configured in `models_config.json` under `llm.runtime_options`, so the node's widget list and every saved workflow stay untouched. Accepted options become part of the model cache identity: a different runtime configuration is a different model instance. `n_ubatch` 128/256/512 are the documented starting points for a benchmark.
+
+## Hardware profile (which model class fits this machine)
+
+The node logs a profile recommendation once per process, based on the detected device (`llm_profiles.py`, IMPROVE-TODO L01). It is advisory: it never changes a setting and never downloads anything.
+
+| Device | Suggested class | Suggested context |
+|---|---|---|
+| CPU only | small 2-4B model, no automatic CPU offload of a large one | 4k |
+| up to 8 GiB | small 4B class; 9B Q4_K_M only after a real budget check | 4-8k |
+| 10-12 GiB | Qwen 3.5 9B Q5_K_M or Gemma 4 12B QAT Q4_0 | 8k start |
+| 16 GiB | Gemma 4 12B QAT / Qwen 3.5 9B Q6_K; 27B UD-IQ3_XXS as comparison | 8-16k |
+| 24 GiB | 27B UD-IQ4_XS or more | by need |
+| 32 GiB+ | larger quantizations as an explicit quality profile | by need |
+
+Anchored **file sizes** (not VRAM promises, read from the repositories on 2026-09-11): Qwen 3.5 9B Q4_K_M 6.17 GB, Q5_K_M 7.11 GB, Q6_K 7.96 GB; Gemma 4 12B QAT Q4_0 6.98 GB; Qwen 3.8 27B UD-IQ3_XXS 10.93 GB, UD-IQ4_XS 14.25 GB, UD-Q4_K_M 16.46 GB. Context/KV state, compute buffers and backend overhead are extra, and the active parameters of an MoE model do not describe its resident size.
+
+An installed GGUF is matched by **name**; its provenance is only called verified when its size matches the anchored artifact, because a file name alone proves nothing. Already-installed candidates are offered before anything new is suggested.

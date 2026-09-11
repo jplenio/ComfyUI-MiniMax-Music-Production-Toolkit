@@ -18,7 +18,7 @@ def load_toolkit_modules():
     pkg.__path__ = [str(ROOT)]
     sys.modules[pkg_name] = pkg
     loaded = {}
-    for module_name in ("toolkit_logging", "model_downloader", "flashsr_audio", "llm_chat"):
+    for module_name in ("toolkit_logging", "model_downloader", "flashsr_audio", "comfy_resources", "llm_chat"):
         full = f"{pkg_name}.{module_name}"
         spec = importlib.util.spec_from_file_location(full, ROOT / f"{module_name}.py")
         module = importlib.util.module_from_spec(spec)
@@ -227,7 +227,7 @@ class LLMChatTests(unittest.TestCase):
                 return {"choices": [{"message": {"content": "strict reply"}}]}
 
         model = StrictFakeLlama()
-        text, thinking = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
+        text, thinking, usage = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
         self.assertEqual(text, "strict reply")
         self.assertEqual(thinking, "")
         messages, max_tokens, temperature, top_p = model.received
@@ -244,7 +244,7 @@ class LLMChatTests(unittest.TestCase):
                 return {"choices": [{"message": {"content": "cached reply"}}]}
 
         model = CacheFakeLlama()
-        text, thinking = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
+        text, thinking, usage = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
         self.assertEqual(text, "cached reply")
         self.assertEqual(thinking, "")
         self.assertIs(model.received, True)
@@ -268,7 +268,7 @@ class LLMChatTests(unittest.TestCase):
                 return gen() if stream else {"choices": [{"message": {"content": "fallback"}}]}
 
         model = StreamFakeLlama()
-        text, thinking = llm_chat._run_chat(model, "sys", "user", 8, 0.7, 0.8)
+        text, thinking, usage = llm_chat._run_chat(model, "sys", "user", 8, 0.7, 0.8)
         self.assertIs(model.streamed, True)
         self.assertEqual(text, "[Caption] moody.")
         self.assertEqual(thinking, "I picked moody.")
@@ -316,7 +316,7 @@ class LLMChatTests(unittest.TestCase):
                 }}]}
 
         model = ThinkingFakeLlama()
-        text, thinking = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
+        text, thinking, usage = llm_chat._run_chat(model, "sys", "user", 16, 0.7, 0.8)
         self.assertEqual(text, "[Caption]\ncap")
         self.assertIn("internal reasoning", thinking)
         self.assertIn("more thinking", thinking)

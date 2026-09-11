@@ -1,3 +1,11 @@
+# Release 2.5 workflow update
+
+The canonical examples now include Auto-EQ (enabled by default), a separate manual
+8-band EQ, resample-only Release Prep, and final compressor/LUFS/true-peak mastering.
+Output defaults to 44.1 kHz, with 48 kHz selectable before the limiter. Historical
+static-gain Release Prep behavior remains available for personal workflows.
+See [the current workflow controls](WORKFLOW_OPTIMIZED.md).
+
 # Audio processing pipeline
 
 This document describes the restoration/release stages used by the example workflow.
@@ -20,7 +28,11 @@ HF Cymbal / Shimmer Repair
         ↓
 POST Low-pass
         ↓
-Release Prep (HQ SRC + static LUFS / true peak)
+Auto-EQ (on by default) → separate manual 8-band EQ
+    ↓
+Release Prep (HQ SRC only, 44.1 / 48 kHz)
+    ↓
+Mastering compressor → LUFS / true-peak limiter
         ↓
 44.1 kHz release FLAC + MP3
 ```
@@ -92,3 +104,40 @@ The three audio savers emit a `save_info_json` output containing the actual save
 The final `Save Production JSON` node consumes these outputs. This both records the final artifact information and ensures the canonical JSON is written after the documented audio files exist.
 
 The legacy `write_json_sidecar` option remains available on individual audio savers but is OFF in the current example workflow (centralized JSON was introduced in v1.0.4).
+
+## Declip findings: what the report tells you (Q01)
+
+The declip node no longer reports only "N candidates repaired". Every channel
+report carries:
+
+- `confidence` (`high` / `medium` / `low` / `none`) with `confidence_reason`:
+  *short flat-topped crests with context on both sides* is the case the node is
+  built for; *most candidates are long plateaus or sit at the signal edge* means
+  the material is probably **limiter-processed or intentionally distorted**, and
+  that is not safely repairable clipping;
+- `regions_for_review`: per candidate the start/end sample, length, plateau
+  length, start time in milliseconds and a `classification`
+  (`flat_top` / `long_plateau` / `edge_of_signal`), capped at 64 entries with
+  `regions_truncated` saying so - audition these spots against the original;
+- `caveats`: always that the Hermite reconstruction **interpolates the
+  surrounding waveform and does not restore the original samples**, plus the
+  limiter/distortion note for low and no confidence. `Analyze only` reports the
+  same findings without touching the audio.
+
+For limiter-processed or deliberately distorted material, prefer `Analyze only`
+and listen before repairing; a universal "better" preset is not the goal.
+
+### Not implemented yet from Q01
+
+- Band-separated HF repair (presence/sibilance and upper cymbal/air) beside the
+  existing broad stereo-linked envelope, which stays the legacy mode; new gain
+  curves would need time smoothing, transient protection and a measured-reduction
+  readout.
+- Hybrid level/time alignment with a *measured* SR delay and delay compensation
+  only when the correlation in the shared band is certain enough - never an
+  automatic global phase correction from reconstructed high frequencies.
+- A guard against stacking the same high-frequency reduction in PRE, HF repair,
+  Auto-EQ and POST without noticing.
+- The acceptance itself: dry hi-hats, long cymbals, voice/sibilants, ambient,
+  bass, distorted guitars, percussive transients and clean sources, compared
+  loudness-matched and as a difference signal.

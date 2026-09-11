@@ -4,6 +4,11 @@
 The script deliberately removes personal notes/metadata and replaces utility
 nodes that are not required by this toolkit.  It does not alter the production
 settings of the audio, MiniMax, FlashSR, artwork, or mastering nodes.
+
+Preconditions: this is a fixed-template historical transformation for the bundled
+example workflow.  It assumes the recognised node set and input layout of the
+supported source revisions and refuses to guess otherwise; it is not a general
+user-workflow migrator.  Never run it on the current public workflow.
 """
 from __future__ import annotations
 

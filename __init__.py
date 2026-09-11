@@ -91,6 +91,10 @@ from .minimax_prompt_report import (
     NODE_CLASS_MAPPINGS as PROMPT_REPORT_NODE_CLASS_MAPPINGS,
     NODE_DISPLAY_NAME_MAPPINGS as PROMPT_REPORT_NODE_DISPLAY_NAME_MAPPINGS,
 )
+from .minimax_audio_branch import (
+    NODE_CLASS_MAPPINGS as AUDIO_BRANCH_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as AUDIO_BRANCH_NODE_DISPLAY_NAME_MAPPINGS,
+)
 
 NODE_CLASS_MAPPINGS = {
     **LOWPASS_NODE_CLASS_MAPPINGS,
@@ -113,6 +117,7 @@ NODE_CLASS_MAPPINGS = {
     **LLM_NODE_CLASS_MAPPINGS,
     **AUTODOWNLOAD_NODE_CLASS_MAPPINGS,
     **PROMPT_REPORT_NODE_CLASS_MAPPINGS,
+    **AUDIO_BRANCH_NODE_CLASS_MAPPINGS,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -136,9 +141,27 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     **LLM_NODE_DISPLAY_NAME_MAPPINGS,
     **AUTODOWNLOAD_NODE_DISPLAY_NAME_MAPPINGS,
     **PROMPT_REPORT_NODE_DISPLAY_NAME_MAPPINGS,
+    **AUDIO_BRANCH_NODE_DISPLAY_NAME_MAPPINGS,
 }
 
-from .ui_help import install_input_tooltips
+from .audio_eq import MiniMaxParametricEQ
+from .audio_auto_eq import MiniMaxAutoEQAnalyze
+from .audio_mastering import MiniMaxMasteringCompressor
+
+NODE_CLASS_MAPPINGS.update({
+    "MiniMaxParametricEQ": MiniMaxParametricEQ,
+    "MiniMaxAutoEQAnalyze": MiniMaxAutoEQAnalyze,
+    "MiniMaxMasteringCompressor": MiniMaxMasteringCompressor,
+})
+NODE_DISPLAY_NAME_MAPPINGS.update({
+    "MiniMaxParametricEQ": "Parametric EQ – 8 Bands",
+    "MiniMaxAutoEQAnalyze": "Auto-EQ – Analyze / Propose",
+    "MiniMaxMasteringCompressor": "Mastering Compressor – LUFS / True Peak",
+})
+
+from .ui_help import install_input_tooltips, NODE_INPUT_TOOLTIPS
+from .audio_tools_help import AUDIO_TOOLTIPS
+NODE_INPUT_TOOLTIPS.update(AUDIO_TOOLTIPS)
 install_input_tooltips(NODE_CLASS_MAPPINGS)
 
 # WEB_DIRECTORY must point to the directory containing both JavaScript files and
@@ -150,6 +173,12 @@ try:
     register_routes()
 except Exception:  # pragma: no cover - keep node import alive if server API changes
     LOGGER.exception("Prompt-library route registration failed")
+
+try:
+    from .model_manager_routes import register_routes as register_model_manager_routes
+    register_model_manager_routes()
+except Exception:  # pragma: no cover - an optional surface must not break the nodes
+    LOGGER.exception("Model-manager route registration failed")
 
 LOGGER.info("Loaded %s %s (%d nodes)", PROJECT_NAME, VERSION, len(NODE_CLASS_MAPPINGS))
 

@@ -40,6 +40,11 @@ NODE_MODULE = {
     "MiniMaxSaveProductionJSON": "minimax_json_output",
     "MiniMaxModelAutodownload": "minimax_autodownload",
     "MiniMaxPromptReport": "minimax_prompt_report",
+    # Since V01 the Audio Enhancement Lab workflow carries the EQ and mastering
+    # stages, so their node types need an owner here too.
+    "MiniMaxParametricEQ": "audio_eq",
+    "MiniMaxAutoEQAnalyze": "audio_auto_eq",
+    "MiniMaxMasteringCompressor": "audio_mastering",
 }
 
 # ComfyUI core nodes legitimately used by the public workflows; their schema is
@@ -61,6 +66,7 @@ MODULE_NAMES = (
     "model_downloader",
     "minimax_prompt_source",
     "minimax_structured_prompt",
+    "comfy_resources",
     "llm_chat",
     "flashsr_audio",
     "minimax_autodownload",
@@ -77,6 +83,10 @@ MODULE_NAMES = (
     "audio_hf_repair",
     "audio_declip",
     "audio_release_prep",
+    # V01: the Audio Enhancement Lab workflow now carries these stages.
+    "audio_eq",
+    "audio_auto_eq",
+    "audio_mastering",
 )
 
 
@@ -147,6 +157,11 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
                 expected = list(data.get("required", {}).keys()) + list(data.get("optional", {}).keys())
                 entries = node.get("inputs", [])
                 actual = [item.get("name") for item in entries]
+                # Additive optional switch: legacy analyzer instances omit it
+                # and retain enabled=True; optimized instances serialize it.
+                if node_type == "MiniMaxAutoEQAnalyze" and "enabled" not in actual:
+                    self.assertIs(data["optional"]["enabled"][1]["default"], True)
+                    expected.remove("enabled")
                 self.assertEqual(
                     sorted(actual), sorted(expected),
                     f"{name}: {node_type} (id {node.get('id')}): serialized input names drifted from INPUT_TYPES.",
@@ -162,6 +177,45 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
                 self.assertEqual(
                     widgets_actual, expected_widgets,
                     f"{name}: {node_type} (id {node.get('id')}): widget-input order drifted from INPUT_TYPES.",
+                )
+
+    def test_required_inputs_are_present_and_optional_inputs_may_be_missing(self):
+        # A serialized node may omit optional inputs (ComfyUI fills their
+        # defaults), but every required input must be present - otherwise the
+        # node cannot be configured.
+        for name, wf in self.workflows.items():
+            for node in wf["nodes"]:
+                node_type = node.get("type")
+                if node_type not in NODE_MODULE:
+                    continue
+                module = MODULES[NODE_MODULE[node_type]]
+                cls = module.NODE_CLASS_MAPPINGS[node_type]
+                data = cls.INPUT_TYPES()
+                required = set(data.get("required", {}))
+                serialized = {item.get("name") for item in node.get("inputs", [])}
+                missing = required - serialized
+                self.assertEqual(
+                    missing, set(),
+                    f"{name}: {node_type} (id {node.get('id')}) is missing required inputs: {sorted(missing)}",
+                )
+
+    def test_optional_inputs_tolerate_omission(self):
+        # Required and optional names are disjoint, and a serialization that
+        # carries only the required inputs is still a valid subset of the
+        # definition's names (optional inputs may be omitted entirely).
+        for module_name, module in MODULES.items():
+            for node_type, cls in getattr(module, "NODE_CLASS_MAPPINGS", {}).items():
+                data = cls.INPUT_TYPES()
+                required = list(data.get("required", {}))
+                optional = list(data.get("optional", {}))
+                self.assertFalse(
+                    set(required) & set(optional),
+                    f"{node_type}: required and optional input names overlap",
+                )
+                serialized = set(required)
+                self.assertTrue(
+                    serialized <= set(required) | set(optional),
+                    f"{node_type}: required inputs must be known input names",
                 )
 
     def test_return_names_count_matches_return_types(self):

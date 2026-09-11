@@ -1,43 +1,44 @@
 from __future__ import annotations
 
+from .prompt_sources import (
+    clean_source_name as _clean_source_name_impl,
+    iter_prompt_files,
+    iter_variants,
+    new_seed as _new_seed_impl,
+    normalize_extensions,
+    read_prompt_text as _read_text_impl,
+    resolve_prompt_directory as _resolve_prompt_directory_impl,
+)
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("minimax_batch")
 
 import os
 import re
-import secrets
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 _SECTION_RE = re.compile(r"^\s*\[(Title|Caption|Lyrics|Count|Song-Count)\]\s*$", re.IGNORECASE)
-_WINDOWS_INVALID = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 def _resolve_prompt_directory(value: str) -> Path:
-    raw = os.path.expandvars(os.path.expanduser((value or "").strip()))
-    if not raw:
-        raise ValueError("MiniMax Prompt Batch Loader: prompt_directory is empty while mode='folder'.")
-
-    p = Path(raw)
-    if not p.is_absolute():
-        try:
-            import folder_paths
-            p = Path(folder_paths.base_path) / p
-        except Exception:
-            p = Path.cwd() / p
-    return p.resolve()
+    """Compatibility wrapper around :func:`prompt_sources.resolve_prompt_directory`."""
+    return _resolve_prompt_directory_impl(value, error_prefix="MiniMax Prompt Batch Loader")
 
 
 def _read_text(path: Path) -> str:
-    # UTF-8 with BOM is preferred. CP1252 fallback makes older German text files usable.
-    data = path.read_bytes()
-    for encoding in ("utf-8-sig", "utf-8", "cp1252"):
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError:
-            pass
-    raise UnicodeDecodeError("utf-8", data, 0, 1, f"Could not decode {path}")
+    """Compatibility wrapper around :func:`prompt_sources.read_prompt_text`."""
+    return _read_text_impl(path)
+
+
+def _clean_source_name(value: str) -> str:
+    """Compatibility wrapper around :func:`prompt_sources.clean_source_name`."""
+    return _clean_source_name_impl(value)
+
+
+def _new_seed() -> int:
+    """Compatibility wrapper around :func:`prompt_sources.new_seed`."""
+    return _new_seed_impl()
 
 
 def _parse_prompt_file(path: Path) -> Dict[str, Any]:
@@ -87,16 +88,6 @@ def _parse_prompt_file(path: Path) -> Dict[str, Any]:
         "source_name": path.stem,
         "source_path": str(path),
     }
-
-
-def _clean_source_name(value: str) -> str:
-    name = _WINDOWS_INVALID.sub("_", (value or "").strip()).strip(" .")
-    return name or "song"
-
-
-def _new_seed() -> int:
-    # Keep it below signed int64 to avoid backend / serialization edge cases.
-    return secrets.randbelow(2**63 - 1)
 
 
 class MiniMaxPromptBatchLoader:
@@ -168,22 +159,11 @@ class MiniMaxPromptBatchLoader:
             if not directory.is_dir():
                 raise NotADirectoryError(f"MiniMax Prompt Batch Loader: not a directory: {directory}")
 
-            allowed = set()
-            for ext in (extensions or "").split(","):
-                ext = ext.strip().lower()
-                if not ext:
-                    continue
-                if not ext.startswith("."):
-                    ext = "." + ext
-                allowed.add(ext)
+            allowed = normalize_extensions(extensions)
             if not allowed:
                 raise ValueError("MiniMax Prompt Batch Loader: extensions list is empty.")
 
-            iterator = directory.rglob("*") if recursive else directory.glob("*")
-            files = sorted(
-                [p for p in iterator if p.is_file() and p.suffix.lower() in allowed],
-                key=lambda p: str(p.relative_to(directory)).lower(),
-            )
+            files = iter_prompt_files(directory, allowed, recursive, relative_sort=True)
             if not files:
                 raise ValueError(
                     f"MiniMax Prompt Batch Loader: no prompt files found in {directory} "
@@ -208,22 +188,21 @@ class MiniMaxPromptBatchLoader:
         source_paths: List[str] = []
 
         global_index = 0
-        for entry in entries:
-            count = entry["count_override"] if entry["count_override"] is not None else int(song_count)
-            for variant in range(1, count + 1):
-                if seed_mode == "random_each_song":
-                    seed = _new_seed()
-                else:
-                    seed = (int(base_seed) + global_index) % (2**63 - 1)
-
-                captions.append(entry["caption"])
-                lyrics_list.append(entry["lyrics"])
-                titles.append(entry["title"])
-                source_names.append(_clean_source_name(entry["source_name"]))
-                seeds.append(seed)
-                run_indices.append(variant)
-                source_paths.append(entry["source_path"])
-                global_index += 1
+        for entry, variant, _count, seed, global_index in iter_variants(
+            entries,
+            song_count=song_count,
+            seed_mode=seed_mode,
+            base_seed=base_seed,
+            # Legacy strict count: an explicit [Count] of 0 produces no songs.
+            count_of=lambda e: e["count_override"] if e["count_override"] is not None else int(song_count),
+        ):
+            captions.append(entry["caption"])
+            lyrics_list.append(entry["lyrics"])
+            titles.append(entry["title"])
+            source_names.append(_clean_source_name(entry["source_name"]))
+            seeds.append(seed)
+            run_indices.append(variant)
+            source_paths.append(entry["source_path"])
 
         LOGGER.info(
             "%d prompt file(s)/entry(ies), %d song generation(s), mode=%s, seed_mode=%s",

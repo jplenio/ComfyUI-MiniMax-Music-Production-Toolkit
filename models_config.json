@@ -1,6 +1,13 @@
 {
-  "version": 2,
+  "version": 3,
   "auto_download": true,
+  "_provenance": {
+    "verified_on": "2026-09-11",
+    "method": "Hugging Face API (tree + revision endpoints, read-only, no download).",
+    "revisions": "Every artifact is pinned to the commit sha of the repository at verification time, so the resolve URL is immutable even if the branch moves.",
+    "hashes": "The HF API did not expose a sha256 for these artifacts (Xet/LFS storage), so NO hash is recorded. Sizes are exact as reported by the API. Do not add a hash that was not read from the file itself.",
+    "sizes": "bytes = exact size reported by the API for the pinned revision; verified against the URLs below with a HEAD request."
+  },
   "flashsr": {
     "note": "Only the FlashSR weights are downloaded; the inference code is bundled with the toolkit in flashsr_inference/ (see flashsr_inference/NOTICE.md).",
     "weights": {
@@ -8,67 +15,127 @@
       "files": [
         {
           "name": "student_ldm.pth",
-          "target": "models/audio/flashsr",
-          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/student_ldm.pth?download=true",
+          "filename": "student_ldm.pth",
+          "repo_id": "jakeoneijk/FlashSR_weights",
+          "repo_type": "dataset",
+          "revision": "5701dea5f6a45ed964f5cb5b9280b3a1f9b39882",
+          "bytes": 1033200174,
           "timeout": 3600
         },
         {
           "name": "sr_vocoder.pth",
-          "target": "models/audio/flashsr",
-          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/sr_vocoder.pth?download=true",
+          "filename": "sr_vocoder.pth",
+          "repo_id": "jakeoneijk/FlashSR_weights",
+          "repo_type": "dataset",
+          "revision": "5701dea5f6a45ed964f5cb5b9280b3a1f9b39882",
+          "bytes": 627861067,
           "timeout": 3600
         },
         {
           "name": "vae.pth",
-          "target": "models/audio/flashsr",
-          "url": "https://huggingface.co/datasets/jakeoneijk/FlashSR_weights/resolve/main/vae.pth?download=true",
+          "filename": "vae.pth",
+          "repo_id": "jakeoneijk/FlashSR_weights",
+          "repo_type": "dataset",
+          "revision": "5701dea5f6a45ed964f5cb5b9280b3a1f9b39882",
+          "bytes": 1655458345,
           "timeout": 3600
         }
       ]
     }
   },
   "minimax": {
-    "note": "MiniMax Music 3 model weights are distributed by MiniMax. Obtain the files from the official MiniMax channels and place them in the target folders.",
+    "note": "MiniMax Music 3 weights, mirrored publicly by Comfy-Org in the ComfyUI folder layout. Only the files this toolkit loads are listed; the fp32 DiT and the bf16 text encoder are not downloaded.",
     "files": [
       {
         "name": "minimax_music3_dit_fp16.safetensors",
+        "filename": "diffusion_models/minimax_music3_dit_fp16.safetensors",
+        "repo_id": "Comfy-Org/MiniMax-Music-3",
+        "repo_type": "model",
+        "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
         "target": "models/diffusion_models",
-        "url": ""
+        "role": "diffusion",
+        "bytes": 4914197682,
+        "timeout": 7200
       },
       {
         "name": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+        "filename": "text_encoders/minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+        "repo_id": "Comfy-Org/MiniMax-Music-3",
+        "repo_type": "model",
+        "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
         "target": "models/text_encoders",
-        "url": ""
+        "role": "text_encoder",
+        "quantization": "int8_convrot",
+        "bytes": 9196611886,
+        "timeout": 7200
       },
       {
         "name": "minimax_music3_dav.safetensors",
+        "filename": "vae/minimax_music3_dav.safetensors",
+        "repo_id": "Comfy-Org/MiniMax-Music-3",
+        "repo_type": "model",
+        "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
         "target": "models/vae",
-        "url": ""
+        "role": "vae",
+        "bytes": 216696128,
+        "timeout": 3600
+      },
+      {
+        "name": "minimax_music3_dit_int8_convrot.safetensors",
+        "filename": "diffusion_models/minimax_music3_dit_int8_convrot.safetensors",
+        "repo_id": "Comfy-Org/MiniMax-Music-3",
+        "repo_type": "model",
+        "revision": "6baad88896848433857c170ba4f05d2ea9d5f218",
+        "target": "models/diffusion_models",
+        "role": "diffusion",
+        "quantization": "int8_convrot",
+        "bytes": 2502161682,
+        "timeout": 7200,
+        "optional": true,
+        "note": "Smaller alternative to the fp16 DiT. Optional: it is not downloaded unless the optional artifacts are requested explicitly, so a family is never pulled in as a whole."
       }
     ]
   },
   "flux2": {
-    "note": "FLUX.2 Klein weights are hosted in a gated Hugging Face repository (black-forest-labs/FLUX.2-klein-dev). Set a HF_TOKEN environment variable and add the resolved URLs here, or download the files manually.",
+    "note": "FLUX.2 Klein 4B artwork branch. The listed files were verified publicly readable in the Comfy-Org split-files mirror; the base variant (flux-2-klein-base-4b.safetensors) and the fp4 text encoder are deliberately NOT listed - the workflow uses the distilled flux-2-klein-4b.safetensors with qwen_3_4b.safetensors. A gated source would report a permission problem separately; no token is needed for these entries.",
     "files": [
       {
         "name": "flux-2-klein-4b.safetensors",
+        "filename": "split_files/diffusion_models/flux-2-klein-4b.safetensors",
+        "repo_id": "Comfy-Org/vae-text-encorder-for-flux-klein-4b",
+        "repo_type": "model",
+        "revision": "5f526678002e43af5551dadb73ce2e8c91b43afe",
         "target": "models/diffusion_models",
-        "url": ""
+        "role": "diffusion",
+        "bytes": 7751105712,
+        "timeout": 7200
       },
       {
         "name": "qwen_3_4b.safetensors",
+        "filename": "split_files/text_encoders/qwen_3_4b.safetensors",
+        "repo_id": "Comfy-Org/vae-text-encorder-for-flux-klein-4b",
+        "repo_type": "model",
+        "revision": "5f526678002e43af5551dadb73ce2e8c91b43afe",
         "target": "models/text_encoders",
-        "url": ""
+        "role": "text_encoder",
+        "bytes": 8044982048,
+        "timeout": 7200
       },
       {
         "name": "flux2-vae.safetensors",
+        "filename": "split_files/vae/flux2-vae.safetensors",
+        "repo_id": "Comfy-Org/vae-text-encorder-for-flux-klein-4b",
+        "repo_type": "model",
+        "revision": "5f526678002e43af5551dadb73ce2e8c91b43afe",
         "target": "models/vae",
-        "url": ""
+        "role": "vae",
+        "bytes": 336211292,
+        "timeout": 3600
       }
     ]
   },
   "llm": {
-    "note": "Any llama.cpp-compatible GGUF placed in models/llm is offered by the integrated LLM chat node. The example name below matches the bundled workflow; provide the file yourself or set a URL here.",
+    "note": "Any llama.cpp-compatible GGUF placed in models/llm is offered by the integrated LLM chat node. No artifact URL is configured yet: the concrete recommendation depends on the hardware profile (L01), and an unverified URL is worse than no URL.",
     "directory": "models/llm",
     "example": {
       "name": "Qwen3.8-27B-UD-IQ3_XXS.gguf",

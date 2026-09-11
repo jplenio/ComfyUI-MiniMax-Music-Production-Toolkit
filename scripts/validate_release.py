@@ -22,6 +22,14 @@ REQUIRED = [
     "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
     "prompts/system/minimax-music3-production.txt",
 ]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_common import (  # noqa: E402  (script-local tooling module)
+    LOCAL_ONLY_NAMES,
+    PACKAGING_EXCLUDED_NAMES,
+    archive_should_include,
+    privacy_hits,
+)
+
 TEXT_EXTENSIONS = {".py", ".js", ".md", ".txt", ".toml", ".json", ".yml", ".yaml", ".bat"}
 
 
@@ -288,7 +296,7 @@ def check_privacy_and_placeholders() -> None:
     # Local-only handoff files must never be published.  If one exists on this
     # machine, the ignore/exclusion guards must all be present, otherwise a
     # release ZIP or Comfy Registry package would leak it.
-    for local_name in ("KONTEXT.md", "PROJECT_STATE.md"):
+    for local_name in sorted(LOCAL_ONLY_NAMES):
         local_file = ROOT / local_name
         if not local_file.exists():
             continue
@@ -299,26 +307,32 @@ def check_privacy_and_placeholders() -> None:
         if local_name not in comfyignore:
             fail(f"{local_name} exists but is not listed in .comfyignore (local-only file must never be published to the Comfy Registry)")
         package_script = (ROOT / "scripts" / "package_release.py").read_text(encoding="utf-8", errors="replace")
-        if f'"{local_name}"' not in package_script:
-            fail(f"{local_name} exists but scripts/package_release.py no longer excludes it from release ZIPs")
+        if "release_common" not in package_script:
+            fail("scripts/package_release.py no longer uses the shared archive selection")
+        # Behavioural guard: the packager shares its selection with
+        # scripts/release_common.py, so check the rule itself instead of a text
+        # marker that a refactor could silently move elsewhere.
+        if archive_should_include(ROOT, local_file):
+            fail(f"{local_name} exists but would be included in release ZIPs (see scripts/release_common.py)")
+    # Maintainer planning documents stay out of every release artifact, even when
+    # they remain under version control (so .gitignore is intentionally not part
+    # of this check for them).
+    for excluded_name in sorted(PACKAGING_EXCLUDED_NAMES - LOCAL_ONLY_NAMES):
+        excluded_file = ROOT / excluded_name
+        if not excluded_file.exists():
+            continue
+        comfyignore = (ROOT / ".comfyignore").read_text(encoding="utf-8", errors="replace")
+        if excluded_name not in comfyignore:
+            fail(f"{excluded_name} exists but is not listed in .comfyignore (must not reach the Comfy Registry)")
+        if archive_should_include(ROOT, excluded_file):
+            fail(f"{excluded_name} exists but would be included in release ZIPs (see scripts/release_common.py)")
     # Generic leak patterns only: the repository deliberately contains the public
     # author name/GitHub URL, so those are not treated as privacy violations.
-    bad_patterns = [
-        re.compile(r"[A-Za-z]:\\\\Users\\\\[^\\\\\s\"']+", re.I),
-        re.compile(r"[A-Za-z]:/Users/[^/\s\"']+", re.I),
-        re.compile(r"(?:192\.168\.|10\.\d+\.\d+\.|172\.(?:1[6-9]|2\d|3[01])\.)\d+\.\d+"),
-        re.compile("YOUR_" + "GITHUB_USERNAME|YOUR_" + "COMFY_PUBLISHER_ID"),
-    ]
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in TEXT_EXTENSIONS:
-            continue
-        if any(part in {".git", "__pycache__"} for part in path.parts):
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        for pattern in bad_patterns:
-            if pattern.search(text):
-                fail(f"Potential private/placeholder data in {path.relative_to(ROOT)} matching {pattern.pattern}")
-
+    # The scan uses the shared rules with published_only=True: it covers exactly
+    # what a release would contain and never trips over the local-only handoff
+    # files that exist on the maintainer machine.
+    for relative, pattern in privacy_hits(ROOT, published_only=True):
+        fail(f"Potential private/placeholder data in {relative} matching {pattern}")
 
 
 def check_demo_catalog() -> None:
@@ -398,14 +412,24 @@ def check_migration_logic() -> None:
 
     node = shutil.which("node")
     if not node:
-        print("Skipping Node migration tests: 'node' not available")
+        print("Skipping Node frontend tests: 'node' not available")
         return
-    test_file = ROOT / "tests" / "test_workflow_migration.mjs"
-    if not test_file.exists():
-        fail("Missing tests/test_workflow_migration.mjs")
-    result = subprocess.run([node, str(test_file)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    if result.returncode != 0:
-        fail("Node migration tests failed:\n" + result.stdout + result.stderr)
+    for relative in (
+        "tests/test_workflow_migration.mjs",
+        "tests/test_structured_prompt_frontend.mjs",
+        # The EQ frontend compares its JS coefficient/response math against the
+        # Python implementation, so a drift between the two is a release blocker.
+        "tests/test_audio_eq_frontend.mjs",
+        # Optional real-browser check: it exits 0 with a "skipped" message when
+        # Playwright is not installed, and fails for real when it is.
+        "tests/test_audio_eq_browser.mjs",
+    ):
+        test_file = ROOT / relative
+        if not test_file.exists():
+            fail(f"Missing {relative}")
+        result = subprocess.run([node, str(test_file)], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if result.returncode != 0:
+            fail(f"Node frontend test {relative} failed:\n" + result.stdout + result.stderr)
 
 
 def main() -> None:

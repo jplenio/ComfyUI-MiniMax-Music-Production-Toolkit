@@ -22,26 +22,24 @@ import hashlib
 import json
 from pathlib import Path
 
-from .minimax_prompt_source import (
+from .prompt_sources import (
     DEFAULT_SYSTEM_PROMPT,
     DEFAULT_SYSTEM_PROMPT_FILE,
-    _clean_source_name,
+    clean_source_name as _clean_source_name,
 )
 from .prompt_library import (
     PLACEHOLDER,
     PromptLibraryError,
-    bundled_root,
     default_combo_values,
+    invalidate_library_options,
+    library_options,
     prompt_selection_fingerprint,
     resolve_prompt,
 )
 from .prompt_metadata import (
     CUSTOM,
-    LYRICS_CHOICES,
     STRUCTURED_FIELDS,
     assemble_structured_user_prompt,
-    collect_file_field_values,
-    merge_field_options,
     parse_prompt_front_matter,
 )
 from .toolkit_logging import get_logger
@@ -53,35 +51,17 @@ _SOURCES = ["manual", "bundled_library", "external_directory"]
 # Default user-prompt file shown by the dropdown (a bundled library entry).
 DEFAULT_USER_PROMPT_FILE = "electronic/synth-pop-vocal.txt"
 
-# Cached aggregated option values; invalidated by the frontend route when the
-# library changes while ComfyUI is running.
-_library_options_cache = None
-_library_options_version = 0
-
-
+# The aggregated option values are library data; the cache and its invalidation
+# live in prompt_library so this node is not a service dependency of the route
+# layer.  The historic names stay as delegates.
 def invalidate_library_options_cache() -> None:
     """Refresh the aggregated combo options after prompt files changed on disk."""
-    global _library_options_cache, _library_options_version
-    _library_options_cache = None
-    _library_options_version += 1
+    invalidate_library_options("user")
 
 
 def _collect_options() -> dict:
     """Curated vocabulary plus unique values from all bundled user prompt files."""
-    global _library_options_cache
-    if _library_options_cache is not None:
-        return _library_options_cache
-    collected = {field: [] for field in STRUCTURED_FIELDS}
-    try:
-        root = bundled_root("user")
-        collected = collect_file_field_values(p for p in root.rglob("*") if p.is_file())
-    except Exception as exc:  # keep ComfyUI node discovery alive on broken installs
-        LOGGER.warning("Could not aggregate bundled prompt metadata: %s", exc)
-    options = merge_field_options(collected)
-    if not options.get("lyrics"):
-        options["lyrics"] = list(LYRICS_CHOICES)
-    _library_options_cache = options
-    return options
+    return library_options("user")
 
 
 def _combo(field: str) -> list:

@@ -1,5 +1,19 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import {
+    CUSTOM,
+    PLACEHOLDER,
+    STRUCTURED_FIELDS,
+    beginRequest,
+    isCurrentRequest,
+    markDirty,
+    readSelection,
+    runGuardedMetadataPrefill,
+    runGuardedSystemPrefill,
+    sameSelection,
+    scheduleInit,
+    widgetByName,
+} from "./prompt_ui_utils.js";
 
 // Structured Song Prompt (MiniMaxStructuredPromptV20): refreshes the user and
 // system prompt-file dropdowns, prefills the structured fields (Genre, Tempo,
@@ -16,9 +30,8 @@ import { api } from "../../scripts/api.js";
 // two heading buttons; the save/refresh buttons are placed accordingly.
 
 const NODE_TYPES = new Set(["MiniMaxStructuredPromptV20"]);
-const PLACEHOLDER = "<select a prompt>";
-const CUSTOM = "custom";
-const STRUCTURED_FIELDS = ["genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length"];
+// PLACEHOLDER / CUSTOM / STRUCTURED_FIELDS / markDirty come from
+// prompt_ui_utils.js so the extension and its Node tests share one definition.
 // Directory group labels in the prompt-file dropdown end with this suffix and
 // carry no file value; selecting one keeps the previous real selection.
 const DIRECTORY_MARKER_SUFFIX = "/";
@@ -40,9 +53,7 @@ const WIDGET_ORDER = [
     "Refresh prompt lists",
 ];
 
-function widget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
+const widget = widgetByName;
 
 function nodeClass(node) {
     return node.comfyClass ?? node.type ?? node.constructor?.type;
@@ -83,11 +94,6 @@ function fileOptionLabel(value) {
     // Indent files under their directory label (non-breaking spaces survive
     // HTML rendering; the value itself stays the resolvable relative path).
     return slash >= 0 ? "\u00A0\u00A0\u00A0\u00A0" + value.slice(slash + 1) : value;
-}
-
-function markDirty(node) {
-    node.setDirtyCanvas?.(true, true);
-    node.graph?.setDirtyCanvas?.(true, true);
 }
 
 function injectHeadingStyle() {
@@ -175,12 +181,12 @@ async function fetchPromptText(kind, source, directory, file) {
 }
 
 async function refreshFiles(node, kind) {
-    const source = widget(node, `${kind}_prompt_source`)?.value ?? "manual";
-    const directory = widget(node, `${kind}_prompt_directory`)?.value ?? "";
+    const selection = readSelection(node, kind);
     const fileWidget = widget(node, `${kind}_prompt_file`);
     if (!fileWidget) return;
+    const token = beginRequest(node, `files:${kind}`);
 
-    if (source === "manual") {
+    if (selection.source === "manual") {
         setComboValues(fileWidget, [], PLACEHOLDER);
         fileWidget.value = PLACEHOLDER;
         markDirty(node);
@@ -188,7 +194,8 @@ async function refreshFiles(node, kind) {
     }
 
     try {
-        const files = await fetchPromptFiles(kind, source, directory);
+        const files = await fetchPromptFiles(kind, selection.source, selection.directory);
+        if (!isCurrentRequest(token)) return;
         const oldValue = fileWidget.value;
         const grouped = buildGroupedFileOptions(files, kind === "user");
         fileWidget.options = fileWidget.options || {};
@@ -200,6 +207,7 @@ async function refreshFiles(node, kind) {
         else fileWidget.value = PLACEHOLDER;
         node.__minimaxStructuredPromptError = null;
     } catch (error) {
+        if (!isCurrentRequest(token)) return;
         console.warn(`[MiniMax Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
         setComboValues(fileWidget, [], PLACEHOLDER);
         node.__minimaxStructuredPromptError = String(error?.message || error);
@@ -219,76 +227,65 @@ function resetStructuredFields(node, { clearDescription = false } = {}) {
 }
 
 // mode:
-//   "overwrite"     - user changed the prompt file: fields and description
-//                     are (re)filled from the selected file.
-//   onlyDescription - graph load: structured fields keep their serialized
-//                     values, only an empty description_override is filled.
-async function prefillStructuredFields(node, file, { onlyDescription = false } = {}) {
-    const source = widget(node, "user_prompt_source")?.value ?? "bundled_library";
-    const directory = widget(node, "user_prompt_directory")?.value ?? "";
-    if (!file || file === PLACEHOLDER || file === CUSTOM || source === "manual") {
-        if (file === CUSTOM) {
-            node.__minimaxStructuredPromptError = null;
-            await refreshOptionLists(node);
-            return;
-        }
+//   "overwrite"  - user changed the prompt file: fields and description
+//                  are (re)filled from the selected file.
+//   "restore"    - graph load: structured fields keep their serialized
+//                  values, only an empty description_override is filled.
+//
+// The request carries a selection snapshot; a response that arrives after the
+// selection changed is discarded instead of overwriting the newer state.
+async function prefillStructuredFields(node, file, { mode = "overwrite" } = {}) {
+    if (file === CUSTOM) {
+        node.__minimaxStructuredPromptError = null;
+        await refreshOptionLists(node);
+        return;
+    }
+    if (!file || file === PLACEHOLDER || readSelection(node, "user").source === "manual") {
         resetStructuredFields(node, { clearDescription: true });
         markDirty(node);
         return;
     }
-    try {
-        const payload = await fetchPromptMetadata(source, directory, file);
-        const fields = payload.fields || {};
-        if (!onlyDescription) {
-            for (const field of STRUCTURED_FIELDS) {
-                const w = widget(node, field);
-                if (!w) continue;
-                const value = fields[field];
-                if (value && value !== CUSTOM) w.value = value;
-                else w.value = CUSTOM;
-            }
-        }
-        const descriptionWidget = widget(node, "description_override");
-        if (descriptionWidget) {
-            const description = typeof payload.description === "string" ? payload.description : "";
-            if (!onlyDescription || !(descriptionWidget.value || "").trim()) {
-                descriptionWidget.value = description;
-            }
-        }
+    const result = await runGuardedMetadataPrefill(
+        node,
+        file,
+        (selection) => fetchPromptMetadata(selection.source, selection.directory, file),
+        { mode },
+    );
+    if (result.status === "error") {
+        console.warn(`[MiniMax Music Production Toolkit] Could not prefill structured prompt fields:`, result.error);
+        node.__minimaxStructuredPromptError = String(result.error?.message || result.error);
+    } else if (result.status === "applied") {
         node.__minimaxStructuredPromptError = null;
-    } catch (error) {
-        console.warn(`[MiniMax Music Production Toolkit] Could not prefill structured prompt fields:`, error);
-        node.__minimaxStructuredPromptError = String(error?.message || error);
+        markDirty(node);
     }
-    markDirty(node);
 }
 
-async function prefillSystemPrompt(node, file) {
-    const source = widget(node, "system_prompt_source")?.value ?? "bundled_library";
-    const directory = widget(node, "system_prompt_directory")?.value ?? "";
-    const promptWidget = widget(node, "system_prompt");
-    if (!promptWidget || !file || file === PLACEHOLDER || file === CUSTOM || source === "manual") {
-        return;
-    }
-    try {
-        const text = await fetchPromptText("system", source, directory, file);
-        promptWidget.value = text;
+async function prefillSystemPrompt(node, file, { mode = "overwrite" } = {}) {
+    if (!file || file === PLACEHOLDER || file === CUSTOM) return;
+    const result = await runGuardedSystemPrefill(
+        node,
+        file,
+        (selection) => fetchPromptText("system", selection.source, selection.directory, file),
+        { mode },
+    );
+    if (result.status === "error") {
+        console.warn(`[MiniMax Music Production Toolkit] Could not load system prompt text:`, result.error);
+        node.__minimaxStructuredPromptError = String(result.error?.message || result.error);
+    } else if (result.status === "applied") {
         node.__minimaxStructuredPromptError = null;
-    } catch (error) {
-        console.warn(`[MiniMax Music Production Toolkit] Could not load system prompt text:`, error);
-        node.__minimaxStructuredPromptError = String(error?.message || error);
+        markDirty(node);
     }
-    markDirty(node);
 }
 
 async function refreshOptionLists(node) {
-    const source = widget(node, "user_prompt_source")?.value ?? "bundled_library";
-    const directory = widget(node, "user_prompt_directory")?.value ?? "";
-    if (source === "manual") return;
+    const selection = readSelection(node, "user");
+    if (selection.source === "manual") return;
+    const token = beginRequest(node, "userOptions");
     try {
-        const params = new URLSearchParams({ source, directory: directory || "" });
+        const params = new URLSearchParams({ source: selection.source, directory: selection.directory || "" });
         const response = await api.fetchApi(`/minimax_music_toolkit/prompt_metadata?${params.toString()}&file=`);
         const payload = await response.json();
+        if (!isCurrentRequest(token)) return;
         if (!response.ok || !payload.ok) return;
         const unique = payload.unique_values || {};
         for (const field of STRUCTURED_FIELDS) {
@@ -298,7 +295,55 @@ async function refreshOptionLists(node) {
         }
         markDirty(node);
     } catch (error) {
+        if (!isCurrentRequest(token)) return;
         console.warn(`[MiniMax Music Production Toolkit] Could not refresh structured options:`, error);
+    }
+}
+
+/**
+ * Refresh the two prompt-file dropdowns and the structured option lists.
+ *
+ * Never touches field or description values - a list refresh must not
+ * overwrite edits.  Used by the "Refresh prompt lists" button.
+ */
+async function refreshLibraryLists(node) {
+    await Promise.all([refreshFiles(node, "user"), refreshFiles(node, "system")]);
+    await refreshOptionLists(node);
+}
+
+/**
+ * Node creation defaults: a brand-new node has no serialized state, so the
+ * selected prompt files may seed every field.
+ */
+async function applyCreateDefaults(node) {
+    await refreshLibraryLists(node);
+    const selectedUser = widget(node, "user_prompt_file")?.value;
+    if (selectedUser && selectedUser !== PLACEHOLDER && selectedUser !== CUSTOM) {
+        await prefillStructuredFields(node, selectedUser, { mode: "overwrite" });
+    }
+    const selectedSystem = widget(node, "system_prompt_file")?.value;
+    if (selectedSystem && selectedSystem !== PLACEHOLDER && selectedSystem !== CUSTOM) {
+        await prefillSystemPrompt(node, selectedSystem, { mode: "overwrite" });
+    }
+}
+
+/**
+ * Graph restore: serialized widget values are authoritative.  Only refresh
+ * the lists and fill values that are still empty (description text, system
+ * prompt text) - never overwrite a saved edit.
+ */
+async function restoreSavedValues(node) {
+    await refreshLibraryLists(node);
+    const selectedUser = widget(node, "user_prompt_file")?.value;
+    if (selectedUser && selectedUser !== PLACEHOLDER && selectedUser !== CUSTOM) {
+        await prefillStructuredFields(node, selectedUser, { mode: "restore" });
+    }
+    const promptWidget = widget(node, "system_prompt");
+    if (promptWidget && !(promptWidget.value || "").trim()) {
+        const selectedSystem = widget(node, "system_prompt_file")?.value;
+        if (selectedSystem && selectedSystem !== PLACEHOLDER && selectedSystem !== CUSTOM) {
+            await prefillSystemPrompt(node, selectedSystem, { mode: "restore" });
+        }
     }
 }
 
@@ -405,19 +450,6 @@ async function saveCustomSystemPrompt(node) {
     }
 }
 
-async function refreshAll(node) {
-    await Promise.all([refreshFiles(node, "user"), refreshFiles(node, "system")]);
-    await refreshOptionLists(node);
-    const selectedUser = widget(node, "user_prompt_file")?.value;
-    if (selectedUser && selectedUser !== PLACEHOLDER) {
-        await prefillStructuredFields(node, selectedUser);
-    }
-    const selectedSystem = widget(node, "system_prompt_file")?.value;
-    if (selectedSystem && selectedSystem !== PLACEHOLDER) {
-        await prefillSystemPrompt(node, selectedSystem);
-    }
-}
-
 function chainCallback(w, callback) {
     if (!w || w.__minimaxStructuredPromptCallbackInstalled) return;
     const original = w.callback;
@@ -495,40 +527,32 @@ function attach(node) {
     node.addWidget?.("button", "Save as custom system prompt", null, () => {
         saveCustomSystemPrompt(node).catch((error) => console.warn(error));
     });
-    // Refresh both user and system prompt libraries.
+    // Refresh both user and system prompt libraries (lists only - never
+    // overwrites edited field or description values).
     node.addWidget?.("button", "Refresh prompt lists", null, async () => {
-        await refreshAll(node);
+        await refreshLibraryLists(node);
     });
 
     orderWidgets(node, WIDGET_ORDER);
-    queueMicrotask(async () => {
-        await refreshAll(node);
-    });
+}
+
+// Both hooks run while a graph is loaded; scheduleInit keeps exactly one of
+// them, whichever fires last, so a reopened graph restores saved values and a
+// freshly created node gets the create defaults.
+function initialize(node, mode) {
+    scheduleInit(node, mode, (resolved) => (
+        resolved === "create" ? applyCreateDefaults(node) : restoreSavedValues(node)
+    ));
 }
 
 app.registerExtension({
     name: "minimax_music_production_toolkit.structured_prompt_v1",
     nodeCreated(node) {
         attach(node);
+        initialize(node, "create");
     },
     loadedGraphNode(node) {
         attach(node);
-        queueMicrotask(async () => {
-            await refreshAll(node);
-            // Fill the description and system prompt fields from the selected
-            // files only when they are still empty; never overwrite serialized
-            // user edits on load.
-            const selectedUser = widget(node, "user_prompt_file")?.value;
-            if (selectedUser && selectedUser !== PLACEHOLDER) {
-                await prefillStructuredFields(node, selectedUser, { onlyDescription: true });
-            }
-            const promptWidget = widget(node, "system_prompt");
-            if (promptWidget && !(promptWidget.value || "").trim()) {
-                const selectedSystem = widget(node, "system_prompt_file")?.value;
-                if (selectedSystem && selectedSystem !== PLACEHOLDER) {
-                    await prefillSystemPrompt(node, selectedSystem);
-                }
-            }
-        });
+        initialize(node, "restore");
     },
 });

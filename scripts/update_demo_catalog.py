@@ -265,7 +265,10 @@ def main() -> None:
     next_order = max((int(t.get("showcaseOrder", 0) or 0) for t in tracks), default=0) + 1
     covers = _cover_index(args.cover_source)
     cover_dest = docs_dir / "assets" / "demo-covers"
-    cover_dest.mkdir(parents=True, exist_ok=True)
+    if not args.dry_run:
+        # A dry run must not create anything - previously this ran before the
+        # dry-run check and left an empty cover directory behind.
+        cover_dest.mkdir(parents=True, exist_ok=True)
 
     updated = 0
     added = 0

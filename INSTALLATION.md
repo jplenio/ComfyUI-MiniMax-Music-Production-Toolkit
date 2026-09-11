@@ -44,11 +44,22 @@ When it is missing, the node still registers and explains the dependency at exec
 
 ## 2. Model files and auto-download
 
-`models_config.json` in the toolkit folder lists every model file the example workflow references, its target folder and (where available) its download URL. `MiniMaxModelAutodownload` and the integrated FlashSR/LLM nodes check these files on first use:
+`models_config.json` in the toolkit folder lists every model file the example workflow references, its target folder and its source. Each artifact is pinned to a verified repository **commit** and an exact byte size:
 
-- Files with a configured URL are downloaded automatically (progress is logged) and the run continues.
-- Gated MiniMax / FLUX.2 weights have no public URL and are reported with guidance; obtain them from the official channels.
-- The FlashSR **inference code is bundled** with the toolkit in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; see `flashsr_inference/NOTICE.md`). Nothing is downloaded into the models directory except the three **weights** from the `jakeoneijk/FlashSR_weights` dataset (`student_ldm.pth`, `sr_vocoder.pth`, `vae.pth` → `models/audio/flashsr/`).
+- **Preflight first (recommended).** `MiniMaxModelAutodownload` reports what is present, what is missing, how many bytes that is and whether the volume can hold it — and downloads only when its `auto_download` toggle is on. The same action is available outside the graph:
+
+  ```bash
+  # report only (never transfers):
+  curl http://127.0.0.1:8188/minimax_music_toolkit/model_preflight
+  # report + download (the explicit setup action):
+  curl -X POST http://127.0.0.1:8188/minimax_music_toolkit/model_preflight -d '{"download": true}'
+  ```
+
+  Neither the nodes nor their `INPUT_TYPES` ever touch the network at load time; the transfer only starts when you ask for it.
+- **Downloads are resumable and verified.** An interrupted transfer keeps a partial that a later run continues (HTTP range/ETag), retries transient failures, and publishes the file only after its size (and hash, where one is recorded) checks out. `Retry-After` is honoured; a 401/403/404 fails immediately instead of retrying.
+- The **MiniMax Music 3** files and the **FLUX.2 Klein** files are publicly readable in the Comfy-Org mirrors; no token is needed for those. A gated source would be reported separately, with its permission problem named.
+- The FlashSR **inference code is bundled** with the toolkit in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; see `flashsr_inference/NOTICE.md`). Nothing is downloaded into the models directory except the three **weights** from the `jakeoneijk/FlashSR_weights` dataset (`student_ldm.pth`, `sr_vocoder.pth`, `vae.pth` → `models/audio/flashsr/`) and the MiniMax/FLUX files listed above.
+- Alternative quantizations (e.g. the int8 DiT) are marked `"optional": true` in the catalog and are **never** downloaded automatically — a family is not pulled in as a whole.
 - Set the per-node `auto_download` toggle to OFF to fail fast instead of downloading.
 
 **All model paths follow ComfyUI's own configuration.** The toolkit resolves targets through `folder_paths.models_dir`, so a ComfyUI started with `--models-directory "F:\ComfyUI\models"` looks for FlashSR under `F:\ComfyUI\models\audio\flashsr` and for GGUFs under `F:\ComfyUI\models\llm` — never under the default base directory. Verify the resolution on any machine with:
@@ -101,6 +112,21 @@ n_ctx      = 32768
 ```
 
 The detailed bundled system prompt consumes a meaningful part of the context, so very small context windows are not recommended. If your chosen LLM needs more context, increase `n_ctx` only if your hardware/runtime can support it.
+
+### Which model for which machine
+
+The toolkit ships a small hardware-profile table (`llm_profiles.py`) and logs the recommendation for the detected device once per run. It is a **starting point, not a measurement**: every size below is the **file size** read from the repository (2026-09-11), not a VRAM promise - context/KV state, compute buffers and backend overhead come on top.
+
+- **CPU only:** small 2-4B class, short context, compact prompt. A large model is not pushed onto the CPU by default. No verified small-model artifact is shipped yet, so check a concrete GGUF (file size, backend support) before committing to one.
+- **Up to 8 GiB VRAM:** prefer the small 4B class; the 9B Q4_K_M (6.17 GB file) is an option **only after** the free VRAM was actually checked against it. 4-8k context.
+- **10-12 GiB:** Qwen 3.5 9B Q5_K_M (7.11 GB) or Gemma 4 12B QAT Q4_0 (6.98 GB); start at 8k.
+- **16 GiB:** Gemma 4 12B QAT or Qwen 3.5 9B Q6_K (7.96 GB) as everyday candidates, Qwen 3.8 27B UD-IQ3_XXS (10.93 GB) as a quality comparison; 8-16k by actual input length.
+- **24 GiB:** 27B at UD-IQ4_XS (14.25 GB) or higher; a large context only when the input needs it.
+- **32 GiB or more:** larger quantizations (UD-Q4_K_M, 16.46 GB) as an explicit quality profile; on several GPUs measure a split against a single card instead of assuming a gain.
+
+Two cautions the profiles state explicitly: the **active parameters of an MoE model are not its resident weight memory**, and bigger is not automatically better or faster for this task. Model quality for this workflow is not measured yet - see the baseline harness in `DEVELOPMENT.md`.
+
+Optional runtime tuning lives in `models_config.json` under `llm.runtime_options` (for example `{"n_ubatch": 256}`). A parameter is only passed when the installed `llama-cpp-python` build declares it; unsupported or misspelled options are reported in the log instead of being ignored silently, and an accepted option becomes part of the model's cache identity. The node's widgets are unchanged, so existing workflows keep their saved values.
 
 ## 6. FFmpeg
 

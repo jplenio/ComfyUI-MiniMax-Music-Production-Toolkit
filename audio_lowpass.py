@@ -21,6 +21,7 @@ ComfyUI AUDIO:
 
 from __future__ import annotations
 
+from .audio_utils import validate_audio
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("audio_lowpass")
@@ -109,21 +110,8 @@ def _resolve_settings(
 
 
 def _validate_audio(audio: Any) -> Tuple[torch.Tensor, int]:
-    if not isinstance(audio, dict):
-        raise ValueError("FlashSR Lowpass Lab: AUDIO input must be a ComfyUI AUDIO dictionary.")
-    if "waveform" not in audio or "sample_rate" not in audio:
-        raise ValueError("FlashSR Lowpass Lab: AUDIO input needs 'waveform' and 'sample_rate'.")
-    waveform = audio["waveform"]
-    sample_rate = int(audio["sample_rate"])
-    if not isinstance(waveform, torch.Tensor):
-        raise ValueError("FlashSR Lowpass Lab: audio['waveform'] must be a torch.Tensor.")
-    if waveform.ndim != 3:
-        raise ValueError(
-            f"FlashSR Lowpass Lab: expected waveform shape [B,C,T], got {tuple(waveform.shape)}."
-        )
-    if sample_rate <= 0:
-        raise ValueError(f"FlashSR Lowpass Lab: invalid sample rate {sample_rate}.")
-    return waveform, sample_rate
+    """Delegates to :func:`audio_utils.validate_audio` (same messages/policy)."""
+    return validate_audio(audio, error_label="FlashSR Lowpass Lab", template="separate", require_positive_rate=True)
 
 
 def _filter_channel_zero_phase(x: np.ndarray, sos: np.ndarray) -> np.ndarray:

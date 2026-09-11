@@ -44,5 +44,50 @@
       "name": "best_pre_post_19k",
       "preset": "POST 19 kHz - slightly stronger"
     }
+  ],
+  "phase_3_eq_mastering_tests": [
+    {
+      "name": "bypass_parity",
+      "chain": "MiniMaxParametricEQ (bypass) -> MiniMaxMasteringCompressor (bypass)",
+      "expect": "output is bit-identical to the input - no gain, no delay, no dither"
+    },
+    {
+      "name": "eq_single_bell",
+      "chain": "MiniMaxParametricEQ, one bell, +3 dB",
+      "expect": "measured response matches the node's reported response_db within +/-0.5 dB; the incoming tensor is not modified"
+    },
+    {
+      "name": "auto_eq_proposal",
+      "chain": "MiniMaxAutoEQAnalyze -> review -> MiniMaxParametricEQ",
+      "expect": "nothing is audible until the proposal is applied by hand; the report keeps applied=false"
+    },
+    {
+      "name": "mastering_loudness",
+      "chain": "MiniMaxMasteringCompressor -> AudioReleasePrep",
+      "expect": "integrated LUFS within +/-0.3 LUFS of the target and true peak at or below the ceiling, both checked against an independent measurement - never only against the node's own report"
+    },
+    {
+      "name": "long_track_blocks",
+      "chain": "mastering on a track longer than five minutes",
+      "expect": "block parity - one pass and chunked passes agree; silence, a 0.1 s signal and an extreme allowed setting produce no NaN/Inf"
+    }
+  ],
+  "phase_4_v01_report_checks": [
+    {
+      "name": "effective_vs_recommended",
+      "expect": "runtime.resource_profile keeps recommended and effective as separate keys; effective names the device and model that actually ran"
+    },
+    {
+      "name": "additive_sections",
+      "expect": "mastering.eq / mastering.auto_eq / mastering.chain carry the DSP nodes' own report schemas; unwired inputs add no key at all"
+    },
+    {
+      "name": "reproducibility",
+      "expect": "models and llm.template_version identify the run; repeating it with the same seeds reproduces the same result"
+    },
+    {
+      "name": "public_example",
+      "expect": "a payload passed through production_metadata.public_safe_payload() contains no secret-named key and no absolute path"
+    }
   ]
 }

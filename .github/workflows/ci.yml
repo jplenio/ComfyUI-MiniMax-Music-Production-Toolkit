@@ -27,5 +27,19 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install CPU tensor runtime for audio regression tests
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
       - name: Run tests
         run: python -m unittest discover -s tests -v
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run frontend regression tests
+        run: |
+          node tests/test_audio_eq_frontend.mjs
+          node tests/test_structured_prompt_frontend.mjs
+          node tests/test_workflow_migration.mjs

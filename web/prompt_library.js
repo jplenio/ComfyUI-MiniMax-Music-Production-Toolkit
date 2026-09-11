@@ -1,15 +1,27 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import {
+    PLACEHOLDER,
+    beginRequest,
+    isCurrentRequest,
+    markDirty,
+    readSelection,
+    sameSelection,
+    scheduleInit,
+    widgetByName as widget,
+} from "./prompt_ui_utils.js";
+
+// Prompt-library dropdowns for the legacy MiniMaxLLMTemplateV16 node.
+//
+// The refresh responses are guarded: a listing that arrives after the source,
+// directory or selection changed is discarded, so a slow response for an old
+// source can never overwrite the dropdown of a newer one.  Only the list is
+// refreshed here - the node has no metadata prefill.
 
 const NODE_TYPES = new Set(["MiniMaxLLMTemplateV16"]);
-const PLACEHOLDER = "<select a prompt>";
 // Directory group labels in the prompt-file dropdown end with this suffix and
 // carry no file value; selecting one keeps the previous real selection.
 const DIRECTORY_MARKER_SUFFIX = "/";
-
-function widget(node, name) {
-    return node.widgets?.find((w) => w.name === name);
-}
 
 function nodeClass(node) {
     return node.comfyClass ?? node.type ?? node.constructor?.type;
@@ -51,11 +63,6 @@ function fileOptionLabel(value) {
     return slash >= 0 ? "\u00A0\u00A0\u00A0\u00A0" + value.slice(slash + 1) : value;
 }
 
-function markDirty(node) {
-    node.setDirtyCanvas?.(true, true);
-    node.graph?.setDirtyCanvas?.(true, true);
-}
-
 async function fetchPromptFiles(kind, source, directory) {
     if (source === "manual") return [];
     const params = new URLSearchParams({ kind, source, directory: directory || "" });
@@ -73,12 +80,12 @@ async function fetchPromptFiles(kind, source, directory) {
 }
 
 async function refreshKind(node, kind) {
-    const source = widget(node, `${kind}_prompt_source`)?.value ?? "manual";
-    const directory = widget(node, `${kind}_prompt_directory`)?.value ?? "";
+    const selection = readSelection(node, kind);
     const fileWidget = widget(node, `${kind}_prompt_file`);
     if (!fileWidget) return;
+    const token = beginRequest(node, `files:${kind}`);
 
-    if (source === "manual") {
+    if (selection.source === "manual") {
         setComboValues(fileWidget, []);
         fileWidget.value = PLACEHOLDER;
         markDirty(node);
@@ -86,7 +93,9 @@ async function refreshKind(node, kind) {
     }
 
     try {
-        const files = await fetchPromptFiles(kind, source, directory);
+        const files = await fetchPromptFiles(kind, selection.source, selection.directory);
+        if (!isCurrentRequest(token)) return;
+        if (!sameSelection(selection, readSelection(node, kind))) return;
         const oldValue = fileWidget.value;
         const grouped = buildGroupedFileOptions(files);
         fileWidget.options = fileWidget.options || {};
@@ -96,6 +105,7 @@ async function refreshKind(node, kind) {
         else if (files.length === 1) fileWidget.value = files[0];
         node.__minimaxPromptLibraryError = null;
     } catch (error) {
+        if (!isCurrentRequest(token)) return;
         console.warn(`[MiniMax Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
         setComboValues(fileWidget, []);
         node.__minimaxPromptLibraryError = String(error?.message || error);
@@ -149,16 +159,18 @@ function attach(node) {
     // A manual refresh button is useful after adding/deleting prompt files while
     // ComfyUI is already running.  It does not become part of the execution input.
     node.addWidget?.("button", "Refresh prompt lists", null, () => refreshBoth(node));
-    queueMicrotask(() => refreshBoth(node));
 }
 
 app.registerExtension({
     name: "minimax_music_production_toolkit.prompt_library_v1",
     nodeCreated(node) {
         attach(node);
+        // Both hooks run during a graph load; scheduleInit keeps exactly one
+        // refresh instead of two racing ones.
+        scheduleInit(node, "refresh", () => refreshBoth(node));
     },
     loadedGraphNode(node) {
         attach(node);
-        queueMicrotask(() => refreshBoth(node));
+        scheduleInit(node, "refresh", () => refreshBoth(node));
     },
 });

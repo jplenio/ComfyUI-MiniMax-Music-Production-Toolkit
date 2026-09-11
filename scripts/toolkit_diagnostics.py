@@ -65,28 +65,33 @@ def _check_packages() -> list[tuple[str, bool, str]]:
 
 
 def _check_ffmpeg() -> tuple[bool, str]:
-    exe = shutil.which("ffmpeg")
-    if exe:
-        try:
-            proc = subprocess.run([exe, "-version"], capture_output=True, text=True, timeout=20)
-            first_line = proc.stdout.splitlines()[0] if proc.stdout else "?"
-            return True, f"{exe} ({first_line})"
-        except Exception as exc:  # pragma: no cover - defensive diagnostics
-            return False, f"found {exe} but could not run it: {exc}"
-    return False, "ffmpeg not found on PATH (MP3 saving needs it; run install_requirements.bat)"
+    """Report the FFmpeg the toolkit would actually use.
+
+    PATH alone is not the answer: MP3 output falls back to the executable
+    bundled with ``imageio-ffmpeg``, so a machine without FFmpeg on PATH is not
+    necessarily broken.  Only report a failure when neither source resolves.
+    """
+    ffmpeg_utils = _load_module("ffmpeg_utils")
+    on_path = shutil.which("ffmpeg")
+    exe = ffmpeg_utils.discover_ffmpeg()
+    if not exe:
+        return False, "ffmpeg not found on PATH or via imageio-ffmpeg (MP3 saving needs one of them; run install_requirements.bat)"
+    try:
+        proc = subprocess.run([exe, "-version"], capture_output=True, text=True, timeout=20)
+        first_line = proc.stdout.splitlines()[0] if proc.stdout else "?"
+    except Exception as exc:  # pragma: no cover - defensive diagnostics
+        return False, f"found {exe} but could not run it: {exc}"
+    if on_path:
+        return True, f"{exe} ({first_line})"
+    return True, f"{exe} (bundled imageio-ffmpeg fallback, not on PATH) ({first_line})"
 
 
 def _check_models(auto_download: bool = False) -> list[dict]:
     try:
         model_downloader = _load_module("model_downloader")
-        config = model_downloader.load_models_config()
-        entries = []
-        for group in ("minimax", "flux2"):
-            entries.extend(config.get(group, {}).get("files", []))
-        entries.extend(config.get("flashsr", {}).get("weights", {}).get("files", []))
-        llm_example = config.get("llm", {}).get("example")
-        if isinstance(llm_example, dict):
-            entries.append(llm_example)
+        # Same expansion as the check node and the FlashSR runtime: group notes
+        # and the FlashSR default target are applied in one place.
+        entries = model_downloader.normalize_model_entries(model_downloader.load_models_config())
         return model_downloader.check_file_entries(entries, auto_download=auto_download)
     except Exception as exc:  # pragma: no cover - defensive diagnostics
         return [{"name": "<config error>", "target": "", "status": "failed", "message": f"{type(exc).__name__}: {exc}"}]
@@ -110,6 +115,28 @@ def _check_prompt_library() -> dict:
         return {"prompt_library_error": f"{type(exc).__name__}: {exc}"}
 
 
+def _check_resources() -> dict:
+    """Hardware snapshot and profile recommendation (R01).
+
+    Purely informational: a missing GPU, unknown RAM or a low-confidence
+    recommendation never fails the diagnostics run, it is reported.
+    """
+    try:
+        module = _load_module("resource_profiles")
+        snapshot = module.detect_resources()
+        return {
+            "snapshot": snapshot.to_dict(),
+            "lines": module.format_resource_report(snapshot),
+            "recommendations": module.recommend_profiles(snapshot),
+        }
+    except Exception as exc:  # pragma: no cover - defensive diagnostics
+        return {
+            "snapshot": None,
+            "lines": [f"Resource detection failed: {type(exc).__name__}: {exc}"],
+            "recommendations": [],
+        }
+
+
 def run_diagnostics(comfy_dir: str | None = None, models_directory: str | None = None) -> dict:
     """Collect all diagnostics into one report dict."""
     report: dict = {}
@@ -120,6 +147,7 @@ def run_diagnostics(comfy_dir: str | None = None, models_directory: str | None =
     else:
         report["comfy_dir"] = comfy_dir or "(not detected)"
     report["ffmpeg"] = _check_ffmpeg()
+    report["resources"] = _check_resources()
     report["packages"] = {name: {"ok": ok, "version": version} for name, ok, version in _check_packages()}
 
     # Model/LLM checks resolve targets against folder_paths.models_dir when
@@ -144,6 +172,9 @@ def format_report(report: dict) -> str:
     lines.append(f"ComfyUI: {report['comfy_dir']}")
     ok, detail = report["ffmpeg"]
     lines.append(f"FFmpeg:  {'OK  ' if ok else 'MISS'} {detail}")
+    lines.append("Resources:")
+    for line in report["resources"]["lines"]:
+        lines.append(f"  {line}")
     lines.append("Python packages:")
     for name, info in sorted(report["packages"].items()):
         marker = "OK  " if info["ok"] else "MISS"

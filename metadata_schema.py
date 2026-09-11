@@ -49,13 +49,38 @@ def _v6_to_v7(payload: Dict[str, Any]) -> Dict[str, Any]:
     data = dict(payload)
     data.setdefault("llm", {})
     data.setdefault("structured_prompt", {})
-    flashsr = data.setdefault("flashsr", {})
+    # Copy the nested section: setdefault on a dict taken from the caller's
+    # payload would add ``flashsr.settings`` to *their* object (the top-level
+    # ``dict(payload)`` is only a shallow copy).
+    flashsr = dict(data.get("flashsr") or {})
     flashsr.setdefault("settings", {})
+    data["flashsr"] = flashsr
     data["schema"] = "minimax_music3_production_metadata_v7"
     return data
 
 
 register_metadata_migration("minimax_music3_production_metadata_v6", _v6_to_v7)
+
+
+def migrate_metadata_payload_if_known(payload: Dict[str, Any]) -> Tuple[Dict[str, Any], list, str]:
+    """Loader policy: migrate recognised schemas, pass anything else through.
+
+    This is deliberately *softer* than :func:`migrate_metadata_payload`, which
+    the writer uses.  A loader must never reject a file that used to be
+    readable, so an unversioned or unknown payload is returned unchanged with a
+    note instead of raising.  Returns ``(payload, applied_steps, note)``.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError(f"Production metadata payload must be a dict, got {type(payload).__name__}.")
+    schema = str(payload.get("schema") or "")
+    if not schema:
+        return payload, [], "payload has no 'schema' field; loaded without migration"
+    if schema == CURRENT_PRODUCTION_METADATA_SCHEMA:
+        return payload, [], ""
+    if schema not in PRODUCTION_METADATA_MIGRATIONS:
+        return payload, [], f"unknown schema '{schema}'; loaded without migration"
+    migrated, applied = migrate_metadata_payload(payload)
+    return migrated, applied, ""
 
 
 def migrate_metadata_payload(payload: Dict[str, Any]) -> Tuple[Dict[str, Any], list]:

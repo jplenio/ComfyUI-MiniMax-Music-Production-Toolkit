@@ -11,6 +11,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, Tuple
 
+from .prompt_budget import (
+    MINIMAX_MAX_PROMPT_TOKENS,
+    count_prompt_tokens,
+)
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("prompt_report")
@@ -28,6 +32,45 @@ def _minimax_prompt_builder() -> Tuple[Optional[Any], Optional[Any], Optional[An
     except Exception as exc:  # pragma: no cover - depends on the ComfyUI build
         LOGGER.debug("comfy.ldm.minimax_music.prompt not importable: %s", exc)
         return None, None, None
+
+
+def build_token_budget_lines(caption: str, lyrics: str):
+    """Markdown block reporting the measured (or estimated) MiniMax token count.
+
+    The distinction is explicit: a measured count came from the real MiniMax
+    tokenizer, an estimated one did not, and the report must never present the
+    estimate as a measurement.
+    """
+    info = count_prompt_tokens(caption, lyrics)
+    tokens = int(info["tokens"])
+    if info["exact"]:
+        value = f"**{tokens} tokens** (measured with the MiniMax tokenizer)"
+    elif str(info["method"]).startswith("tokenizer"):
+        value = (
+            f"**{tokens} tokens** (measured on the caption+lyrics text; ComfyUI's "
+            "`build_prompt` wrapper was not importable, so the fixed tag overhead may differ slightly)"
+        )
+    else:
+        value = (
+            f"**~{tokens} tokens** (conservative *estimate* - the MiniMax tokenizer/checkpoint "
+            "was not available; dense scripts can tokenize above this estimate)"
+        )
+    lines = [
+        "---",
+        "",
+        "## Token budget (MiniMax text encoder)",
+        "",
+        f"- {value}",
+        f"- Conservative estimate: {int(info['estimate'])} tokens",
+        f"- Hard limit enforced by MiniMax: {MINIMAX_MAX_PROMPT_TOKENS} tokens",
+    ]
+    if info["estimate_covers_real"] is False:
+        lines.append(
+            "- **Warning:** the estimate was *below* the measured count for this text; treat the "
+            "heuristic as an estimate only."
+        )
+    lines.append("")
+    return lines
 
 
 def build_prompt_report(caption: str, lyrics: str, title: str, image_prompt: str) -> str:
@@ -74,6 +117,8 @@ def build_prompt_report(caption: str, lyrics: str, title: str, image_prompt: str
             "the raw values are shown instead._",
             "",
         ]
+
+    lines += build_token_budget_lines(caption, lyrics)
 
     lines += [
         "---",

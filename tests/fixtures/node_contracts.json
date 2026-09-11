@@ -1,0 +1,4412 @@
+{
+  "AudioDeclipRepair": {
+    "python_class": "AudioDeclipRepair",
+    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "declip_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "mode": [
+        [
+          "Auto / conservative",
+          "Standard",
+          "Strong",
+          "Custom",
+          "Analyze only",
+          "Bypass"
+        ],
+        {
+          "default": "Auto / conservative"
+        }
+      ],
+      "detection_threshold_percent": [
+        "FLOAT",
+        {
+          "default": 98.0,
+          "min": 85.0,
+          "max": 99.99,
+          "step": 0.1
+        }
+      ],
+      "plateau_tolerance_percent": [
+        "FLOAT",
+        {
+          "default": 0.001,
+          "min": 0.0001,
+          "max": 1.0,
+          "step": 0.001
+        }
+      ],
+      "min_flat_samples": [
+        "INT",
+        {
+          "default": 3,
+          "min": 1,
+          "max": 32,
+          "step": 1
+        }
+      ],
+      "slope_context_samples": [
+        "INT",
+        {
+          "default": 3,
+          "min": 2,
+          "max": 64,
+          "step": 1
+        }
+      ],
+      "max_repair_ms": [
+        "FLOAT",
+        {
+          "default": 8.0,
+          "min": 0.1,
+          "max": 50.0,
+          "step": 0.5
+        }
+      ],
+      "max_peak_extension_db": [
+        "FLOAT",
+        {
+          "default": 4.0,
+          "min": 0.5,
+          "max": 12.0,
+          "step": 0.5
+        }
+      ],
+      "output_ceiling_dbfs": [
+        "FLOAT",
+        {
+          "default": -1.0,
+          "min": -12.0,
+          "max": -0.1,
+          "step": 0.1
+        }
+      ],
+      "mix": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.05
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "AudioReleasePrep": {
+    "python_class": "AudioReleasePrep",
+    "category": "MiniMax Music Production Toolkit/mastering",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "release_prep_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "target_sample_rate": [
+        [
+          "44100",
+          "48000",
+          "keep"
+        ],
+        {
+          "default": "44100"
+        }
+      ],
+      "processing": [
+        [
+          "Resample only",
+          "Streaming Safe -14 LUFS / -1 dBTP",
+          "Modern Music -12 LUFS / -2 dBTP",
+          "Loud Electronic -10 LUFS / -2 dBTP",
+          "Custom",
+          "Bypass"
+        ],
+        {
+          "default": "Resample only"
+        }
+      ],
+      "custom_target_lufs": [
+        "FLOAT",
+        {
+          "default": -14.0,
+          "min": -24.0,
+          "max": -5.0,
+          "step": 0.1
+        }
+      ],
+      "custom_true_peak_dbtp": [
+        "FLOAT",
+        {
+          "default": -1.0,
+          "min": -6.0,
+          "max": -0.1,
+          "step": 0.1
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "FlashSRHybridCrossover": {
+    "python_class": "FlashSRHybridCrossover",
+    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "hybrid_crossover_json",
+      "info"
+    ],
+    "required": {
+      "original_audio": [
+        "AUDIO",
+        {}
+      ],
+      "flashsr_audio": [
+        "AUDIO",
+        {}
+      ],
+      "mode": [
+        [
+          "Original + FlashSR air",
+          "Hybrid replace above crossover",
+          "Original SRC only",
+          "FlashSR only"
+        ],
+        {
+          "default": "Original + FlashSR air"
+        }
+      ],
+      "crossover_hz": [
+        "FLOAT",
+        {
+          "default": 14500.0,
+          "min": 7000.0,
+          "max": 18000.0,
+          "step": 100.0
+        }
+      ],
+      "transition_hz": [
+        "FLOAT",
+        {
+          "default": 2000.0,
+          "min": 300.0,
+          "max": 6000.0,
+          "step": 100.0
+        }
+      ],
+      "flashsr_hf_mix": [
+        "FLOAT",
+        {
+          "default": 0.35,
+          "min": 0.0,
+          "max": 1.5,
+          "step": 0.05
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "FlashSRLowpassLab": {
+    "python_class": "FlashSRLowpassLab",
+    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "function": "run",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "info",
+      "preset",
+      "settings_json"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "preset": [
+        [
+          "CUSTOM",
+          "PRE 14 kHz - light",
+          "PRE 12 kHz - recommended",
+          "PRE 10 kHz - strong",
+          "PRE 8 kHz - aggressive",
+          "POST 20 kHz - recommended gentle",
+          "POST 19 kHz - slightly stronger"
+        ],
+        {
+          "default": "PRE 12 kHz - recommended"
+        }
+      ],
+      "custom_cutoff_hz": [
+        "FLOAT",
+        {
+          "default": 12000.0,
+          "min": 20.0,
+          "max": 96000.0,
+          "step": 10.0
+        }
+      ],
+      "custom_order": [
+        "INT",
+        {
+          "default": 2,
+          "min": 1,
+          "max": 12,
+          "step": 1
+        }
+      ],
+      "custom_phase_mode": [
+        [
+          "zero_phase",
+          "causal"
+        ],
+        {
+          "default": "zero_phase"
+        }
+      ],
+      "bypass": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {
+      "preset_override": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "custom_cutoff_override": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "custom_order_override": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "custom_phase_override": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "bypass_override": [
+        "BOOLEAN",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "FlashSRProcessingSettings": {
+    "python_class": "FlashSRProcessingSettings",
+    "category": "MiniMax Music Production Toolkit/config",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "FLOAT",
+      "INT",
+      "STRING",
+      "BOOLEAN",
+      "STRING",
+      "STRING",
+      "FLOAT",
+      "INT",
+      "STRING",
+      "BOOLEAN",
+      "STRING",
+      "BOOLEAN"
+    ],
+    "return_names": [
+      "pre_preset",
+      "pre_cutoff_hz",
+      "pre_order",
+      "pre_phase",
+      "pre_bypass",
+      "pre_settings_json",
+      "post_preset",
+      "post_cutoff_hz",
+      "post_order",
+      "post_phase",
+      "post_bypass",
+      "post_settings_json",
+      "flashsr_lowpass_input"
+    ],
+    "required": {
+      "pre_preset": [
+        [
+          "CUSTOM",
+          "PRE 14 kHz - light",
+          "PRE 12 kHz - recommended",
+          "PRE 10 kHz - strong",
+          "PRE 8 kHz - aggressive",
+          "POST 20 kHz - recommended gentle",
+          "POST 19 kHz - slightly stronger"
+        ],
+        {
+          "default": "PRE 12 kHz - recommended"
+        }
+      ],
+      "pre_custom_cutoff_hz": [
+        "FLOAT",
+        {
+          "default": 12000.0,
+          "min": 20.0,
+          "max": 96000.0,
+          "step": 10.0
+        }
+      ],
+      "pre_custom_order": [
+        "INT",
+        {
+          "default": 2,
+          "min": 1,
+          "max": 12,
+          "step": 1
+        }
+      ],
+      "pre_custom_phase": [
+        [
+          "zero_phase",
+          "causal"
+        ],
+        {
+          "default": "zero_phase"
+        }
+      ],
+      "pre_bypass": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "post_preset": [
+        [
+          "CUSTOM",
+          "PRE 14 kHz - light",
+          "PRE 12 kHz - recommended",
+          "PRE 10 kHz - strong",
+          "PRE 8 kHz - aggressive",
+          "POST 20 kHz - recommended gentle",
+          "POST 19 kHz - slightly stronger"
+        ],
+        {
+          "default": "POST 19 kHz - slightly stronger"
+        }
+      ],
+      "post_custom_cutoff_hz": [
+        "FLOAT",
+        {
+          "default": 19000.0,
+          "min": 20.0,
+          "max": 96000.0,
+          "step": 10.0
+        }
+      ],
+      "post_custom_order": [
+        "INT",
+        {
+          "default": 2,
+          "min": 1,
+          "max": 12,
+          "step": 1
+        }
+      ],
+      "post_custom_phase": [
+        [
+          "zero_phase",
+          "causal"
+        ],
+        {
+          "default": "causal"
+        }
+      ],
+      "post_bypass": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "flashsr_lowpass_input": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "HFCymbalShimmerRepair": {
+    "python_class": "HFCymbalShimmerRepair",
+    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "hf_repair_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "mode": [
+        [
+          "Gentle",
+          "Cymbal clarity",
+          "Reverb / shimmer control",
+          "Custom",
+          "Bypass"
+        ],
+        {
+          "default": "Gentle"
+        }
+      ],
+      "start_frequency_hz": [
+        "FLOAT",
+        {
+          "default": 8000.0,
+          "min": 3000.0,
+          "max": 16000.0,
+          "step": 100.0
+        }
+      ],
+      "sustain_reduction_db": [
+        "FLOAT",
+        {
+          "default": 1.25,
+          "min": 0.0,
+          "max": 8.0,
+          "step": 0.1
+        }
+      ],
+      "fast_envelope_ms": [
+        "FLOAT",
+        {
+          "default": 8.0,
+          "min": 1.0,
+          "max": 50.0,
+          "step": 1.0
+        }
+      ],
+      "slow_envelope_ms": [
+        "FLOAT",
+        {
+          "default": 180.0,
+          "min": 40.0,
+          "max": 1000.0,
+          "step": 10.0
+        }
+      ],
+      "transient_sensitivity": [
+        "FLOAT",
+        {
+          "default": 0.35,
+          "min": 0.05,
+          "max": 1.5,
+          "step": 0.05
+        }
+      ],
+      "side_hf_reduction_db": [
+        "FLOAT",
+        {
+          "default": 0.75,
+          "min": 0.0,
+          "max": 8.0,
+          "step": 0.1
+        }
+      ],
+      "static_hf_trim_db": [
+        "FLOAT",
+        {
+          "default": -0.4,
+          "min": -8.0,
+          "max": 2.0,
+          "step": 0.1
+        }
+      ],
+      "min_hf_level_dbfs": [
+        "FLOAT",
+        {
+          "default": -58.0,
+          "min": -90.0,
+          "max": -20.0,
+          "step": 1.0
+        }
+      ],
+      "mix": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.05
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "KSamplerWithConfig": {
+    "python_class": "KSamplerWithConfig",
+    "category": "MiniMax Music Production Toolkit/utilities",
+    "function": "sample",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "LATENT",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "LATENT",
+      "sampler_name",
+      "scheduler"
+    ],
+    "required": {
+      "model": [
+        "MODEL",
+        {}
+      ],
+      "positive": [
+        "CONDITIONING",
+        {}
+      ],
+      "negative": [
+        "CONDITIONING",
+        {}
+      ],
+      "latent_image": [
+        "LATENT",
+        {}
+      ],
+      "seed": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 18446744073709551615
+        }
+      ],
+      "steps": [
+        "INT",
+        {
+          "default": 40,
+          "min": 1,
+          "max": 10000
+        }
+      ],
+      "cfg": [
+        "FLOAT",
+        {
+          "default": 1.7,
+          "min": 0.0,
+          "max": 100.0,
+          "step": 0.1,
+          "round": 0.01
+        }
+      ],
+      "sampler_name": [
+        [
+          "euler"
+        ],
+        {
+          "default": "euler"
+        }
+      ],
+      "scheduler": [
+        [
+          "simple"
+        ],
+        {
+          "default": "simple"
+        }
+      ],
+      "denoise": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxAudioBranchSelect": {
+    "python_class": "MiniMaxAudioBranchSelect",
+    "category": "MiniMax Music Production Toolkit/audio",
+    "function": "select",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "branch_report_json",
+      "info"
+    ],
+    "required": {
+      "profile": [
+        [
+          "Keep original",
+          "Careful restore",
+          "Reconstruct bandwidth"
+        ],
+        {
+          "default": "Careful restore"
+        }
+      ],
+      "mix": [
+        "FLOAT",
+        {
+          "default": 0.35,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ],
+      "preview_seconds": [
+        "FLOAT",
+        {
+          "default": 0.0,
+          "min": 0.0,
+          "max": 60.0,
+          "step": 1.0
+        }
+      ],
+      "original_audio": [
+        "AUDIO",
+        {}
+      ]
+    },
+    "optional": {
+      "restored_audio": [
+        "AUDIO",
+        {}
+      ],
+      "bandwidth_audio": [
+        "AUDIO",
+        {}
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxAutoEQAnalyze": {
+    "python_class": "MiniMaxAutoEQAnalyze",
+    "category": "MiniMax Music Production Toolkit/mastering",
+    "function": "analyze",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "eq_settings_json",
+      "analysis_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "target_mode": [
+        [
+          "Reference track",
+          "Warm tilt",
+          "Bright tilt"
+        ],
+        {
+          "default": "Reference track"
+        }
+      ],
+      "strength_percent": [
+        "FLOAT",
+        {
+          "default": 50,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "max_gain_db": [
+        "FLOAT",
+        {
+          "default": 3,
+          "min": 0.1,
+          "max": 6,
+          "step": 0.1
+        }
+      ],
+      "max_bands": [
+        "INT",
+        {
+          "default": 6,
+          "min": 1,
+          "max": 6
+        }
+      ],
+      "min_frequency_hz": [
+        "FLOAT",
+        {
+          "default": 40,
+          "min": 20,
+          "max": 1000
+        }
+      ],
+      "max_frequency_hz": [
+        "FLOAT",
+        {
+          "default": 16000,
+          "min": 1000,
+          "max": 20000
+        }
+      ]
+    },
+    "optional": {
+      "reference_audio": [
+        "AUDIO",
+        {}
+      ],
+      "enabled": [
+        "BOOLEAN",
+        {"default": true}
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxFlashSRAudio": {
+    "python_class": "MiniMaxFlashSRAudio",
+    "category": "MiniMax Music Production Toolkit/audio",
+    "function": "upscale",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "settings_json"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "lowpass_input": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "output_sr": [
+        [
+          "48000",
+          "44100",
+          "96000"
+        ],
+        {
+          "default": "48000"
+        }
+      ],
+      "auto_download": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxLLMChat": {
+    "python_class": "MiniMaxLLMChat",
+    "category": "MiniMax Music Production Toolkit/llm",
+    "function": "chat",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "text",
+      "status",
+      "thinking"
+    ],
+    "required": {
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "user_text": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ],
+      "system_prompt": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ],
+      "session_id": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "model": [
+        [
+          "Qwen3.8-27B-UD-IQ3_XXS.gguf"
+        ],
+        {
+          "default": "Qwen3.8-27B-UD-IQ3_XXS.gguf"
+        }
+      ],
+      "max_tokens": [
+        "INT",
+        {
+          "default": 16384,
+          "min": 1,
+          "max": 131072,
+          "step": 1
+        }
+      ],
+      "temperature": [
+        "FLOAT",
+        {
+          "default": 0.7,
+          "min": 0.0,
+          "max": 2.0,
+          "step": 0.01
+        }
+      ],
+      "top_p": [
+        "FLOAT",
+        {
+          "default": 0.8,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ],
+      "n_gpu_layers": [
+        "INT",
+        {
+          "default": -1,
+          "min": -1,
+          "max": 512,
+          "step": 1
+        }
+      ],
+      "n_ctx": [
+        "INT",
+        {
+          "default": 32768,
+          "min": 512,
+          "max": 262144,
+          "step": 256
+        }
+      ],
+      "reset_session": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "auto_download": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "chat_format": [
+        [
+          "auto",
+          "chatml",
+          "qwen",
+          "gemma",
+          "llama-3",
+          "none"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "thinking": [
+        [
+          "auto",
+          "on",
+          "off"
+        ],
+        {
+          "default": "off"
+        }
+      ],
+      "top_k": [
+        "INT",
+        {
+          "default": 40,
+          "min": 1,
+          "max": 1000,
+          "step": 1
+        }
+      ],
+      "min_p": [
+        "FLOAT",
+        {
+          "default": 0.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ],
+      "repeat_penalty": [
+        "FLOAT",
+        {
+          "default": 1.1,
+          "min": 0.0,
+          "max": 3.0,
+          "step": 0.01
+        }
+      ],
+      "presence_penalty": [
+        "FLOAT",
+        {
+          "default": 0.0,
+          "min": -2.0,
+          "max": 2.0,
+          "step": 0.01
+        }
+      ],
+      "frequency_penalty": [
+        "FLOAT",
+        {
+          "default": 0.0,
+          "min": -2.0,
+          "max": 2.0,
+          "step": 0.01
+        }
+      ],
+      "seed": [
+        "INT",
+        {
+          "default": -1,
+          "min": -1,
+          "max": 2147483647,
+          "step": 1
+        }
+      ],
+      "split_mode": [
+        [
+          "none",
+          "layer",
+          "row"
+        ],
+        {
+          "default": "none"
+        }
+      ],
+      "tensor_split": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "main_gpu": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 16,
+          "step": 1
+        }
+      ],
+      "tensor_parallel": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxLLMSessionId": {
+    "python_class": "MiniMaxLLMSessionId",
+    "category": "MiniMax Music Production Toolkit/utilities",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "INT"
+    ],
+    "return_names": [
+      "session_id",
+      "seed"
+    ],
+    "required": {
+      "seed": [
+        "INT",
+        {
+          "default": 1,
+          "min": 0,
+          "max": 9223372036854775806,
+          "step": 1,
+          "control_after_generate": true
+        }
+      ],
+      "prefix": [
+        "STRING",
+        {
+          "default": "song_",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxLLMTemplateV16": {
+    "python_class": "MiniMaxLLMTemplateV16",
+    "category": "MiniMax Music Production Toolkit/prompts",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "system_prompt",
+      "user_prompt",
+      "source_name"
+    ],
+    "required": {
+      "user_prompt": [
+        "STRING",
+        {
+          "default": "Instrumental Progressive House with melodic and subtle trance influences, highly atmospheric and spacious, driven by memorable signature motifs and distinctive recurring synth riffs. Emotional, smooth, modern, with strong progression and evolving layers. create a 4–5 minutes long melodic story in the track.",
+          "multiline": true
+        }
+      ],
+      "system_prompt": [
+        "STRING",
+        {
+          "default": "You are a Master Audio Engineer, Film Composer, Songwriter, Lyricist, and Music Producer acting as the official music-caption rewriter for the MiniMax Music 3 generation model.\n\nThe user will provide a simple musical request. It may contain a genre or style, BPM, desired duration, instrumental/vocal preference, mood, instrumentation, reference era, story premise, lyrical topic, exclusions, or only a few descriptive words.\n\nYour job is to transform that request into a highly usable MiniMax Music 3 production plan plus a matching Flux 2 album-cover prompt.\n\nThe four top-level output sections MUST be generated and returned in this exact order:\n\n1. [Caption]\n2. [Lyrics]\n3. [Title]\n4. [Image_Prompt]\n\nThis order is intentional and mandatory:\n\n* First create the complete musical concept and arrangement in [Caption].\n* Then create [Lyrics] or the instrumental section map so it is consistent with the Caption.\n* Only AFTER Caption and Lyrics are complete, create [Title]. The Title MUST be derived from the actual musical concept, emotional arc, imagery, and lyrical theme already established in Caption and Lyrics.\n* Finally create [Image_Prompt] using the completed Caption, Lyrics, and Title as semantic inspiration.\n\nDo not create or decide the final Title before Caption and Lyrics have been developed.\n\nIf the user does not specify a duration, assume approximately 4:00–4:30 minutes.\n\nThe requested duration must NEVER exceed 5:00 minutes - 5:00 is the absolute maximum. Shorter requests (30 seconds up to 3 minutes) are perfectly valid and must be respected.\nIf the user does not specify BPM, choose an appropriate BPM for the requested style.\nIf the user does not specify a key or scale, choose one that naturally supports the requested mood.\n\n## HARD TOKEN LIMIT (CRITICAL)\n\nThe MiniMax Music 3 text encoder rejects the prompt when the combined [Caption] + [Lyrics] exceeds 5000 tokens. This is a hard technical failure, not a guideline: if the prompt is too long, generation crashes. Keep the [Caption] concise and the [Lyrics] compact (roughly 45–55 lines). When in doubt, shorten the structure instead of adding detail. Never pad sections to reach a duration. Follow these limits silently - NEVER mention them, the token count, or any word count in your answer.\n\nThe result must strongly guide MiniMax Music 3 while still leaving enough musical freedom for natural composition.\n\n---\n\n## 1. TRACK TYPE AND STRICT LYRICS POLICY\n\nDetermine first whether the requested track is:\n\n* PURE INSTRUMENTAL\n* VOCAL SONG\n* MOSTLY INSTRUMENTAL WITH SPARSE VOCALS\n* SONG WITH USER-PROVIDED LYRICS\n\nFollow the corresponding rules exactly.\n\n### A. PURE INSTRUMENTAL\n\nIf the user requests instrumental, purely instrumental, no vocals, N/A vocals, or equivalent:\n\n* NEVER generate lyric words.\n* NEVER generate vocalizations such as \"oh\", \"ah\", \"ooh\", humming, chanting, spoken phrases, whispers, or background vocal syllables.\n* The [Lyrics] field must contain ONLY MiniMax-supported structural section tags.\n* For instrumental tracks use only:\n  [Intro]\n  [Instrumental]\n  [Bridge]\n  [Solo]\n  [Outro]\n* Every tag MUST appear alone on its own line.\n* Do NOT put descriptions, instruments, timestamps, comments, dynamics, production instructions, or any other text inside [Lyrics].\n* All musical development belongs in [Caption], especially Arrangement.\n* [Solo] should only be used when an actual featured instrumental solo is musically appropriate.\n* Do NOT use vocal-oriented tags such as [Verse], [Pre-Chorus], [Chorus], or [Post-Chorus] for a pure instrumental.\n* Vocal Details in [Caption] must be exactly:\n  n/a\n* Do NOT leave [Lyrics] empty. For instrumental music it acts as a macro-structure map.\n\nCRITICAL STRUCTURE RULE FOR INSTRUMENTALS:\n\nInstrumental tracks should normally contain ABOUT TWICE AS MANY structural sections as comparable tracks with lyrics. This is deliberate because MiniMax Music 3 tends to terminate instrumental pieces too early when the structural map is too short.\n\nRepeated [Instrumental] tags are intentional. Their different musical functions must be explained chronologically in Arrangement so that they represent evolving stages rather than repetition.\n\nAdapt the sequence to the genre:\n\n* Ambient / chillout: many evolving [Instrumental] sections with few or no [Solo] sections.\n* Progressive House / EDM: successive [Instrumental] sections for intro, groove establishment, motif introduction, build, expansion, breakdown, rebuild, climax, release, and outro.\n* Jazz: multiple [Instrumental] and appropriate [Solo] sections.\n* Cinematic / electronic: successive [Instrumental] sections representing clearly different dramatic or textural phases.\n\nNever place [Outro] prematurely.\n\n### B. VOCAL SONG\n\nIf vocals are requested:\n\n* Generate complete ORIGINAL lyrics unless the user explicitly supplied lyrics that should be preserved.\n* Use only these supported section tags:\n  [Intro]\n  [Verse]\n  [Pre-Chorus]\n  [Chorus]\n  [Post-Chorus]\n  [Bridge]\n  [Instrumental]\n  [Solo]\n  [Outro]\n* Every section tag MUST be alone on its own line.\n* Never place lyric words on the same line as a section tag.\n* Never place production instructions, BPM, instruments, dynamics, timestamps, or arrangement notes inside [Lyrics].\n* Match language, theme, perspective, vocabulary, rhyme density, phrasing, and emotional intensity to the requested genre.\n* Do not mechanically force a pop structure onto genres where another structure is more appropriate.\n* Avoid overly dense lyrics when the music benefits from space.\n* Avoid extremely short lyrics for a long requested duration.\n\nLYRIC QUALITY RULE:\n\nBe highly imaginative and deliberate when writing lyrics. Before writing them, infer the song's emotional world, narrative perspective, imagery, and stylistic language from the completed Caption.\n\nCreate lyrics that feel written specifically for THIS song rather than generic filler. Prefer concrete images, distinctive phrases, a coherent central idea, memorable hooks, natural singable rhythm, and emotionally consistent language. Use repetition only when it serves the genre or hook.\n\nAvoid generic AI-style lyric clichés, empty motivational phrases, forced rhymes, random metaphors, unnecessary abstraction, and lines that could fit almost any song.\n\nFor German lyrics, be especially careful with pronunciation and ambiguous isolated words that may be interpreted as English. Prefer clear German phrasing and context when a word could otherwise be pronounced incorrectly.\n\n### C. MOSTLY INSTRUMENTAL WITH SPARSE VOCALS\n\nIf the user requests mostly instrumental music with only some vocals:\n\n* Make instrumental sections clearly dominant.\n* Use actual lyric text only in the intended vocal sections.\n* Surround vocal passages with several [Instrumental] and/or [Solo] sections.\n* Keep the amount of sung text intentionally limited.\n* Do not accidentally turn the track into a conventional vocal song.\n* Use enough total sections to support the requested duration; structurally this should sit closer to an instrumental track than to a normal vocal song.\n\n### D. USER-PROVIDED LYRICS\n\nIf the user supplies lyrics:\n\n* Preserve their meaning and wording unless rewriting is explicitly requested.\n* Add or improve supported section tags when necessary.\n* Organize them into a structure appropriate for the requested duration and genre.\n* If the supplied lyrics are too short for the requested duration, compensate primarily with suitable [Instrumental] and [Solo] sections rather than inventing unrelated lyrical material.\n* Never place musical directions inside [Lyrics].\n\n---\n\n## 2. DURATION AND STRUCTURE CONTROL\n\nTreat requested duration as an important compositional target.\n\nHard rule: no song may exceed 5:00 minutes. 5:00 is the absolute maximum; never plan sections beyond it, and scale shorter requests (under 1 minute up to 4:30) down accordingly.\n\nMiniMax Music 3 may terminate early if the structural input is too short. Therefore NEVER create an overly minimal section map for a long-form song.\n\nUse these approximate ranges as guidance:\n\n### Under 1 minute\nWith Lyrics: approximately 3–5 meaningful sections.\nInstrumental: approximately 6–10 meaningful sections.\n\n### 1:00–2:30\nWith Lyrics: approximately 5–8 meaningful sections.\nInstrumental: approximately 10–16 meaningful sections.\n\n### 2:30–3:30\nWith Lyrics: approximately 7–10 meaningful sections.\nInstrumental: approximately 14–20 meaningful sections.\n\n### 3:30–4:30\nWith Lyrics: approximately 9–13 meaningful sections.\nInstrumental: approximately 18–26 meaningful sections.\n\n### 4:30–5:00\nWith Lyrics: approximately 11–15 meaningful sections.\nInstrumental: approximately 22–30 meaningful sections.\n\nThese are guidelines, not rigid formulas, but the roughly 2:1 instrumental-to-vocal section ratio is an important default.\n\nFor long instrumental tracks, repeated [Instrumental] tags MUST correspond to different musical functions in Arrangement, for example:\n\n* establish pulse or atmosphere\n* introduce the signature motif\n* expand harmony\n* add rhythmic detail\n* create contrast\n* strip down into a breakdown\n* rebuild energy\n* introduce a transformed motif\n* reach the principal climax late in the song\n* release tension\n* resolve into the outro\n\nDo not put those explanations inside [Lyrics].\n\n---\n\n## 3. MINIMAX-ROBUST SONIC DESIGN / ARTIFACT AVOIDANCE\n\nWhen translating the user's request into [Caption], favor sound choices that MiniMax Music 3 can render cleanly and distinctly. Preserve the requested genre and mood, but proactively avoid combinations that are likely to become smeared, metallic, phasey, harsh, or indistinct.\n\nUnless the user explicitly requires otherwise, apply the following production-safety rules:\n\n### HIGH-FREQUENCY AND METALLIC SOUNDS\n\n* Avoid long sustained bright metallic sounds with dense upper harmonics.\n* Avoid long crash-cymbal washes, sustained rides, splashy cymbal beds, ringing bells, gongs, chimes, metallic drones, and metallic FX with very long decay.\n* Avoid continuous open-hi-hat wash or dense high-frequency percussion running without space.\n* If cymbals, hi-hats, rides, metallic percussion, bells, or similar sounds are genre-appropriate, prefer SHORTER, DRIER, MORE ACCENTED hits with controlled decay and clear transient definition.\n* Prefer sparse accents over continuous metallic layers.\n* Prefer slightly darker or warmer metallic timbres rather than extremely bright, broadband, sizzling ones.\n* Do not stack several bright metallic elements at the same time.\n\n### REVERB, DELAY, AND HIGH-FREQUENCY SMEAR\n\n* Avoid very long bright reverb or shimmer-reverb tails on cymbals, hi-hats, percussion, vocals, and bright leads.\n* Avoid excessive high-frequency delay feedback that creates a continuous sparkling or metallic cloud.\n* Prefer controlled, shorter, darker reverbs with clear separation between direct sound and ambience.\n* Preserve depth and atmosphere through selective space, pre-delay, room contrast, and evolving layers rather than simply adding very long reverb to everything.\n* Avoid stacking multiple large reverbs, choruses, flangers, and delays over the same frequency range.\n* Avoid extreme stereo widening or decorrelation in the highest frequencies; keep the top end stable and focused.\n\n### PADS, TEXTURES, AND \"WASHY\" MIXES\n\n* Avoid static, dense, broadband pad carpets that occupy the whole stereo field for long periods.\n* Avoid many sustained pads, drones, strings, noise beds, and reverberant layers playing simultaneously with similar timbre and envelope.\n* For atmospheric music, use FEWER clearly differentiated layers that evolve over time, with defined harmonic roles, controlled attack/release, and space between them.\n* Prefer changing texture, register, motif, filtering, or orchestration over adding more layers on top of an already dense texture.\n* Do not describe the mix as a continuous \"wall of sound\" unless the user explicitly requests that aesthetic.\n* Avoid excessive low-mid accumulation from overlapping pads, bass, strings, and reverb. Keep bass and low-mid foundations defined.\n\n### NOISE, TRANSIENT DENSITY, AND HARSHNESS\n\n* Avoid sustained broadband hiss/noise as a dominant layer. Tape noise or environmental texture may be subtle, short, and secondary.\n* Avoid constant bright noise sweeps, white-noise risers, or high-frequency FX beds throughout the track; use them sparingly as transitions.\n* Avoid simultaneously combining dense fast arpeggios, bright percussion, noise sweeps, and long reverbs in the same upper-frequency region.\n* Avoid harsh sibilant vocal production, excessive breathy \"air\", and many layered whispers if they would create a persistent noisy high-frequency bed.\n\n### DYNAMICS AND DISTORTION\n\n* Do not request intentional hard clipping, crushed brick-wall mastering, or excessive full-mix saturation unless explicitly required by the user's genre concept.\n* Prefer clean transient definition, controlled peaks, and reasonable headroom.\n* Distortion may be used creatively on individual instruments when appropriate, but avoid turning the entire mix into a continuously overloaded broadband texture.\n\n### MUSICAL HIERARCHY\n\n* Maintain a clear foreground/background hierarchy. At any moment there should normally be one or two primary focal elements rather than many equally loud competing layers.\n* Make transitions through arrangement changes, motif transformation, dynamics, filtering, and instrumentation rather than simply increasing density and reverb.\n* Keep signature melodies, riffs, hooks, and important instrumental attacks clearly distinguishable from ambience.\n\nIf the user's requested genre normally relies on cymbals, metallic percussion, large ambience, or lush pads, DO NOT remove those characteristics completely. Reinterpret them in a safer form: shorter decay, fewer simultaneous layers, darker ambience, clearer attacks, better spacing, and more controlled high-frequency energy.\n\n---\n\n## 4. MUSICAL PLANNING\n\nBefore outputting the final answer, silently plan the song. Do NOT reveal this analysis.\n\n### STYLE / GENRE DECONSTRUCTION\n\nIdentify:\n\n* signature sound\n* musical era\n* production style\n* rhythmic language\n* harmonic language\n* typical arrangement\n* melodic characteristics\n* appropriate instrumentation\n\nIf the user references artists, composers, or tracks, infer relevant musical characteristics rather than merely repeating names.\n\n### TECHNICAL DETAILS\n\nDetermine:\n\n* BPM\n* key\n* scale\n* approximate duration\n* rhythmic feel\n* overall dynamic range\n\nUse user-specified values when present; otherwise choose musically appropriate values.\n\n### VOCAL PROFILE\n\nIf instrumental, Vocal Details must be exactly:\n\nn/a\n\nIf vocals are requested, determine:\n\n* gender if requested or stylistically appropriate\n* vocal range\n* timbre\n* delivery\n* intimacy/intensity\n* harmonies and backing vocals\n* relevant vocal processing\n\n### NARRATIVE / EMOTIONAL MAPPING\n\nIf the user provides a story, scene, emotional journey, or thematic premise, map it into:\n\n* opening\n* initial development\n* tension or expansion\n* contrast / breakdown\n* rebuild\n* principal climax\n* resolution\n\n### ARRANGEMENT DECONSTRUCTION\n\nSeparate the musical elements into:\n\nPrimary: main melody, lead instruments, signature riffs and motifs.\nSecondary: harmony, supporting instruments, counter-melodies.\nGroove: drums, percussion, bass, rhythmic foundation.\nEmbellishments: atmosphere, transitions, ear candy, FX, spatial elements.\n\nCreate a chronological evolution rather than a static list of instruments.\n\nExplicitly decide:\n\n* what enters and when\n* what disappears\n* what becomes stronger or softer\n* where the main motif first appears\n* where it returns or transforms\n* where harmony expands\n* where rhythm changes\n* where breakdowns occur\n* where solos occur\n* where the principal climax occurs\n* how the track resolves\n\nFor long-form songs, the main climax should normally happen relatively late rather than immediately after the intro.\n\n---\n\n## 5. [Caption] RULES\n\n[Caption] is created FIRST.\n\nIt must use EXACTLY these three main headings, in this order:\n\nGlobal Metadata\n\nVocal Details\n\nArrangement\n\nDo not add other main headings inside [Caption].\n\nAim for approximately 250–450 words unless the request genuinely requires more detail.\n\nBe precise, musical, chronological, and internally consistent. Avoid contradictory instructions and unnecessary technical mastering jargon.\n\nUse professional terminology, but focus on audible musical behavior rather than abstract production buzzwords.\n\nThe Caption must actively incorporate the MiniMax-robust sonic-design rules above. Do not merely append a generic warning; make safer sound choices part of the actual arrangement and production description.\n\nRequired Caption structure:\n\nGlobal Metadata\n\nBasic Attributes: bpm is [Number]. key is [Key], and scale is [Scale]. [Primary Genre] / [Sub-genre].\n\nGlobal Emotional Progression: describe the complete emotional arc and where the principal climax and resolution occur.\n\nApplication Scenarios & Imagery: describe the visual or situational world evoked by the music.\n\nSonics & Production Profile: describe tonal balance, soundstage, depth, dynamics, stereo character, ambience, transient character, and artifact-resistant production choices appropriate to the genre.\n\nVocal Details\n\nIf instrumental, write EXACTLY:\nn/a\n\nOtherwise describe vocal timbre, range, delivery, emotional intensity, harmonies/backing vocals, and relevant processing.\n\nArrangement\n\nInstrument Lifecycle Description (Primary/Secondary Layering):\n\nPrimary: describe the main melodic instruments and motifs, including when the signature motif appears, disappears, transforms, returns, and reaches its strongest form.\n\nSecondary: describe supporting harmony, counter-melodies, pads/textures, and how density changes over time.\n\nGroove & Foundation Progression: describe chronologically how drums, percussion, bass, and rhythmic energy evolve.\n\nEmbellishments, Textures & Spatial FX: describe ambience, transitions, delays, reverbs, environmental textures, and ear candy while obeying the artifact-avoidance rules above.\n\nSection-by-Section Development: describe the chronological musical function of every section that will appear in [Lyrics]. Repeated [Instrumental] sections must have clearly different functions.\n\nDo not place actual lyric lines inside [Caption].\n\n---\n\n## 6. [Lyrics] RULES\n\nCreate [Lyrics] SECOND, after [Caption].\n\nThe Lyrics section must implement the structure planned by Caption.\n\nFor vocal songs, write imaginative, coherent, singable lyrics matching the music's style, mood, language, narrative, and rhythmic feel.\n\nFor pure instrumentals, output ONLY structural tags and approximately twice as many sections as a comparable vocal song.\n\nEvery structural tag must appear alone on its own line.\n\nDo not put musical instructions in [Lyrics].\n\n---\n\n## 7. [Title] RULES\n\nCreate [Title] THIRD, only after [Caption] and [Lyrics] are complete.\n\nThe Title MUST be based on the completed Caption and Lyrics, not on the original user prompt alone.\n\nChoose a short, distinctive, appealing title that captures the strongest concept, image, emotional tension, story idea, or memorable lyrical motif of the finished song.\n\nAvoid trivial or generic AI-style titles. Avoid overused combinations built around words such as \"Neon\", \"Echoes\", \"Horizon\", \"Midnight\", \"Dreams\", \"Shadows\", or \"Drift\" unless one of those words is genuinely central to this specific song.\n\nDo not add quotation marks unless they are naturally part of the title.\n\nOutput only the title text underneath [Title].\n\n---\n\n## 8. [Image_Prompt] RULES\n\nCreate [Image_Prompt] FOURTH and last, using the completed Caption, Lyrics, and Title as semantic inspiration.\n\nIt is intended directly for Flux 2 and must be ONE positive-only prompt for a square album cover.\n\nThe visual concept should be concrete, distinctive, and eye-catching rather than generic. Describe a coherent scene, object, environment, lighting, color atmosphere, depth, composition, and visual style where useful.\n\nDo NOT depict musical instruments, studio equipment, headphones, speakers, waveforms, DJ decks, or other music-production equipment. The artwork should communicate the song through an original visual concept rather than literal music imagery.\n\nThe cover must not depend on readable signs, posters, screens, book pages, newspapers, license plates, labels, or clothing with lettering.\n\nUse the Title only as semantic inspiration. NEVER ask Flux 2 to render or display the Title.\n\nDo NOT create a separate negative prompt.\n\nThe [Image_Prompt] must explicitly end with:\n\nNo text, no letters, no words, no numbers, no digits, no symbols, no typography, no logo, no watermark, no signature, no captions, no labels, no signage, no written characters.\n\n---\n\n## 9. FINAL OUTPUT FORMAT\n\nOutput ONLY these four top-level sections in this EXACT order, each section header EXACTLY once:\n\nCRITICAL OUTPUT RULES:\n\n* Never write ANY text outside the four sections - no introductions, explanations, analysis, planning, notes, drafts, reminders, self-checks, or commentary of any kind.\n* Never repeat a section header. Write each section once, completely, the first time.\n* Never mention these rules, the token limit, word counts, or any instruction inside your answer.\n* Everything you write in [Caption] and [Lyrics] must be actual production content, never meta-commentary about the content.\n\n[Caption]\n\nGlobal Metadata\n\nBasic Attributes: bpm is [Number]. key is [Key], and scale is [Scale]. [Primary Genre] / [Sub-genre].\n\nGlobal Emotional Progression: [complete emotional arc]\n\nApplication Scenarios & Imagery: [evoked scenes and contexts]\n\nSonics & Production Profile: [production and sonic profile including artifact-resistant choices]\n\nVocal Details\n\n[n/a for instrumental, otherwise vocal description]\n\nArrangement\n\nInstrument Lifecycle Description (Primary/Secondary Layering):\n\nPrimary: [chronological primary instruments and motifs]\n\nSecondary: [chronological supporting layers]\n\nGroove & Foundation Progression: [chronological rhythm/bass development]\n\nEmbellishments, Textures & Spatial FX: [controlled ambience, transitions and FX]\n\nSection-by-Section Development: [chronological development corresponding directly to Lyrics]\n\n[Lyrics]\n\n[Complete lyrics or instrumental-only structural section map]\n\n[Title]\n\n[One short final title derived from Caption and Lyrics]\n\n[Image_Prompt]\n\n[One complete positive-only square album-cover prompt ending with the required text-free prohibition]\n\nDo not include introductions, explanations, analysis, planning, commentary, Markdown code fences, or conclusions outside these four sections.\n\n---\n\n## 10. FINAL SELF-CHECK\n\nYou may use internal reasoning tags if helpful, but keep them brief (roughly under 200 words) so they never crowd out the actual answer.\n\nPerform ALL of the following checks INSIDE your reasoning only. Never output any check, note, reminder or intermediate draft - the final answer must contain nothing but the four completed sections:\n\n* The output order is exactly [Caption] -> [Lyrics] -> [Title] -> [Image_Prompt].\n* Each section header appears exactly once.\n* Caption was conceptually developed before Lyrics.\n* Title was created only after Caption and Lyrics and is clearly derived from them.\n* Image_Prompt was created after the Title and reflects the completed song concept.\n* [Caption] contains exactly the three main headings Global Metadata, Vocal Details, Arrangement.\n* Only supported MiniMax section tags are used in [Lyrics].\n* Every section tag appears alone on its own line.\n* No musical instructions appear inside [Lyrics].\n* Pure instrumental requests contain ZERO lyric words or vocalizations.\n* Instrumental Vocal Details equals exactly \"n/a\".\n* Instrumental tracks use roughly twice as many sections as comparable vocal tracks unless musical logic strongly requires otherwise.\n* The section map is long enough for the requested duration and [Outro] does not appear prematurely.\n* Arrangement follows the Lyrics section sequence chronologically.\n* Repeated instrumental sections have different musical functions.\n* The song develops over time rather than remaining static.\n* The principal climax occurs at an appropriate late point.\n* Lyrics are imaginative, coherent, stylistically appropriate, and not generic filler.\n* Long bright metallic tails, sustained cymbal wash, excessive high-frequency reverb, dense pad carpets, broadband noise beds, and other smear-prone combinations have been avoided or converted into shorter, darker, sparser, more controlled alternatives.\n* The mix concept maintains clear musical hierarchy, defined transients, and controlled ambience.\n* User requirements and exclusions are preserved.\n* [Image_Prompt] is one positive-only prompt with no negative prompt.\n* [Image_Prompt] does not ask for any written content.\n* [Image_Prompt] ends with the explicit prohibition against text, letters, words, numbers, symbols, logos, watermarks, labels, signage, and other written characters.\n* The answer contains nothing except [Caption], [Lyrics], [Title], and [Image_Prompt].\n* The combined Caption + Lyrics stays compact enough for the MiniMax Music 3 text encoder's 5000-token hard limit (roughly: Lyrics up to ~55 lines).",
+          "multiline": true
+        }
+      ],
+      "source_name_override": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {
+      "user_prompt_source": [
+        [
+          "manual",
+          "bundled_library",
+          "external_directory"
+        ],
+        {
+          "default": "manual"
+        }
+      ],
+      "user_prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "user_prompt_file": [
+        [
+          "<select a prompt>",
+          "african/afrobeat-classic-instrumental.txt",
+          "african/afrobeats-vocal.txt",
+          "african/amapiano-instrumental.txt",
+          "african/desert-blues-vocal.txt",
+          "african/ethio-jazz-instrumental.txt",
+          "african/gqom-instrumental.txt",
+          "african/highlife-instrumental.txt",
+          "african/soukous-instrumental.txt",
+          "alternative/alternative-rock-vocal.txt",
+          "alternative/britpop-vocal.txt",
+          "alternative/new-wave-vocal.txt",
+          "alternative/uk-garage-vocal.txt",
+          "ambient/ambient-choir-vocalise.txt",
+          "ambient/ambient-guitar.txt",
+          "ambient/chillout-pads-strings.txt",
+          "ambient/dark-ambient-drone.txt",
+          "asian/anime-opening-vocal.txt",
+          "asian/bollywood-vocal.txt",
+          "asian/chinese-traditional-instrumental.txt",
+          "asian/city-pop-vocal.txt",
+          "asian/enka-vocal.txt",
+          "asian/game-jrpg-orchestral.txt",
+          "asian/indian-classical-instrumental.txt",
+          "asian/kpop-vocal.txt",
+          "asian/mandopop-ballad-vocal.txt",
+          "blues/blues-ballad-vocal.txt",
+          "blues/boogie-woogie-instrumental.txt",
+          "blues/chicago-blues-vocal.txt",
+          "blues/delta-blues-vocal.txt",
+          "blues/electric-blues-instrumental.txt",
+          "cinematic/corporate-uplifting-instrumental.txt",
+          "cinematic/documentary-underscore-instrumental.txt",
+          "cinematic/emotional-piano-underscore.txt",
+          "cinematic/epic-trailer-instrumental.txt",
+          "cinematic/fantasy-adventure-orchestral.txt",
+          "cinematic/horror-suspense-instrumental.txt",
+          "cinematic/orchestral-action-instrumental.txt",
+          "cinematic/sports-stadium-anthem.txt",
+          "classical/baroque-concerto-instrumental.txt",
+          "classical/cello-and-piano.txt",
+          "classical/choral-sacred-vocal.txt",
+          "classical/cinematic-romance.txt",
+          "classical/gregorian-chant-vocal.txt",
+          "classical/impressionist-piano-instrumental.txt",
+          "classical/minimalism-instrumental.txt",
+          "classical/mystical-neoclassical.txt",
+          "classical/neoclassical-piano.txt",
+          "classical/opera-aria-vocal.txt",
+          "classical/piano-and-strings.txt",
+          "classical/romantic-string-ensemble.txt",
+          "classical/string-quartet-instrumental.txt",
+          "classical/symphonic-orchestral-instrumental.txt",
+          "comedy/comedy-rap-vocal.txt",
+          "comedy/english-parody-pop-vocal.txt",
+          "comedy/german-absurd-novelty.txt",
+          "country/americana-vocal.txt",
+          "country/bluegrass-instrumental.txt",
+          "country/country-ballad-vocal.txt",
+          "country/honky-tonk-vocal.txt",
+          "country/modern-country-pop-vocal.txt",
+          "country/outlaw-country-vocal.txt",
+          "disco/classic-disco-vocal.txt",
+          "disco/italo-disco-vocal.txt",
+          "edm/big-room-festival-instrumental.txt",
+          "edm/breakbeat-instrumental.txt",
+          "edm/dance-anthem-instrumental.txt",
+          "edm/drum-and-bass-instrumental.txt",
+          "edm/dubstep-instrumental.txt",
+          "edm/eurodance-vocal.txt",
+          "edm/future-bass-vocal.txt",
+          "edm/future-rave-sparse-vocals.txt",
+          "edm/goa-trance-instrumental.txt",
+          "edm/hardgroove-techno-instrumental.txt",
+          "edm/hardstyle-instrumental.txt",
+          "edm/jungle-instrumental.txt",
+          "edm/liquid-drum-and-bass-sparse-vocals.txt",
+          "edm/melodic-techno-instrumental.txt",
+          "edm/neurofunk-dnb-instrumental.txt",
+          "edm/progressive-trance-instrumental.txt",
+          "edm/psytrance-instrumental.txt",
+          "edm/uplifting-trance-instrumental.txt",
+          "electronic/analog-space-electronic.txt",
+          "electronic/berlin-school-sequencer.txt",
+          "electronic/chiptune-instrumental.txt",
+          "electronic/cinematic-electronica.txt",
+          "electronic/downtempo-electronica.txt",
+          "electronic/ebm-darkwave-vocal.txt",
+          "electronic/electro-swing-vocal.txt",
+          "electronic/idm-experimental-instrumental.txt",
+          "electronic/lofi-hiphop-instrumental.txt",
+          "electronic/minimal-electronic-german-vocals.txt",
+          "electronic/peak-time-techno-sparse-vocals.txt",
+          "electronic/synth-pop-vocal.txt",
+          "electronic/synthwave.txt",
+          "electronic/trip-hop.txt",
+          "electronic/vaporwave-instrumental.txt",
+          "european/alpine-volksmusik-instrumental.txt",
+          "european/balkan-brass-instrumental.txt",
+          "european/chanson-vocal.txt",
+          "european/fado-vocal.txt",
+          "european/flamenco-instrumental.txt",
+          "european/irish-pub-session-instrumental.txt",
+          "european/klezmer-instrumental.txt",
+          "european/polka-instrumental.txt",
+          "european/russian-folk-vocal.txt",
+          "european/schlager-vocal.txt",
+          "european/viennese-waltz-instrumental.txt",
+          "folk/appalachian-folk-instrumental.txt",
+          "folk/celtic-folk-vocal.txt",
+          "folk/dark-fairytale-folk-vocal.txt",
+          "folk/folk-punk-vocal.txt",
+          "folk/melancholic-folk-ballad-vocal.txt",
+          "folk/mystical-medieval-folk-vocal.txt",
+          "folk/nordic-folk-vocal.txt",
+          "folk/romantic-solo-guitar.txt",
+          "folk/sea-shanty-vocal.txt",
+          "funk/classic-funk-instrumental.txt",
+          "funk/nu-disco-funk.txt",
+          "gospel/contemporary-worship-vocal.txt",
+          "gospel/german-worship-vocal.txt",
+          "gospel/gospel-choir-vocal.txt",
+          "gospel/hymn-choir-vocal.txt",
+          "hiphop/boom-bap-hiphop-vocal.txt",
+          "hiphop/cloud-rap-vocal.txt",
+          "hiphop/drill-instrumental.txt",
+          "hiphop/german-rap-vocal.txt",
+          "hiphop/old-school-hiphop-vocal.txt",
+          "hiphop/phonk-instrumental.txt",
+          "hiphop/rnb-vocal.txt",
+          "hiphop/trap-instrumental.txt",
+          "house/acid-house-instrumental.txt",
+          "house/afro-house-vocal.txt",
+          "house/bass-house-instrumental.txt",
+          "house/deep-house.txt",
+          "house/disco-house-vocal.txt",
+          "house/electro-house-instrumental.txt",
+          "house/french-house-instrumental.txt",
+          "house/melodic-house.txt",
+          "house/organic-house.txt",
+          "house/progressive-house-dreamy-bittersweet.txt",
+          "house/progressive-house-melodic-trance.txt",
+          "house/progressive-house-sparse-vocals.txt",
+          "house/tech-house-instrumental.txt",
+          "jazz/bebop-instrumental.txt",
+          "jazz/cool-jazz-instrumental.txt",
+          "jazz/dixieland-instrumental.txt",
+          "jazz/gypsy-jazz-instrumental.txt",
+          "jazz/jazz-funk.txt",
+          "jazz/smooth-jazz-instrumental.txt",
+          "jazz/smooth-jazz-vocal-late-night.txt",
+          "jazz/smooth-jazz-vocal-positive-resolution.txt",
+          "jazz/swing-big-band-instrumental.txt",
+          "jazz/vocal-jazz-crooner.txt",
+          "kids/children-song-vocal.txt",
+          "kids/kids-adventure-song-vocal.txt",
+          "kids/lullaby-vocal.txt",
+          "kids/nursery-rhyme-german-vocal.txt",
+          "latin/bachata-vocal.txt",
+          "latin/bossa-nova-vocal.txt",
+          "latin/cumbia-instrumental.txt",
+          "latin/merengue-instrumental.txt",
+          "latin/norteno-corrido-vocal.txt",
+          "latin/reggaeton-vocal.txt",
+          "latin/salsa-vocal.txt",
+          "latin/samba-instrumental.txt",
+          "latin/son-cubano-vocal.txt",
+          "latin/tango-instrumental.txt",
+          "meditation/focus-study-instrumental.txt",
+          "meditation/meditation-healing-instrumental.txt",
+          "meditation/nature-soundscape-instrumental.txt",
+          "meditation/sleep-music-instrumental.txt",
+          "metal/black-metal-instrumental.txt",
+          "metal/death-metal-vocal.txt",
+          "metal/doom-metal-instrumental.txt",
+          "metal/folk-metal-vocal.txt",
+          "metal/grunge-vocal.txt",
+          "metal/heavy-metal-vocal.txt",
+          "metal/industrial-metal-vocal.txt",
+          "metal/melodic-metal-instrumental.txt",
+          "metal/metalcore-vocal.txt",
+          "metal/nu-metal-vocal.txt",
+          "metal/power-metal-vocal.txt",
+          "metal/progressive-djent-instrumental.txt",
+          "metal/sludge-post-metal-instrumental.txt",
+          "metal/symphonic-metal-vocal.txt",
+          "metal/thrash-metal-vocal.txt",
+          "musical/broadway-ballad-vocal.txt",
+          "musical/german-musical-vocal.txt",
+          "musical/musical-theatre-ensemble-vocal.txt",
+          "pop/art-pop-vocal.txt",
+          "pop/bedroom-pop-vocal.txt",
+          "pop/dance-pop-vocal.txt",
+          "pop/dream-pop-electronic-vocal.txt",
+          "pop/german-pop-vocal.txt",
+          "pop/hyperpop-vocal.txt",
+          "pop/indie-pop-vocal.txt",
+          "pop/power-ballad-vocal.txt",
+          "pop/singer-songwriter-acoustic-vocal.txt",
+          "punk/pop-punk-vocal.txt",
+          "punk/post-punk-vocal.txt",
+          "punk/punk-rock-vocal.txt",
+          "punk/ska-punk-vocal.txt",
+          "reggae/dancehall-vocal.txt",
+          "reggae/dub-instrumental.txt",
+          "reggae/rocksteady-vocal.txt",
+          "reggae/roots-reggae-vocal.txt",
+          "reggae/ska-jamaican-instrumental.txt",
+          "rock/blues-rock-instrumental.txt",
+          "rock/classic-rock-vocal.txt",
+          "rock/garage-rock-vocal.txt",
+          "rock/hard-rock-vocal.txt",
+          "rock/indie-rock-vocal.txt",
+          "rock/post-rock-instrumental.txt",
+          "rock/progressive-rock-instrumental.txt",
+          "rock/psychedelic-rock-instrumental.txt",
+          "rock/rockabilly-vocal.txt",
+          "rock/shoegaze-vocal.txt",
+          "rock/southern-rock-vocal.txt",
+          "rock/stoner-rock-instrumental.txt",
+          "rock/surf-rock-instrumental.txt",
+          "seasonal/christmas-carol-vocal.txt",
+          "seasonal/christmas-pop-vocal.txt",
+          "seasonal/german-christmas-vocal.txt",
+          "seasonal/wedding-ceremony-instrumental.txt",
+          "soul/doo-wop-vocal.txt",
+          "soul/motown-soul-vocal.txt",
+          "soul/neo-soul-vocal.txt",
+          "soul/soul-ballad-vocal.txt",
+          "world/andean-folk-instrumental.txt",
+          "world/arabic-pop-vocal.txt",
+          "world/bhangra-instrumental.txt",
+          "world/calypso-soca-vocal.txt",
+          "world/gamelan-instrumental.txt",
+          "world/gnawa-instrumental.txt",
+          "world/hawaiian-slack-key-instrumental.txt",
+          "world/mariachi-vocal.txt",
+          "world/mongolian-throat-singing-instrumental.txt",
+          "world/qawwali-vocal.txt",
+          "world/turkish-folk-instrumental.txt"
+        ],
+        {
+          "default": "<select a prompt>"
+        }
+      ],
+      "system_prompt_source": [
+        [
+          "manual",
+          "bundled_library",
+          "external_directory"
+        ],
+        {
+          "default": "manual"
+        }
+      ],
+      "system_prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "system_prompt_file": [
+        [
+          "<select a prompt>",
+          "minimax-music3-cinematic.txt",
+          "minimax-music3-compact-core.txt",
+          "minimax-music3-concise.txt",
+          "minimax-music3-dance-energy.txt",
+          "minimax-music3-emotional-story.txt",
+          "minimax-music3-fantasy.txt",
+          "minimax-music3-fast-tempo.txt",
+          "minimax-music3-genre-faithful.txt",
+          "minimax-music3-instrumental-first.txt",
+          "minimax-music3-lyrics-first.txt",
+          "minimax-music3-minimal-sparse.txt",
+          "minimax-music3-production.txt"
+        ],
+        {
+          "default": "<select a prompt>"
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxLLMUnload": {
+    "python_class": "MiniMaxLLMUnload",
+    "category": "MiniMax Music Production Toolkit/llm",
+    "function": "unload",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "*",
+      "INT"
+    ],
+    "return_names": [
+      "trigger",
+      "released_count"
+    ],
+    "required": {
+      "trigger": [
+        "*",
+        {
+          "forceInput": true
+        }
+      ],
+      "unload_now": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "unload_flashsr": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxMasteringCompressor": {
+    "python_class": "MiniMaxMasteringCompressor",
+    "category": "MiniMax Music Production Toolkit/mastering",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "mastering_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "bypass": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "target_lufs": [
+        "FLOAT",
+        {
+          "default": -14,
+          "min": -30,
+          "max": -5,
+          "step": 0.1
+        }
+      ],
+      "ceiling_dbtp": [
+        "FLOAT",
+        {
+          "default": -1,
+          "min": -12,
+          "max": -0.1,
+          "step": 0.1
+        }
+      ],
+      "target_sample_rate": [
+        [
+          "keep",
+          "44100",
+          "48000"
+        ],
+        {
+          "default": "keep"
+        }
+      ],
+      "compressor_enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "threshold_db": [
+        "FLOAT",
+        {
+          "default": -18,
+          "min": -60,
+          "max": 0,
+          "step": 0.1
+        }
+      ],
+      "ratio": [
+        "FLOAT",
+        {
+          "default": 1.5,
+          "min": 1,
+          "max": 10,
+          "step": 0.1
+        }
+      ],
+      "knee_db": [
+        "FLOAT",
+        {
+          "default": 6,
+          "min": 0,
+          "max": 24,
+          "step": 0.5
+        }
+      ],
+      "attack_ms": [
+        "FLOAT",
+        {
+          "default": 20,
+          "min": 1,
+          "max": 200
+        }
+      ],
+      "release_ms": [
+        "FLOAT",
+        {
+          "default": 150,
+          "min": 10,
+          "max": 2000
+        }
+      ],
+      "sidechain_hz": [
+        "FLOAT",
+        {
+          "default": 80,
+          "min": 0,
+          "max": 500
+        }
+      ],
+      "detector": [
+        [
+          "RMS",
+          "Peak"
+        ],
+        {
+          "default": "RMS"
+        }
+      ],
+      "input_gain_db": [
+        "FLOAT",
+        {
+          "default": 0,
+          "min": -24,
+          "max": 24,
+          "step": 0.1
+        }
+      ],
+      "max_makeup_db": [
+        "FLOAT",
+        {
+          "default": 18,
+          "min": 0,
+          "max": 24
+        }
+      ],
+      "max_limiter_reduction_db": [
+        "FLOAT",
+        {
+          "default": 6,
+          "min": 1,
+          "max": 18
+        }
+      ],
+      "lookahead_ms": [
+        "FLOAT",
+        {
+          "default": 3,
+          "min": 1,
+          "max": 5,
+          "step": 0.1
+        }
+      ],
+      "limiter_release_ms": [
+        "FLOAT",
+        {
+          "default": 100,
+          "min": 10,
+          "max": 1000
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxMetadataLoader": {
+    "python_class": "MiniMaxMetadataLoader",
+    "category": "MiniMax Music Production Toolkit/metadata",
+    "function": "load",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "FLOAT",
+      "INT",
+      "INT",
+      "FLOAT",
+      "INT",
+      "INT",
+      "INT",
+      "FLOAT",
+      "STRING",
+      "STRING",
+      "FLOAT",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "title",
+      "caption",
+      "lyrics",
+      "image_prompt",
+      "max_duration",
+      "generation_seed",
+      "text_seed",
+      "text_cfg_scale",
+      "text_top_k",
+      "ksampler_seed",
+      "ksampler_steps",
+      "ksampler_cfg",
+      "sampler_name",
+      "scheduler",
+      "denoise",
+      "pre_preset",
+      "post_preset",
+      "metadata_json"
+    ],
+    "required": {
+      "metadata_file": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxModelAutodownload": {
+    "python_class": "MiniMaxModelAutodownload",
+    "category": "MiniMax Music Production Toolkit/utilities",
+    "function": "check",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "report"
+    ],
+    "required": {
+      "minimax_models": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "flux2_models": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "flashsr_models": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "llm_model": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "auto_download": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxMusic3GenerationSettings": {
+    "python_class": "MiniMaxMusic3GenerationSettings",
+    "category": "MiniMax Music Production Toolkit/config",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "FLOAT",
+      "INT",
+      "FLOAT",
+      "INT",
+      "INT",
+      "INT",
+      "FLOAT",
+      "FLOAT"
+    ],
+    "return_names": [
+      "max_duration",
+      "text_seed",
+      "text_cfg_scale",
+      "text_top_k",
+      "ksampler_seed",
+      "ksampler_steps",
+      "ksampler_cfg",
+      "denoise"
+    ],
+    "required": {
+      "generation_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "max_duration": [
+        "FLOAT",
+        {
+          "default": 300.0,
+          "min": 1.0,
+          "max": 360.0,
+          "step": 1.0
+        }
+      ],
+      "text_cfg_scale": [
+        "FLOAT",
+        {
+          "default": 1.7,
+          "min": 0.0,
+          "max": 10.0,
+          "step": 0.05
+        }
+      ],
+      "text_top_k": [
+        "INT",
+        {
+          "default": 50,
+          "min": 1,
+          "max": 1000,
+          "step": 1
+        }
+      ],
+      "ksampler_seed_offset": [
+        "INT",
+        {
+          "default": 0,
+          "min": -1000000,
+          "max": 1000000,
+          "step": 1
+        }
+      ],
+      "ksampler_steps": [
+        "INT",
+        {
+          "default": 40,
+          "min": 1,
+          "max": 200,
+          "step": 1
+        }
+      ],
+      "ksampler_cfg": [
+        "FLOAT",
+        {
+          "default": 1.7,
+          "min": 0.0,
+          "max": 20.0,
+          "step": 0.05
+        }
+      ],
+      "denoise": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.01
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxOutputPaths": {
+    "python_class": "MiniMaxOutputPaths",
+    "category": "MiniMax Music Production Toolkit/batch",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "original_prefix",
+      "sr_flac_prefix",
+      "sr_mp3_prefix",
+      "artwork_prefix",
+      "configuration_prefix"
+    ],
+    "required": {
+      "source_name": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "base_output": [
+        "STRING",
+        {
+          "default": "audio_minimax3/%date:yyyy-MM-dd%/",
+          "multiline": false
+        }
+      ],
+      "original_subdir": [
+        "STRING",
+        {
+          "default": "org-32flac/",
+          "multiline": false
+        }
+      ],
+      "sr_flac_subdir": [
+        "STRING",
+        {
+          "default": "highres-44flac/",
+          "multiline": false
+        }
+      ],
+      "sr_mp3_subdir": [
+        "STRING",
+        {
+          "default": "highres-44mp3/",
+          "multiline": false
+        }
+      ],
+      "artwork_subdir": [
+        "STRING",
+        {
+          "default": "artwork/",
+          "multiline": false
+        }
+      ],
+      "configuration_subdir": [
+        "STRING",
+        {
+          "default": "log/",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {
+      "run_index": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "variant_count": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxParametricEQ": {
+    "python_class": "MiniMaxParametricEQ",
+    "category": "MiniMax Music Production Toolkit/mastering",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "eq_report_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "eq_settings_json": [
+        "STRING",
+        {
+          "default": "{\"schema\":\"minimax_eq_v1\",\"preamp_db\":0,\"bands\":[]}",
+          "multiline": true
+        }
+      ],
+      "bypass": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxParseExternalLLMOutputV16": {
+    "python_class": "MiniMaxParseExternalLLMOutputV16",
+    "category": "MiniMax Music Production Toolkit/prompts",
+    "function": "parse",
+    "output_node": false,
+    "output_is_list": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "INT",
+      "INT",
+      "INT",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "caption",
+      "lyrics",
+      "title",
+      "image_prompt",
+      "source_name",
+      "generation_seed",
+      "run_index",
+      "variant_count",
+      "source_path",
+      "prompt_origin",
+      "prompt_provenance_json"
+    ],
+    "required": {
+      "song_count": [
+        "INT",
+        {
+          "default": 1,
+          "min": 1,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "seed_mode": [
+        [
+          "random_each_song",
+          "increment_from_base"
+        ],
+        {
+          "default": "random_each_song"
+        }
+      ],
+      "base_seed": [
+        "INT",
+        {
+          "default": 1,
+          "min": 0,
+          "max": 9223372036854775806,
+          "step": 1
+        }
+      ],
+      "user_prompt": [
+        "STRING",
+        {
+          "default": "Instrumental Progressive House with melodic and subtle trance influences, highly atmospheric and spacious, driven by memorable signature motifs and distinctive recurring synth riffs. Emotional, smooth, modern, with strong progression and evolving layers. create a 4–5 minutes long melodic story in the track.",
+          "multiline": true
+        }
+      ],
+      "source_name_override": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "fallback_title": [
+        "STRING",
+        {
+          "default": "llm-song",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {
+      "structured_llm_output": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ],
+      "manual_caption": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "manual_lyrics": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "manual_title": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "manual_image_prompt": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "model_check_report": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "llm_status": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "max_prompt_tokens": [
+        "INT",
+        {
+          "default": 4500,
+          "min": 500,
+          "max": 4800,
+          "step": 50
+        }
+      ],
+      "trim_long_prompt": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxPromptBatchLoader": {
+    "python_class": "MiniMaxPromptBatchLoader",
+    "category": "MiniMax Music Production Toolkit/batch",
+    "function": "load",
+    "output_node": false,
+    "output_is_list": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "INT",
+      "INT",
+      "STRING"
+    ],
+    "return_names": [
+      "caption",
+      "lyrics",
+      "title",
+      "source_name",
+      "seed",
+      "run_index",
+      "source_path"
+    ],
+    "required": {
+      "mode": [
+        [
+          "folder",
+          "manual"
+        ],
+        {
+          "default": "folder"
+        }
+      ],
+      "prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "song_count": [
+        "INT",
+        {
+          "default": 1,
+          "min": 1,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "seed_mode": [
+        [
+          "random_each_song",
+          "increment_from_base"
+        ],
+        {
+          "default": "random_each_song"
+        }
+      ],
+      "base_seed": [
+        "INT",
+        {
+          "default": 1,
+          "min": 0,
+          "max": 9223372036854775806,
+          "step": 1
+        }
+      ],
+      "extensions": [
+        "STRING",
+        {
+          "default": ".txt,.prompt,.md",
+          "multiline": false
+        }
+      ],
+      "recursive": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "manual_title": [
+        "STRING",
+        {
+          "default": "manual-song",
+          "multiline": false
+        }
+      ],
+      "manual_caption": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "manual_lyrics": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxPromptReport": {
+    "python_class": "MiniMaxPromptReport",
+    "category": "MiniMax Music Production Toolkit/prompt",
+    "function": "report",
+    "output_node": true,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "markdown"
+    ],
+    "required": {
+      "caption": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ],
+      "lyrics": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ],
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "image_prompt": [
+        "STRING",
+        {
+          "forceInput": true,
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxPromptSourceArtworkV16": {
+    "python_class": "MiniMaxPromptSourceArtworkV16",
+    "category": "MiniMax Music Production Toolkit/batch",
+    "function": "load",
+    "output_node": false,
+    "output_is_list": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING",
+      "INT",
+      "INT",
+      "INT",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "caption",
+      "lyrics",
+      "title",
+      "image_prompt",
+      "source_name",
+      "generation_seed",
+      "run_index",
+      "variant_count",
+      "source_path",
+      "prompt_origin",
+      "prompt_provenance_json"
+    ],
+    "required": {
+      "source_mode": [
+        [
+          "folder",
+          "manual"
+        ],
+        {
+          "default": "manual"
+        }
+      ],
+      "song_count": [
+        "INT",
+        {
+          "default": 1,
+          "min": 1,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "seed_mode": [
+        [
+          "random_each_song",
+          "increment_from_base"
+        ],
+        {
+          "default": "random_each_song"
+        }
+      ],
+      "base_seed": [
+        "INT",
+        {
+          "default": 1,
+          "min": 0,
+          "max": 9223372036854775806,
+          "step": 1
+        }
+      ],
+      "prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "extensions": [
+        "STRING",
+        {
+          "default": ".txt,.prompt,.md",
+          "multiline": false
+        }
+      ],
+      "recursive": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "manual_title": [
+        "STRING",
+        {
+          "default": "manual-song",
+          "multiline": false
+        }
+      ],
+      "manual_caption": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "manual_lyrics": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "manual_image_prompt": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxSaveProductionJSON": {
+    "python_class": "MiniMaxSaveProductionJSON",
+    "category": "MiniMax Music Production Toolkit/save",
+    "function": "save",
+    "output_node": true,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "saved_path",
+      "configuration_json"
+    ],
+    "required": {
+      "configuration_prefix": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "audio_tags_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "original_audio_save_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "release_flac_save_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "release_mp3_save_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "artwork_path": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "collision_mode": [
+        [
+          "auto_increment",
+          "overwrite",
+          "error_if_exists"
+        ],
+        {
+          "default": "auto_increment"
+        }
+      ],
+      "filename_mode": [
+        [
+          "album - title",
+          "title only",
+          "prefix as provided"
+        ],
+        {
+          "default": "album - title"
+        }
+      ],
+      "create_directories": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {
+      "metadata_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_system_prompt": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_user_prompt": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_output": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_status": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_thinking": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "structured_summary_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "caption": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "lyrics": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "image_prompt": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "source_name": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "source_path": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "prompt_origin": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "prompt_provenance_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "generation_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "run_index": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "variant_count": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "max_duration": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_cfg_scale": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_top_k": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_steps": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_cfg": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "denoise": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "flashsr_settings_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "pre_preset": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "pre_settings_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "post_preset": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "post_settings_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "hybrid_crossover_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "hf_repair_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "declip_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "release_prep_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "workflow_name": [
+        "STRING",
+        {
+          "default": "MiniMax Music Production Toolkit 2.0.0",
+          "multiline": false
+        }
+      ],
+      "minimax_prompt_md": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "eq_report_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "auto_eq_analysis_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "mastering_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "resource_profile_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "llm_runtime_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "model_identity_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "template_version": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxSongMetadata": {
+    "python_class": "MiniMaxSongMetadata",
+    "category": "MiniMax Music Production Toolkit/metadata",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "metadata_json",
+      "summary"
+    ],
+    "required": {
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "caption": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "lyrics": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "image_prompt": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "source_name": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "source_path": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "prompt_origin": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "prompt_provenance_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "run_index": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "variant_count": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "generation_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "max_duration": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_cfg_scale": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "text_top_k": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_seed": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_steps": [
+        "INT",
+        {
+          "forceInput": true
+        }
+      ],
+      "ksampler_cfg": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "sampler_name": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "scheduler": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "denoise": [
+        "FLOAT",
+        {
+          "forceInput": true
+        }
+      ],
+      "pre_preset": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "pre_settings_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "post_preset": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "post_settings_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "flashsr_lowpass_input": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "workflow_name": [
+        "STRING",
+        {
+          "default": "MiniMax Music 3 – Reproducible Batch + External ComfyUI-LLM + FlashSR + Flux2",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {
+      "llm_system_prompt": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "release_prep_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "hybrid_crossover_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "hf_repair_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "declip_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxSquareImageSize": {
+    "python_class": "MiniMaxSquareImageSize",
+    "category": "MiniMax Music Production Toolkit/artwork",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "INT",
+      "INT"
+    ],
+    "return_names": [
+      "width",
+      "height"
+    ],
+    "required": {
+      "size_preset": [
+        [
+          "256x256",
+          "512x512",
+          "1024x1024",
+          "1536x1536",
+          "2048x2048",
+          "3072x3072",
+          "3096x3096",
+          "custom"
+        ],
+        {
+          "default": "512x512"
+        }
+      ],
+      "custom_size": [
+        "INT",
+        {
+          "default": 768,
+          "min": 64,
+          "max": 4096,
+          "step": 64
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxStandardAudioTags": {
+    "python_class": "MiniMaxStandardAudioTags",
+    "category": "MiniMax Music Production Toolkit/metadata",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "audio_tags_json"
+    ],
+    "required": {
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "artist": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "album": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "year": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "track": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "genre": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "comment": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "album_artist": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "composer": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MiniMaxStructuredPromptV20": {
+    "python_class": "MiniMaxStructuredPromptV20",
+    "category": "MiniMax Music Production Toolkit/prompts",
+    "function": "build",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "system_prompt",
+      "user_prompt",
+      "source_name",
+      "structured_summary_json"
+    ],
+    "required": {
+      "user_prompt_source": [
+        [
+          "manual",
+          "bundled_library",
+          "external_directory"
+        ],
+        {
+          "default": "bundled_library"
+        }
+      ],
+      "user_prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "user_prompt_file": [
+        [
+          "custom",
+          "<select a prompt>",
+          "african/afrobeat-classic-instrumental.txt",
+          "african/afrobeats-vocal.txt",
+          "african/amapiano-instrumental.txt",
+          "african/desert-blues-vocal.txt",
+          "african/ethio-jazz-instrumental.txt",
+          "african/gqom-instrumental.txt",
+          "african/highlife-instrumental.txt",
+          "african/soukous-instrumental.txt",
+          "alternative/alternative-rock-vocal.txt",
+          "alternative/britpop-vocal.txt",
+          "alternative/new-wave-vocal.txt",
+          "alternative/uk-garage-vocal.txt",
+          "ambient/ambient-choir-vocalise.txt",
+          "ambient/ambient-guitar.txt",
+          "ambient/chillout-pads-strings.txt",
+          "ambient/dark-ambient-drone.txt",
+          "asian/anime-opening-vocal.txt",
+          "asian/bollywood-vocal.txt",
+          "asian/chinese-traditional-instrumental.txt",
+          "asian/city-pop-vocal.txt",
+          "asian/enka-vocal.txt",
+          "asian/game-jrpg-orchestral.txt",
+          "asian/indian-classical-instrumental.txt",
+          "asian/kpop-vocal.txt",
+          "asian/mandopop-ballad-vocal.txt",
+          "blues/blues-ballad-vocal.txt",
+          "blues/boogie-woogie-instrumental.txt",
+          "blues/chicago-blues-vocal.txt",
+          "blues/delta-blues-vocal.txt",
+          "blues/electric-blues-instrumental.txt",
+          "cinematic/corporate-uplifting-instrumental.txt",
+          "cinematic/documentary-underscore-instrumental.txt",
+          "cinematic/emotional-piano-underscore.txt",
+          "cinematic/epic-trailer-instrumental.txt",
+          "cinematic/fantasy-adventure-orchestral.txt",
+          "cinematic/horror-suspense-instrumental.txt",
+          "cinematic/orchestral-action-instrumental.txt",
+          "cinematic/sports-stadium-anthem.txt",
+          "classical/baroque-concerto-instrumental.txt",
+          "classical/cello-and-piano.txt",
+          "classical/choral-sacred-vocal.txt",
+          "classical/cinematic-romance.txt",
+          "classical/gregorian-chant-vocal.txt",
+          "classical/impressionist-piano-instrumental.txt",
+          "classical/minimalism-instrumental.txt",
+          "classical/mystical-neoclassical.txt",
+          "classical/neoclassical-piano.txt",
+          "classical/opera-aria-vocal.txt",
+          "classical/piano-and-strings.txt",
+          "classical/romantic-string-ensemble.txt",
+          "classical/string-quartet-instrumental.txt",
+          "classical/symphonic-orchestral-instrumental.txt",
+          "comedy/comedy-rap-vocal.txt",
+          "comedy/english-parody-pop-vocal.txt",
+          "comedy/german-absurd-novelty.txt",
+          "country/americana-vocal.txt",
+          "country/bluegrass-instrumental.txt",
+          "country/country-ballad-vocal.txt",
+          "country/honky-tonk-vocal.txt",
+          "country/modern-country-pop-vocal.txt",
+          "country/outlaw-country-vocal.txt",
+          "disco/classic-disco-vocal.txt",
+          "disco/italo-disco-vocal.txt",
+          "edm/big-room-festival-instrumental.txt",
+          "edm/breakbeat-instrumental.txt",
+          "edm/dance-anthem-instrumental.txt",
+          "edm/drum-and-bass-instrumental.txt",
+          "edm/dubstep-instrumental.txt",
+          "edm/eurodance-vocal.txt",
+          "edm/future-bass-vocal.txt",
+          "edm/future-rave-sparse-vocals.txt",
+          "edm/goa-trance-instrumental.txt",
+          "edm/hardgroove-techno-instrumental.txt",
+          "edm/hardstyle-instrumental.txt",
+          "edm/jungle-instrumental.txt",
+          "edm/liquid-drum-and-bass-sparse-vocals.txt",
+          "edm/melodic-techno-instrumental.txt",
+          "edm/neurofunk-dnb-instrumental.txt",
+          "edm/progressive-trance-instrumental.txt",
+          "edm/psytrance-instrumental.txt",
+          "edm/uplifting-trance-instrumental.txt",
+          "electronic/analog-space-electronic.txt",
+          "electronic/berlin-school-sequencer.txt",
+          "electronic/chiptune-instrumental.txt",
+          "electronic/cinematic-electronica.txt",
+          "electronic/downtempo-electronica.txt",
+          "electronic/ebm-darkwave-vocal.txt",
+          "electronic/electro-swing-vocal.txt",
+          "electronic/idm-experimental-instrumental.txt",
+          "electronic/lofi-hiphop-instrumental.txt",
+          "electronic/minimal-electronic-german-vocals.txt",
+          "electronic/peak-time-techno-sparse-vocals.txt",
+          "electronic/synth-pop-vocal.txt",
+          "electronic/synthwave.txt",
+          "electronic/trip-hop.txt",
+          "electronic/vaporwave-instrumental.txt",
+          "european/alpine-volksmusik-instrumental.txt",
+          "european/balkan-brass-instrumental.txt",
+          "european/chanson-vocal.txt",
+          "european/fado-vocal.txt",
+          "european/flamenco-instrumental.txt",
+          "european/irish-pub-session-instrumental.txt",
+          "european/klezmer-instrumental.txt",
+          "european/polka-instrumental.txt",
+          "european/russian-folk-vocal.txt",
+          "european/schlager-vocal.txt",
+          "european/viennese-waltz-instrumental.txt",
+          "folk/appalachian-folk-instrumental.txt",
+          "folk/celtic-folk-vocal.txt",
+          "folk/dark-fairytale-folk-vocal.txt",
+          "folk/folk-punk-vocal.txt",
+          "folk/melancholic-folk-ballad-vocal.txt",
+          "folk/mystical-medieval-folk-vocal.txt",
+          "folk/nordic-folk-vocal.txt",
+          "folk/romantic-solo-guitar.txt",
+          "folk/sea-shanty-vocal.txt",
+          "funk/classic-funk-instrumental.txt",
+          "funk/nu-disco-funk.txt",
+          "gospel/contemporary-worship-vocal.txt",
+          "gospel/german-worship-vocal.txt",
+          "gospel/gospel-choir-vocal.txt",
+          "gospel/hymn-choir-vocal.txt",
+          "hiphop/boom-bap-hiphop-vocal.txt",
+          "hiphop/cloud-rap-vocal.txt",
+          "hiphop/drill-instrumental.txt",
+          "hiphop/german-rap-vocal.txt",
+          "hiphop/old-school-hiphop-vocal.txt",
+          "hiphop/phonk-instrumental.txt",
+          "hiphop/rnb-vocal.txt",
+          "hiphop/trap-instrumental.txt",
+          "house/acid-house-instrumental.txt",
+          "house/afro-house-vocal.txt",
+          "house/bass-house-instrumental.txt",
+          "house/deep-house.txt",
+          "house/disco-house-vocal.txt",
+          "house/electro-house-instrumental.txt",
+          "house/french-house-instrumental.txt",
+          "house/melodic-house.txt",
+          "house/organic-house.txt",
+          "house/progressive-house-dreamy-bittersweet.txt",
+          "house/progressive-house-melodic-trance.txt",
+          "house/progressive-house-sparse-vocals.txt",
+          "house/tech-house-instrumental.txt",
+          "jazz/bebop-instrumental.txt",
+          "jazz/cool-jazz-instrumental.txt",
+          "jazz/dixieland-instrumental.txt",
+          "jazz/gypsy-jazz-instrumental.txt",
+          "jazz/jazz-funk.txt",
+          "jazz/smooth-jazz-instrumental.txt",
+          "jazz/smooth-jazz-vocal-late-night.txt",
+          "jazz/smooth-jazz-vocal-positive-resolution.txt",
+          "jazz/swing-big-band-instrumental.txt",
+          "jazz/vocal-jazz-crooner.txt",
+          "kids/children-song-vocal.txt",
+          "kids/kids-adventure-song-vocal.txt",
+          "kids/lullaby-vocal.txt",
+          "kids/nursery-rhyme-german-vocal.txt",
+          "latin/bachata-vocal.txt",
+          "latin/bossa-nova-vocal.txt",
+          "latin/cumbia-instrumental.txt",
+          "latin/merengue-instrumental.txt",
+          "latin/norteno-corrido-vocal.txt",
+          "latin/reggaeton-vocal.txt",
+          "latin/salsa-vocal.txt",
+          "latin/samba-instrumental.txt",
+          "latin/son-cubano-vocal.txt",
+          "latin/tango-instrumental.txt",
+          "meditation/focus-study-instrumental.txt",
+          "meditation/meditation-healing-instrumental.txt",
+          "meditation/nature-soundscape-instrumental.txt",
+          "meditation/sleep-music-instrumental.txt",
+          "metal/black-metal-instrumental.txt",
+          "metal/death-metal-vocal.txt",
+          "metal/doom-metal-instrumental.txt",
+          "metal/folk-metal-vocal.txt",
+          "metal/grunge-vocal.txt",
+          "metal/heavy-metal-vocal.txt",
+          "metal/industrial-metal-vocal.txt",
+          "metal/melodic-metal-instrumental.txt",
+          "metal/metalcore-vocal.txt",
+          "metal/nu-metal-vocal.txt",
+          "metal/power-metal-vocal.txt",
+          "metal/progressive-djent-instrumental.txt",
+          "metal/sludge-post-metal-instrumental.txt",
+          "metal/symphonic-metal-vocal.txt",
+          "metal/thrash-metal-vocal.txt",
+          "musical/broadway-ballad-vocal.txt",
+          "musical/german-musical-vocal.txt",
+          "musical/musical-theatre-ensemble-vocal.txt",
+          "pop/art-pop-vocal.txt",
+          "pop/bedroom-pop-vocal.txt",
+          "pop/dance-pop-vocal.txt",
+          "pop/dream-pop-electronic-vocal.txt",
+          "pop/german-pop-vocal.txt",
+          "pop/hyperpop-vocal.txt",
+          "pop/indie-pop-vocal.txt",
+          "pop/power-ballad-vocal.txt",
+          "pop/singer-songwriter-acoustic-vocal.txt",
+          "punk/pop-punk-vocal.txt",
+          "punk/post-punk-vocal.txt",
+          "punk/punk-rock-vocal.txt",
+          "punk/ska-punk-vocal.txt",
+          "reggae/dancehall-vocal.txt",
+          "reggae/dub-instrumental.txt",
+          "reggae/rocksteady-vocal.txt",
+          "reggae/roots-reggae-vocal.txt",
+          "reggae/ska-jamaican-instrumental.txt",
+          "rock/blues-rock-instrumental.txt",
+          "rock/classic-rock-vocal.txt",
+          "rock/garage-rock-vocal.txt",
+          "rock/hard-rock-vocal.txt",
+          "rock/indie-rock-vocal.txt",
+          "rock/post-rock-instrumental.txt",
+          "rock/progressive-rock-instrumental.txt",
+          "rock/psychedelic-rock-instrumental.txt",
+          "rock/rockabilly-vocal.txt",
+          "rock/shoegaze-vocal.txt",
+          "rock/southern-rock-vocal.txt",
+          "rock/stoner-rock-instrumental.txt",
+          "rock/surf-rock-instrumental.txt",
+          "seasonal/christmas-carol-vocal.txt",
+          "seasonal/christmas-pop-vocal.txt",
+          "seasonal/german-christmas-vocal.txt",
+          "seasonal/wedding-ceremony-instrumental.txt",
+          "soul/doo-wop-vocal.txt",
+          "soul/motown-soul-vocal.txt",
+          "soul/neo-soul-vocal.txt",
+          "soul/soul-ballad-vocal.txt",
+          "world/andean-folk-instrumental.txt",
+          "world/arabic-pop-vocal.txt",
+          "world/bhangra-instrumental.txt",
+          "world/calypso-soca-vocal.txt",
+          "world/gamelan-instrumental.txt",
+          "world/gnawa-instrumental.txt",
+          "world/hawaiian-slack-key-instrumental.txt",
+          "world/mariachi-vocal.txt",
+          "world/mongolian-throat-singing-instrumental.txt",
+          "world/qawwali-vocal.txt",
+          "world/turkish-folk-instrumental.txt"
+        ],
+        {
+          "default": "electronic/synth-pop-vocal.txt"
+        }
+      ],
+      "genre": [
+        [
+          "custom",
+          "House",
+          "Deep House",
+          "Tech House",
+          "Melodic House",
+          "Techno",
+          "Trance",
+          "EDM",
+          "Drum & Bass",
+          "Breakbeat",
+          "Dubstep",
+          "Pop",
+          "Rock",
+          "Alternative Rock",
+          "Hard Rock",
+          "Metal",
+          "Heavy Metal",
+          "Industrial",
+          "Jazz",
+          "Funk",
+          "Soul / R&B",
+          "Hip-Hop / Rap",
+          "Blues",
+          "Folk",
+          "Country",
+          "Classical",
+          "Neoclassical",
+          "Cinematic / Film Score",
+          "Ambient",
+          "Chillout / Downtempo",
+          "Lo-Fi",
+          "Synthwave / Retro",
+          "Trip-Hop",
+          "Reggae / Dub",
+          "Latin",
+          "World Music",
+          "Comedy / Novelty",
+          "Synth-Pop",
+          "Psytrance",
+          "Jungle",
+          "Trap",
+          "Punk Rock",
+          "Indie Rock",
+          "Power Metal",
+          "Opera",
+          "Afrobeats",
+          "Amapiano",
+          "Dancehall",
+          "Dub",
+          "Reggae",
+          "Ethio-Jazz",
+          "Highlife",
+          "Desert Blues",
+          "K-Pop",
+          "J-Pop / City Pop",
+          "Anime / Game Music",
+          "Chinese Traditional",
+          "Indian Classical",
+          "Bollywood",
+          "Bossa Nova",
+          "Samba",
+          "Salsa",
+          "Cumbia",
+          "Tango",
+          "Reggaeton",
+          "Bachata",
+          "Flamenco",
+          "Fado",
+          "Chanson",
+          "Schlager",
+          "Klezmer",
+          "Balkan Folk",
+          "Electronic",
+          "Progressive House",
+          "Afro House",
+          "Organic House",
+          "Bass House",
+          "Electro House",
+          "Disco House",
+          "French House",
+          "Acid House",
+          "Future Rave",
+          "Melodic Techno",
+          "Peak Time Techno",
+          "Hardgroove Techno",
+          "Minimal / Deep Tech",
+          "Liquid Drum & Bass",
+          "Neurofunk",
+          "UK Garage",
+          "2-Step / Speed Garage",
+          "Grime",
+          "Footwork / Juke",
+          "Hardstyle",
+          "Hardcore / Gabber",
+          "Big Room / Festival EDM",
+          "Future Bass",
+          "Eurodance",
+          "Progressive Trance",
+          "Uplifting Trance",
+          "Goa Trance",
+          "IDM / Experimental Electronic",
+          "Glitch Hop",
+          "Electro Swing",
+          "Vaporwave",
+          "Chiptune / 8-Bit",
+          "Berlin School / Kosmische",
+          "EBM / Darkwave",
+          "Dark Ambient",
+          "Drone",
+          "Lo-Fi Hip-Hop",
+          "Downtempo / Balearic",
+          "Disco",
+          "Nu-Disco",
+          "Italo Disco",
+          "P-Funk / Classic Funk",
+          "Boogie / Post-Disco",
+          "Boom Bap",
+          "Drill",
+          "Cloud Rap",
+          "Phonk",
+          "Conscious Hip-Hop",
+          "Old School Hip-Hop",
+          "Hyperpop",
+          "Dance-Pop",
+          "Indie Pop",
+          "Dream Pop",
+          "Electropop",
+          "Bedroom Pop",
+          "Art Pop",
+          "Power Ballad",
+          "Singer-Songwriter",
+          "Acoustic Pop",
+          "Pop Rock",
+          "Britpop",
+          "New Wave",
+          "Post-Punk",
+          "Shoegaze",
+          "Classic Rock",
+          "Blues Rock",
+          "Southern Rock",
+          "Psychedelic Rock",
+          "Progressive Rock",
+          "Post-Rock",
+          "Garage Rock",
+          "Stoner Rock",
+          "Surf Rock",
+          "Rockabilly",
+          "Grunge",
+          "Pop-Punk / Emo",
+          "Hardcore Punk",
+          "Ska Punk",
+          "Folk Punk",
+          "Math Rock",
+          "Melodic Metal",
+          "Symphonic Metal",
+          "Thrash Metal",
+          "Death Metal",
+          "Black Metal",
+          "Doom Metal",
+          "Sludge / Post-Metal",
+          "Metalcore",
+          "Nu Metal",
+          "Folk Metal",
+          "Gothic Metal",
+          "Progressive Metal / Djent",
+          "Industrial Metal",
+          "Swing / Big Band",
+          "Bebop",
+          "Cool Jazz",
+          "Modal Jazz",
+          "Jazz Fusion",
+          "Smooth Jazz",
+          "Gypsy Jazz",
+          "Vocal Jazz / Crooner",
+          "Nu Jazz",
+          "Dixieland / New Orleans Jazz",
+          "Ragtime",
+          "Boogie-Woogie",
+          "Motown / Classic Soul",
+          "Neo-Soul",
+          "Soul Ballad",
+          "Doo-Wop",
+          "Gospel",
+          "Contemporary Worship",
+          "Hymn / Sacred",
+          "Delta Blues",
+          "Chicago Blues",
+          "Electric Blues",
+          "Blues Ballad",
+          "Modern Country Pop",
+          "Outlaw Country",
+          "Country Rock",
+          "Honky Tonk",
+          "Bluegrass",
+          "Americana",
+          "Country Ballad",
+          "Celtic Folk",
+          "Nordic Folk",
+          "Medieval / Renaissance",
+          "Appalachian Folk",
+          "Sea Shanty",
+          "Alpine Folk / Volksmusik",
+          "Russian Folk",
+          "Polka",
+          "Waltz",
+          "Baroque",
+          "Classical Period",
+          "Romantic Classical",
+          "Impressionist Classical",
+          "Minimalism",
+          "Chamber Music",
+          "String Quartet",
+          "Symphonic / Orchestral",
+          "Solo Piano",
+          "Choral / Sacred Choir",
+          "Gregorian Chant",
+          "Epic Trailer",
+          "Orchestral Action",
+          "Horror / Suspense Score",
+          "Documentary Underscore",
+          "Corporate / Advertising",
+          "Fantasy / Adventure Score",
+          "Video Game Orchestral",
+          "Sports / Stadium Anthem",
+          "Fanfare / March",
+          "Musical / Broadway",
+          "Children's Song",
+          "Lullaby",
+          "Nursery Rhyme",
+          "Meditation / Healing",
+          "Nature Soundscape",
+          "Focus / Study Music",
+          "Sleep Music",
+          "Christmas / Holiday",
+          "Wedding / Ceremonial",
+          "Afrobeat (Classic)",
+          "Gqom",
+          "Soukous",
+          "Kwaito",
+          "Mbalax",
+          "Arabic Pop",
+          "Turkish Folk",
+          "Persian Classical",
+          "Rai",
+          "Gnawa",
+          "Qawwali",
+          "Bhangra",
+          "Carnatic",
+          "Gamelan",
+          "Mongolian Throat Singing",
+          "Andean Folk",
+          "Mariachi",
+          "Ranchera",
+          "Norteño / Corrido",
+          "Vallenato",
+          "Merengue",
+          "Son Cubano",
+          "Calypso / Soca",
+          "Ska (Jamaican)",
+          "Rocksteady",
+          "Mandopop",
+          "Cantopop",
+          "Enka",
+          "V-Pop",
+          "Hawaiian"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "tempo": [
+        [
+          "custom",
+          "Slow (40-70 BPM)",
+          "Laid-back (70-100 BPM)",
+          "Midtempo (100-120 BPM)",
+          "Dancefloor (120-130 BPM)",
+          "Uptempo (130-145 BPM)",
+          "Fast (145-175 BPM)",
+          "Very fast (175-200 BPM)"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "meter": [
+        [
+          "custom",
+          "4/4 (common time)",
+          "3/4 (waltz)",
+          "6/8",
+          "2/4 (march / polka)",
+          "12/8 (shuffle / slow blues)",
+          "2/2 (cut time)",
+          "6/4",
+          "5/4",
+          "7/8",
+          "7/4",
+          "9/8",
+          "5/8",
+          "11/8",
+          "changing time signatures",
+          "free time / rubato"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "key": [
+        [
+          "custom",
+          "A minor",
+          "E minor",
+          "B minor",
+          "F# minor",
+          "C# minor",
+          "G# minor",
+          "D# minor",
+          "Bb minor",
+          "F minor",
+          "C minor",
+          "G minor",
+          "D minor",
+          "C major",
+          "G major",
+          "D major",
+          "A major",
+          "E major",
+          "B major",
+          "F# major",
+          "Db major",
+          "Ab major",
+          "Eb major",
+          "Bb major",
+          "F major"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "lyrics": [
+        [
+          "custom",
+          "yes",
+          "sparse",
+          "only voice - no words",
+          "instrumental"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "language": [
+        [
+          "custom",
+          "English",
+          "Deutsch (German)",
+          "Español (Spanish)",
+          "Français (French)",
+          "Italiano (Italian)",
+          "Português (Portuguese)",
+          "日本語 (Japanese)",
+          "한국어 (Korean)",
+          "中文 (Chinese)",
+          "हिन्दी (Hindi)",
+          "Русский (Russian)",
+          "العربية (Arabic)",
+          "বাংলা (Bengali)",
+          "Български (Bulgarian)",
+          "Čeština (Czech)",
+          "Dansk (Danish)",
+          "Nederlands (Dutch)",
+          "Suomi (Finnish)",
+          "Ελληνικά (Greek)",
+          "עברית (Hebrew)",
+          "Magyar (Hungarian)",
+          "Bahasa Indonesia (Indonesian)",
+          "Bahasa Melayu (Malay)",
+          "Norsk (Norwegian)",
+          "فارسی (Persian)",
+          "Polski (Polish)",
+          "Română (Romanian)",
+          "Српски (Serbian)",
+          "Kiswahili (Swahili)",
+          "Svenska (Swedish)",
+          "Tagalog",
+          "ไทย (Thai)",
+          "Türkçe (Turkish)",
+          "Українська (Ukrainian)",
+          "اردو (Urdu)",
+          "Tiếng Việt (Vietnamese)",
+          "Afrikaans",
+          "Shqip (Albanian)",
+          "አማርኛ (Amharic)",
+          "Հայերեն (Armenian)",
+          "Azərbaycanca (Azerbaijani)",
+          "Euskara (Basque)",
+          "Беларуская (Belarusian)",
+          "Bosanski (Bosnian)",
+          "Català (Catalan)",
+          "Hrvatski (Croatian)",
+          "Eesti (Estonian)",
+          "Galego (Galician)",
+          "ქართული (Georgian)",
+          "Gaeilge (Irish)",
+          "Íslenska (Icelandic)",
+          "Latina (Latin)",
+          "Latviešu (Latvian)",
+          "Lietuvių (Lithuanian)",
+          "Lëtzebuergesch (Luxembourgish)",
+          "Македонски (Macedonian)",
+          "Malti (Maltese)",
+          "ਪੰਜਾਬੀ (Punjabi)",
+          "தமிழ் (Tamil)",
+          "తెలుగు (Telugu)",
+          "मराठी (Marathi)",
+          "ગુજરાતી (Gujarati)",
+          "മലയാളം (Malayalam)",
+          "ಕನ್ನಡ (Kannada)",
+          "नेपाली (Nepali)",
+          "සිංහල (Sinhala)",
+          "ဗမာ (Burmese)",
+          "ខ្មែរ (Khmer)",
+          "ລາວ (Lao)",
+          "Қазақша (Kazakh)",
+          "Oʻzbekcha (Uzbek)",
+          "Монгол (Mongolian)",
+          "Slovenčina (Slovak)",
+          "Slovenščina (Slovenian)",
+          "Gàidhlig (Scottish Gaelic)",
+          "Cymraeg (Welsh)",
+          "ייִדיש (Yiddish)",
+          "Yorùbá (Yoruba)",
+          "isiZulu (Zulu)",
+          "Hausa",
+          "Igbo",
+          "ʻŌlelo Hawaiʻi (Hawaiian)",
+          "Te Reo Māori (Maori)",
+          "Runa Simi (Quechua)",
+          "Bairisch (Bavarian)",
+          "Schwiizerdütsch (Swiss German)",
+          "Plattdeutsch (Low German)",
+          "Multilingual / mixed",
+          "Invented / gibberish language",
+          "No lyrics / n/a"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "voice": [
+        [
+          "custom",
+          "female vocal",
+          "male vocal",
+          "female vocal, soft & airy",
+          "male vocal, deep & warm",
+          "female vocal, powerful & belting",
+          "male vocal, powerful & belting",
+          "female vocal, raspy & raw",
+          "male vocal, raspy & raw",
+          "female vocal, young & bright",
+          "male vocal, young & energetic",
+          "mature female vocal",
+          "mature male vocal",
+          "child vocal",
+          "happy & uplifting vocal",
+          "sad & melancholic vocal",
+          "angry & aggressive vocal",
+          "funny & playful vocal",
+          "warm & comforting vocal",
+          "cool & detached vocal",
+          "whispered & intimate vocal",
+          "breathy & sensual vocal",
+          "smoky & soulful vocal",
+          "bright & clean pop vocal",
+          "female lead + male backing",
+          "male lead + female backing",
+          "duet (female & male)",
+          "layered harmony vocals",
+          "female choir",
+          "male choir",
+          "mixed choir",
+          "children's choir",
+          "gospel choir",
+          "group vocals / gang vocals",
+          "rap flow, male",
+          "rap flow, female",
+          "operatic soprano",
+          "operatic tenor",
+          "baritone vocal",
+          "falsetto vocal",
+          "growled / screamed vocal",
+          "throat singing",
+          "robotic / vocoder vocal",
+          "auto-tuned vocal",
+          "spoken word",
+          "narrator / voice-over",
+          "no vocals / n/a"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "theme": [
+        [
+          "custom",
+          "love & romance",
+          "heartbreak & loss",
+          "freedom & escape",
+          "night & city lights",
+          "nature & seasons",
+          "hope & resilience",
+          "self-discovery & growth",
+          "celebration & party",
+          "nostalgia & memories",
+          "dreams & fantasy",
+          "social commentary",
+          "storytelling & adventure",
+          "spirituality & inner peace",
+          "friendship & togetherness",
+          "melancholy & longing",
+          "mystery & darkness"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "length": [
+        [
+          "custom",
+          "30 seconds",
+          "1 minute",
+          "1-2 minutes",
+          "2-3 minutes",
+          "3-4 minutes",
+          "4-5 minutes"
+        ],
+        {
+          "default": "custom"
+        }
+      ],
+      "description_override": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ],
+      "system_prompt_source": [
+        [
+          "manual",
+          "bundled_library",
+          "external_directory"
+        ],
+        {
+          "default": "bundled_library"
+        }
+      ],
+      "system_prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "system_prompt_file": [
+        [
+          "<select a prompt>",
+          "minimax-music3-cinematic.txt",
+          "minimax-music3-compact-core.txt",
+          "minimax-music3-concise.txt",
+          "minimax-music3-dance-energy.txt",
+          "minimax-music3-emotional-story.txt",
+          "minimax-music3-fantasy.txt",
+          "minimax-music3-fast-tempo.txt",
+          "minimax-music3-genre-faithful.txt",
+          "minimax-music3-instrumental-first.txt",
+          "minimax-music3-lyrics-first.txt",
+          "minimax-music3-minimal-sparse.txt",
+          "minimax-music3-production.txt"
+        ],
+        {
+          "default": "minimax-music3-production.txt"
+        }
+      ],
+      "source_name_override": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "system_prompt": [
+        "STRING",
+        {
+          "default": "You are a Master Audio Engineer, Film Composer, Songwriter, Lyricist, and Music Producer acting as the official music-caption rewriter for the MiniMax Music 3 generation model.\n\nThe user will provide a simple musical request. It may contain a genre or style, BPM, desired duration, instrumental/vocal preference, mood, instrumentation, reference era, story premise, lyrical topic, exclusions, or only a few descriptive words.\n\nYour job is to transform that request into a highly usable MiniMax Music 3 production plan plus a matching Flux 2 album-cover prompt.\n\nThe four top-level output sections MUST be generated and returned in this exact order:\n\n1. [Caption]\n2. [Lyrics]\n3. [Title]\n4. [Image_Prompt]\n\nThis order is intentional and mandatory:\n\n* First create the complete musical concept and arrangement in [Caption].\n* Then create [Lyrics] or the instrumental section map so it is consistent with the Caption.\n* Only AFTER Caption and Lyrics are complete, create [Title]. The Title MUST be derived from the actual musical concept, emotional arc, imagery, and lyrical theme already established in Caption and Lyrics.\n* Finally create [Image_Prompt] using the completed Caption, Lyrics, and Title as semantic inspiration.\n\nDo not create or decide the final Title before Caption and Lyrics have been developed.\n\nIf the user does not specify a duration, assume approximately 4:00–4:30 minutes.\n\nThe requested duration must NEVER exceed 5:00 minutes - 5:00 is the absolute maximum. Shorter requests (30 seconds up to 3 minutes) are perfectly valid and must be respected.\nIf the user does not specify BPM, choose an appropriate BPM for the requested style.\nIf the user does not specify a key or scale, choose one that naturally supports the requested mood.\n\n## HARD TOKEN LIMIT (CRITICAL)\n\nThe MiniMax Music 3 text encoder rejects the prompt when the combined [Caption] + [Lyrics] exceeds 5000 tokens. This is a hard technical failure, not a guideline: if the prompt is too long, generation crashes. Keep the [Caption] concise and the [Lyrics] compact (roughly 45–55 lines). When in doubt, shorten the structure instead of adding detail. Never pad sections to reach a duration. Follow these limits silently - NEVER mention them, the token count, or any word count in your answer.\n\nThe result must strongly guide MiniMax Music 3 while still leaving enough musical freedom for natural composition.\n\n---\n\n## 1. TRACK TYPE AND STRICT LYRICS POLICY\n\nDetermine first whether the requested track is:\n\n* PURE INSTRUMENTAL\n* VOCAL SONG\n* MOSTLY INSTRUMENTAL WITH SPARSE VOCALS\n* SONG WITH USER-PROVIDED LYRICS\n\nFollow the corresponding rules exactly.\n\n### A. PURE INSTRUMENTAL\n\nIf the user requests instrumental, purely instrumental, no vocals, N/A vocals, or equivalent:\n\n* NEVER generate lyric words.\n* NEVER generate vocalizations such as \"oh\", \"ah\", \"ooh\", humming, chanting, spoken phrases, whispers, or background vocal syllables.\n* The [Lyrics] field must contain ONLY MiniMax-supported structural section tags.\n* For instrumental tracks use only:\n  [Intro]\n  [Instrumental]\n  [Bridge]\n  [Solo]\n  [Outro]\n* Every tag MUST appear alone on its own line.\n* Do NOT put descriptions, instruments, timestamps, comments, dynamics, production instructions, or any other text inside [Lyrics].\n* All musical development belongs in [Caption], especially Arrangement.\n* [Solo] should only be used when an actual featured instrumental solo is musically appropriate.\n* Do NOT use vocal-oriented tags such as [Verse], [Pre-Chorus], [Chorus], or [Post-Chorus] for a pure instrumental.\n* Vocal Details in [Caption] must be exactly:\n  n/a\n* Do NOT leave [Lyrics] empty. For instrumental music it acts as a macro-structure map.\n\nCRITICAL STRUCTURE RULE FOR INSTRUMENTALS:\n\nInstrumental tracks should normally contain ABOUT TWICE AS MANY structural sections as comparable tracks with lyrics. This is deliberate because MiniMax Music 3 tends to terminate instrumental pieces too early when the structural map is too short.\n\nRepeated [Instrumental] tags are intentional. Their different musical functions must be explained chronologically in Arrangement so that they represent evolving stages rather than repetition.\n\nAdapt the sequence to the genre:\n\n* Ambient / chillout: many evolving [Instrumental] sections with few or no [Solo] sections.\n* Progressive House / EDM: successive [Instrumental] sections for intro, groove establishment, motif introduction, build, expansion, breakdown, rebuild, climax, release, and outro.\n* Jazz: multiple [Instrumental] and appropriate [Solo] sections.\n* Cinematic / electronic: successive [Instrumental] sections representing clearly different dramatic or textural phases.\n\nNever place [Outro] prematurely.\n\n### B. VOCAL SONG\n\nIf vocals are requested:\n\n* Generate complete ORIGINAL lyrics unless the user explicitly supplied lyrics that should be preserved.\n* Use only these supported section tags:\n  [Intro]\n  [Verse]\n  [Pre-Chorus]\n  [Chorus]\n  [Post-Chorus]\n  [Bridge]\n  [Instrumental]\n  [Solo]\n  [Outro]\n* Every section tag MUST be alone on its own line.\n* Never place lyric words on the same line as a section tag.\n* Never place production instructions, BPM, instruments, dynamics, timestamps, or arrangement notes inside [Lyrics].\n* Match language, theme, perspective, vocabulary, rhyme density, phrasing, and emotional intensity to the requested genre.\n* Do not mechanically force a pop structure onto genres where another structure is more appropriate.\n* Avoid overly dense lyrics when the music benefits from space.\n* Avoid extremely short lyrics for a long requested duration.\n\nLYRIC QUALITY RULE:\n\nBe highly imaginative and deliberate when writing lyrics. Before writing them, infer the song's emotional world, narrative perspective, imagery, and stylistic language from the completed Caption.\n\nCreate lyrics that feel written specifically for THIS song rather than generic filler. Prefer concrete images, distinctive phrases, a coherent central idea, memorable hooks, natural singable rhythm, and emotionally consistent language. Use repetition only when it serves the genre or hook.\n\nAvoid generic AI-style lyric clichés, empty motivational phrases, forced rhymes, random metaphors, unnecessary abstraction, and lines that could fit almost any song.\n\nFor German lyrics, be especially careful with pronunciation and ambiguous isolated words that may be interpreted as English. Prefer clear German phrasing and context when a word could otherwise be pronounced incorrectly.\n\n### C. MOSTLY INSTRUMENTAL WITH SPARSE VOCALS\n\nIf the user requests mostly instrumental music with only some vocals:\n\n* Make instrumental sections clearly dominant.\n* Use actual lyric text only in the intended vocal sections.\n* Surround vocal passages with several [Instrumental] and/or [Solo] sections.\n* Keep the amount of sung text intentionally limited.\n* Do not accidentally turn the track into a conventional vocal song.\n* Use enough total sections to support the requested duration; structurally this should sit closer to an instrumental track than to a normal vocal song.\n\n### D. USER-PROVIDED LYRICS\n\nIf the user supplies lyrics:\n\n* Preserve their meaning and wording unless rewriting is explicitly requested.\n* Add or improve supported section tags when necessary.\n* Organize them into a structure appropriate for the requested duration and genre.\n* If the supplied lyrics are too short for the requested duration, compensate primarily with suitable [Instrumental] and [Solo] sections rather than inventing unrelated lyrical material.\n* Never place musical directions inside [Lyrics].\n\n---\n\n## 2. DURATION AND STRUCTURE CONTROL\n\nTreat requested duration as an important compositional target.\n\nHard rule: no song may exceed 5:00 minutes. 5:00 is the absolute maximum; never plan sections beyond it, and scale shorter requests (under 1 minute up to 4:30) down accordingly.\n\nMiniMax Music 3 may terminate early if the structural input is too short. Therefore NEVER create an overly minimal section map for a long-form song.\n\nUse these approximate ranges as guidance:\n\n### Under 1 minute\nWith Lyrics: approximately 3–5 meaningful sections.\nInstrumental: approximately 6–10 meaningful sections.\n\n### 1:00–2:30\nWith Lyrics: approximately 5–8 meaningful sections.\nInstrumental: approximately 10–16 meaningful sections.\n\n### 2:30–3:30\nWith Lyrics: approximately 7–10 meaningful sections.\nInstrumental: approximately 14–20 meaningful sections.\n\n### 3:30–4:30\nWith Lyrics: approximately 9–13 meaningful sections.\nInstrumental: approximately 18–26 meaningful sections.\n\n### 4:30–5:00\nWith Lyrics: approximately 11–15 meaningful sections.\nInstrumental: approximately 22–30 meaningful sections.\n\nThese are guidelines, not rigid formulas, but the roughly 2:1 instrumental-to-vocal section ratio is an important default.\n\nFor long instrumental tracks, repeated [Instrumental] tags MUST correspond to different musical functions in Arrangement, for example:\n\n* establish pulse or atmosphere\n* introduce the signature motif\n* expand harmony\n* add rhythmic detail\n* create contrast\n* strip down into a breakdown\n* rebuild energy\n* introduce a transformed motif\n* reach the principal climax late in the song\n* release tension\n* resolve into the outro\n\nDo not put those explanations inside [Lyrics].\n\n---\n\n## 3. MINIMAX-ROBUST SONIC DESIGN / ARTIFACT AVOIDANCE\n\nWhen translating the user's request into [Caption], favor sound choices that MiniMax Music 3 can render cleanly and distinctly. Preserve the requested genre and mood, but proactively avoid combinations that are likely to become smeared, metallic, phasey, harsh, or indistinct.\n\nUnless the user explicitly requires otherwise, apply the following production-safety rules:\n\n### HIGH-FREQUENCY AND METALLIC SOUNDS\n\n* Avoid long sustained bright metallic sounds with dense upper harmonics.\n* Avoid long crash-cymbal washes, sustained rides, splashy cymbal beds, ringing bells, gongs, chimes, metallic drones, and metallic FX with very long decay.\n* Avoid continuous open-hi-hat wash or dense high-frequency percussion running without space.\n* If cymbals, hi-hats, rides, metallic percussion, bells, or similar sounds are genre-appropriate, prefer SHORTER, DRIER, MORE ACCENTED hits with controlled decay and clear transient definition.\n* Prefer sparse accents over continuous metallic layers.\n* Prefer slightly darker or warmer metallic timbres rather than extremely bright, broadband, sizzling ones.\n* Do not stack several bright metallic elements at the same time.\n\n### REVERB, DELAY, AND HIGH-FREQUENCY SMEAR\n\n* Avoid very long bright reverb or shimmer-reverb tails on cymbals, hi-hats, percussion, vocals, and bright leads.\n* Avoid excessive high-frequency delay feedback that creates a continuous sparkling or metallic cloud.\n* Prefer controlled, shorter, darker reverbs with clear separation between direct sound and ambience.\n* Preserve depth and atmosphere through selective space, pre-delay, room contrast, and evolving layers rather than simply adding very long reverb to everything.\n* Avoid stacking multiple large reverbs, choruses, flangers, and delays over the same frequency range.\n* Avoid extreme stereo widening or decorrelation in the highest frequencies; keep the top end stable and focused.\n\n### PADS, TEXTURES, AND \"WASHY\" MIXES\n\n* Avoid static, dense, broadband pad carpets that occupy the whole stereo field for long periods.\n* Avoid many sustained pads, drones, strings, noise beds, and reverberant layers playing simultaneously with similar timbre and envelope.\n* For atmospheric music, use FEWER clearly differentiated layers that evolve over time, with defined harmonic roles, controlled attack/release, and space between them.\n* Prefer changing texture, register, motif, filtering, or orchestration over adding more layers on top of an already dense texture.\n* Do not describe the mix as a continuous \"wall of sound\" unless the user explicitly requests that aesthetic.\n* Avoid excessive low-mid accumulation from overlapping pads, bass, strings, and reverb. Keep bass and low-mid foundations defined.\n\n### NOISE, TRANSIENT DENSITY, AND HARSHNESS\n\n* Avoid sustained broadband hiss/noise as a dominant layer. Tape noise or environmental texture may be subtle, short, and secondary.\n* Avoid constant bright noise sweeps, white-noise risers, or high-frequency FX beds throughout the track; use them sparingly as transitions.\n* Avoid simultaneously combining dense fast arpeggios, bright percussion, noise sweeps, and long reverbs in the same upper-frequency region.\n* Avoid harsh sibilant vocal production, excessive breathy \"air\", and many layered whispers if they would create a persistent noisy high-frequency bed.\n\n### DYNAMICS AND DISTORTION\n\n* Do not request intentional hard clipping, crushed brick-wall mastering, or excessive full-mix saturation unless explicitly required by the user's genre concept.\n* Prefer clean transient definition, controlled peaks, and reasonable headroom.\n* Distortion may be used creatively on individual instruments when appropriate, but avoid turning the entire mix into a continuously overloaded broadband texture.\n\n### MUSICAL HIERARCHY\n\n* Maintain a clear foreground/background hierarchy. At any moment there should normally be one or two primary focal elements rather than many equally loud competing layers.\n* Make transitions through arrangement changes, motif transformation, dynamics, filtering, and instrumentation rather than simply increasing density and reverb.\n* Keep signature melodies, riffs, hooks, and important instrumental attacks clearly distinguishable from ambience.\n\nIf the user's requested genre normally relies on cymbals, metallic percussion, large ambience, or lush pads, DO NOT remove those characteristics completely. Reinterpret them in a safer form: shorter decay, fewer simultaneous layers, darker ambience, clearer attacks, better spacing, and more controlled high-frequency energy.\n\n---\n\n## 4. MUSICAL PLANNING\n\nBefore outputting the final answer, silently plan the song. Do NOT reveal this analysis.\n\n### STYLE / GENRE DECONSTRUCTION\n\nIdentify:\n\n* signature sound\n* musical era\n* production style\n* rhythmic language\n* harmonic language\n* typical arrangement\n* melodic characteristics\n* appropriate instrumentation\n\nIf the user references artists, composers, or tracks, infer relevant musical characteristics rather than merely repeating names.\n\n### TECHNICAL DETAILS\n\nDetermine:\n\n* BPM\n* key\n* scale\n* approximate duration\n* rhythmic feel\n* overall dynamic range\n\nUse user-specified values when present; otherwise choose musically appropriate values.\n\n### VOCAL PROFILE\n\nIf instrumental, Vocal Details must be exactly:\n\nn/a\n\nIf vocals are requested, determine:\n\n* gender if requested or stylistically appropriate\n* vocal range\n* timbre\n* delivery\n* intimacy/intensity\n* harmonies and backing vocals\n* relevant vocal processing\n\n### NARRATIVE / EMOTIONAL MAPPING\n\nIf the user provides a story, scene, emotional journey, or thematic premise, map it into:\n\n* opening\n* initial development\n* tension or expansion\n* contrast / breakdown\n* rebuild\n* principal climax\n* resolution\n\n### ARRANGEMENT DECONSTRUCTION\n\nSeparate the musical elements into:\n\nPrimary: main melody, lead instruments, signature riffs and motifs.\nSecondary: harmony, supporting instruments, counter-melodies.\nGroove: drums, percussion, bass, rhythmic foundation.\nEmbellishments: atmosphere, transitions, ear candy, FX, spatial elements.\n\nCreate a chronological evolution rather than a static list of instruments.\n\nExplicitly decide:\n\n* what enters and when\n* what disappears\n* what becomes stronger or softer\n* where the main motif first appears\n* where it returns or transforms\n* where harmony expands\n* where rhythm changes\n* where breakdowns occur\n* where solos occur\n* where the principal climax occurs\n* how the track resolves\n\nFor long-form songs, the main climax should normally happen relatively late rather than immediately after the intro.\n\n---\n\n## 5. [Caption] RULES\n\n[Caption] is created FIRST.\n\nIt must use EXACTLY these three main headings, in this order:\n\nGlobal Metadata\n\nVocal Details\n\nArrangement\n\nDo not add other main headings inside [Caption].\n\nAim for approximately 250–450 words unless the request genuinely requires more detail.\n\nBe precise, musical, chronological, and internally consistent. Avoid contradictory instructions and unnecessary technical mastering jargon.\n\nUse professional terminology, but focus on audible musical behavior rather than abstract production buzzwords.\n\nThe Caption must actively incorporate the MiniMax-robust sonic-design rules above. Do not merely append a generic warning; make safer sound choices part of the actual arrangement and production description.\n\nRequired Caption structure:\n\nGlobal Metadata\n\nBasic Attributes: bpm is [Number]. key is [Key], and scale is [Scale]. [Primary Genre] / [Sub-genre].\n\nGlobal Emotional Progression: describe the complete emotional arc and where the principal climax and resolution occur.\n\nApplication Scenarios & Imagery: describe the visual or situational world evoked by the music.\n\nSonics & Production Profile: describe tonal balance, soundstage, depth, dynamics, stereo character, ambience, transient character, and artifact-resistant production choices appropriate to the genre.\n\nVocal Details\n\nIf instrumental, write EXACTLY:\nn/a\n\nOtherwise describe vocal timbre, range, delivery, emotional intensity, harmonies/backing vocals, and relevant processing.\n\nArrangement\n\nInstrument Lifecycle Description (Primary/Secondary Layering):\n\nPrimary: describe the main melodic instruments and motifs, including when the signature motif appears, disappears, transforms, returns, and reaches its strongest form.\n\nSecondary: describe supporting harmony, counter-melodies, pads/textures, and how density changes over time.\n\nGroove & Foundation Progression: describe chronologically how drums, percussion, bass, and rhythmic energy evolve.\n\nEmbellishments, Textures & Spatial FX: describe ambience, transitions, delays, reverbs, environmental textures, and ear candy while obeying the artifact-avoidance rules above.\n\nSection-by-Section Development: describe the chronological musical function of every section that will appear in [Lyrics]. Repeated [Instrumental] sections must have clearly different functions.\n\nDo not place actual lyric lines inside [Caption].\n\n---\n\n## 6. [Lyrics] RULES\n\nCreate [Lyrics] SECOND, after [Caption].\n\nThe Lyrics section must implement the structure planned by Caption.\n\nFor vocal songs, write imaginative, coherent, singable lyrics matching the music's style, mood, language, narrative, and rhythmic feel.\n\nFor pure instrumentals, output ONLY structural tags and approximately twice as many sections as a comparable vocal song.\n\nEvery structural tag must appear alone on its own line.\n\nDo not put musical instructions in [Lyrics].\n\n---\n\n## 7. [Title] RULES\n\nCreate [Title] THIRD, only after [Caption] and [Lyrics] are complete.\n\nThe Title MUST be based on the completed Caption and Lyrics, not on the original user prompt alone.\n\nChoose a short, distinctive, appealing title that captures the strongest concept, image, emotional tension, story idea, or memorable lyrical motif of the finished song.\n\nAvoid trivial or generic AI-style titles. Avoid overused combinations built around words such as \"Neon\", \"Echoes\", \"Horizon\", \"Midnight\", \"Dreams\", \"Shadows\", or \"Drift\" unless one of those words is genuinely central to this specific song.\n\nDo not add quotation marks unless they are naturally part of the title.\n\nOutput only the title text underneath [Title].\n\n---\n\n## 8. [Image_Prompt] RULES\n\nCreate [Image_Prompt] FOURTH and last, using the completed Caption, Lyrics, and Title as semantic inspiration.\n\nIt is intended directly for Flux 2 and must be ONE positive-only prompt for a square album cover.\n\nThe visual concept should be concrete, distinctive, and eye-catching rather than generic. Describe a coherent scene, object, environment, lighting, color atmosphere, depth, composition, and visual style where useful.\n\nDo NOT depict musical instruments, studio equipment, headphones, speakers, waveforms, DJ decks, or other music-production equipment. The artwork should communicate the song through an original visual concept rather than literal music imagery.\n\nThe cover must not depend on readable signs, posters, screens, book pages, newspapers, license plates, labels, or clothing with lettering.\n\nUse the Title only as semantic inspiration. NEVER ask Flux 2 to render or display the Title.\n\nDo NOT create a separate negative prompt.\n\nThe [Image_Prompt] must explicitly end with:\n\nNo text, no letters, no words, no numbers, no digits, no symbols, no typography, no logo, no watermark, no signature, no captions, no labels, no signage, no written characters.\n\n---\n\n## 9. FINAL OUTPUT FORMAT\n\nOutput ONLY these four top-level sections in this EXACT order, each section header EXACTLY once:\n\nCRITICAL OUTPUT RULES:\n\n* Never write ANY text outside the four sections - no introductions, explanations, analysis, planning, notes, drafts, reminders, self-checks, or commentary of any kind.\n* Never repeat a section header. Write each section once, completely, the first time.\n* Never mention these rules, the token limit, word counts, or any instruction inside your answer.\n* Everything you write in [Caption] and [Lyrics] must be actual production content, never meta-commentary about the content.\n\n[Caption]\n\nGlobal Metadata\n\nBasic Attributes: bpm is [Number]. key is [Key], and scale is [Scale]. [Primary Genre] / [Sub-genre].\n\nGlobal Emotional Progression: [complete emotional arc]\n\nApplication Scenarios & Imagery: [evoked scenes and contexts]\n\nSonics & Production Profile: [production and sonic profile including artifact-resistant choices]\n\nVocal Details\n\n[n/a for instrumental, otherwise vocal description]\n\nArrangement\n\nInstrument Lifecycle Description (Primary/Secondary Layering):\n\nPrimary: [chronological primary instruments and motifs]\n\nSecondary: [chronological supporting layers]\n\nGroove & Foundation Progression: [chronological rhythm/bass development]\n\nEmbellishments, Textures & Spatial FX: [controlled ambience, transitions and FX]\n\nSection-by-Section Development: [chronological development corresponding directly to Lyrics]\n\n[Lyrics]\n\n[Complete lyrics or instrumental-only structural section map]\n\n[Title]\n\n[One short final title derived from Caption and Lyrics]\n\n[Image_Prompt]\n\n[One complete positive-only square album-cover prompt ending with the required text-free prohibition]\n\nDo not include introductions, explanations, analysis, planning, commentary, Markdown code fences, or conclusions outside these four sections.\n\n---\n\n## 10. FINAL SELF-CHECK\n\nYou may use internal reasoning tags if helpful, but keep them brief (roughly under 200 words) so they never crowd out the actual answer.\n\nPerform ALL of the following checks INSIDE your reasoning only. Never output any check, note, reminder or intermediate draft - the final answer must contain nothing but the four completed sections:\n\n* The output order is exactly [Caption] -> [Lyrics] -> [Title] -> [Image_Prompt].\n* Each section header appears exactly once.\n* Caption was conceptually developed before Lyrics.\n* Title was created only after Caption and Lyrics and is clearly derived from them.\n* Image_Prompt was created after the Title and reflects the completed song concept.\n* [Caption] contains exactly the three main headings Global Metadata, Vocal Details, Arrangement.\n* Only supported MiniMax section tags are used in [Lyrics].\n* Every section tag appears alone on its own line.\n* No musical instructions appear inside [Lyrics].\n* Pure instrumental requests contain ZERO lyric words or vocalizations.\n* Instrumental Vocal Details equals exactly \"n/a\".\n* Instrumental tracks use roughly twice as many sections as comparable vocal tracks unless musical logic strongly requires otherwise.\n* The section map is long enough for the requested duration and [Outro] does not appear prematurely.\n* Arrangement follows the Lyrics section sequence chronologically.\n* Repeated instrumental sections have different musical functions.\n* The song develops over time rather than remaining static.\n* The principal climax occurs at an appropriate late point.\n* Lyrics are imaginative, coherent, stylistically appropriate, and not generic filler.\n* Long bright metallic tails, sustained cymbal wash, excessive high-frequency reverb, dense pad carpets, broadband noise beds, and other smear-prone combinations have been avoided or converted into shorter, darker, sparser, more controlled alternatives.\n* The mix concept maintains clear musical hierarchy, defined transients, and controlled ambience.\n* User requirements and exclusions are preserved.\n* [Image_Prompt] is one positive-only prompt with no negative prompt.\n* [Image_Prompt] does not ask for any written content.\n* [Image_Prompt] ends with the explicit prohibition against text, letters, words, numbers, symbols, logos, watermarks, labels, signage, and other written characters.\n* The answer contains nothing except [Caption], [Lyrics], [Title], and [Image_Prompt].\n* The combined Caption + Lyrics stays compact enough for the MiniMax Music 3 text encoder's 5000-token hard limit (roughly: Lyrics up to ~55 lines).",
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "SaveAudioAbsolutePath": {
+    "python_class": "SaveAudioAbsolutePath",
+    "category": "MiniMax Music Production Toolkit/save",
+    "function": "save",
+    "output_node": true,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "saved_paths"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "absolute_directory": [
+        "STRING",
+        {
+          "default": "D:\\Music\\MiniMax\\Preview",
+          "multiline": false
+        }
+      ],
+      "filename": [
+        "STRING",
+        {
+          "default": "track",
+          "multiline": false
+        }
+      ],
+      "format": [
+        [
+          "mp3",
+          "flac",
+          "wav"
+        ],
+        {
+          "default": "mp3"
+        }
+      ],
+      "collision_mode": [
+        [
+          "auto_increment",
+          "overwrite",
+          "error_if_exists"
+        ],
+        {
+          "default": "auto_increment"
+        }
+      ],
+      "create_directories": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "mp3_quality": [
+        [
+          "V0 (~245 kbps)",
+          "V2 (~190 kbps)",
+          "320 kbps",
+          "256 kbps",
+          "192 kbps"
+        ],
+        {
+          "default": "V0 (~245 kbps)"
+        }
+      ],
+      "flac_bit_depth": [
+        [
+          "24-bit",
+          "16-bit"
+        ],
+        {
+          "default": "24-bit"
+        }
+      ],
+      "wav_bit_depth": [
+        [
+          "32-bit float",
+          "24-bit",
+          "16-bit"
+        ],
+        {
+          "default": "32-bit float"
+        }
+      ],
+      "peak_handling": [
+        [
+          "leave_unchanged",
+          "normalize_only_if_clipping"
+        ],
+        {
+          "default": "leave_unchanged"
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "SaveAudioSmartPrefix": {
+    "python_class": "SaveAudioSmartPrefix",
+    "category": "MiniMax Music Production Toolkit/save",
+    "function": "save",
+    "output_node": true,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "saved_path",
+      "metadata_path",
+      "save_info_json"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "filename_prefix": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "format": [
+        [
+          "flac",
+          "mp3",
+          "wav"
+        ],
+        {
+          "default": "flac"
+        }
+      ],
+      "collision_mode": [
+        [
+          "auto_increment",
+          "overwrite",
+          "error_if_exists"
+        ],
+        {
+          "default": "auto_increment"
+        }
+      ],
+      "create_directories": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "mp3_quality": [
+        [
+          "V0 (~245 kbps)",
+          "V2 (~190 kbps)",
+          "320 kbps",
+          "256 kbps",
+          "192 kbps"
+        ],
+        {
+          "default": "V0 (~245 kbps)"
+        }
+      ],
+      "flac_bit_depth": [
+        [
+          "24-bit",
+          "16-bit"
+        ],
+        {
+          "default": "24-bit"
+        }
+      ],
+      "wav_bit_depth": [
+        [
+          "32-bit float",
+          "24-bit",
+          "16-bit"
+        ],
+        {
+          "default": "32-bit float"
+        }
+      ],
+      "peak_handling": [
+        [
+          "leave_unchanged",
+          "normalize_only_if_clipping"
+        ],
+        {
+          "default": "leave_unchanged"
+        }
+      ],
+      "write_json_sidecar": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "embed_basic_metadata": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "metadata_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "audio_tags_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_image_path": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "filename_mode": [
+        [
+          "album - title",
+          "title only",
+          "prefix as provided"
+        ],
+        {
+          "default": "album - title"
+        }
+      ],
+      "embedded_cover_size": [
+        "INT",
+        {
+          "default": 512,
+          "min": 64,
+          "max": 4096,
+          "step": 64
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "SaveImageSmartPrefix": {
+    "python_class": "SaveImageSmartPrefix",
+    "category": "MiniMax Music Production Toolkit/artwork",
+    "function": "save",
+    "output_node": true,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "saved_path"
+    ],
+    "required": {
+      "image": [
+        "IMAGE",
+        {}
+      ],
+      "filename_prefix": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "collision_mode": [
+        [
+          "auto_increment",
+          "overwrite",
+          "error_if_exists"
+        ],
+        {
+          "default": "auto_increment"
+        }
+      ],
+      "create_directories": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "jpeg_quality": [
+        "INT",
+        {
+          "default": 95,
+          "min": 50,
+          "max": 100,
+          "step": 1
+        }
+      ]
+    },
+    "optional": {
+      "title": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "audio_tags_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "filename_mode": [
+        [
+          "album - title",
+          "title only",
+          "prefix as provided"
+        ],
+        {
+          "default": "album - title"
+        }
+      ]
+    },
+    "hidden": {}
+  }
+}

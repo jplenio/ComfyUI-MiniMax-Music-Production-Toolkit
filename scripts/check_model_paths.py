@@ -27,7 +27,7 @@ def load_toolkit_modules() -> dict:
     pkg.__path__ = [str(REPO)]
     sys.modules["_toolkit_paths_check"] = pkg
     modules = {}
-    for module_name in ("toolkit_logging", "model_downloader", "llm_chat"):
+    for module_name in ("toolkit_logging", "model_downloader", "comfy_resources", "llm_chat"):
         full = f"_toolkit_paths_check.{module_name}"
         spec = importlib.util.spec_from_file_location(full, REPO / f"{module_name}.py")
         module = importlib.util.module_from_spec(spec)
@@ -66,7 +66,9 @@ def main() -> int:
     llm_chat = modules["llm_chat"]
 
     flashsr_target = downloader.resolve_target("models/audio/flashsr")
-    llm_directories = llm_chat._llm_directories()
+    # The loader's own search path (folder scan + catalog targets), so this script
+    # reports exactly what the LLM node will look at.
+    llm_directories = llm_chat._llm_search_directories()
     ggufs = llm_chat.list_llm_models()
 
     print(f"FlashSR weights/code   -> {flashsr_target}")

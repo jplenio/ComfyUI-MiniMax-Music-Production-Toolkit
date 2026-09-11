@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.5.0] - 2026-09-11
+
+### Added
+- Mastering section in both public workflows: independently switchable Auto-EQ,
+  manual 8-band EQ, stereo-linked compression, LUFS targeting and true-peak limiting.
+- Visual EQ editor, bounded spectral analysis and regression coverage for DSP,
+  workflow connections, serialization and resource handling.
+- EQ/analysis/mastering reports connected to the production JSON writer.
+
+### Changed
+- The redesigned workflows replace the previous examples under the original filenames;
+  the temporary `_Optimized` copies are removed. Auto-EQ is enabled by default.
+- Resampling occurs before final mastering: 44.1 kHz by default, 48 kHz selectable.
+  Release Prep is resample-only in the examples; no duplicate loudness adjustment.
+- Numerous improvements to model/resource management, bounded audio processing,
+  model downloads, prompts, file handling and metadata, including support for
+  configurations with less available memory.
+- README rewritten around the two user journeys and independent mastering controls.
+- Historical optimizer command now validates the canonical files without rebuilding
+  from retired source graphs.
+
+Personal saved workflows retain their settings. Reopen the bundled examples to
+use the new chain/defaults; compare audio at matched loudness before publishing.
+
 ## [2.1.1] - 2026-09-09
 
 Branding and README refresh: project icon + banner, banner at the top of the README, and an up-to-date description with exact prompt counts (239 user templates, 11 system-prompt variants).

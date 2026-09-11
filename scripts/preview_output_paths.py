@@ -26,8 +26,12 @@ DEFAULT_FORMATS = ("flac", "flac", "mp3", "jpg", "json")
 DEFAULT_BASE_OUTPUT = "audio/minimax3/%date:yyyy-MM-dd%/Example Album/"
 
 
-def _load_saver_module():
-    """Load save_audio_smart_prefix as a synthetic package (no ComfyUI import)."""
+def _load_path_module():
+    """Load output_paths as a synthetic package.
+
+    Deliberately does NOT load the audio saver: planning a filename must not
+    require numpy, Torch, SoundFile, Mutagen or Pillow.
+    """
     import importlib.util
     import types
 
@@ -35,7 +39,7 @@ def _load_saver_module():
     pkg = types.ModuleType(pkg_name)
     pkg.__path__ = [str(ROOT)]
     sys.modules[pkg_name] = pkg
-    for dependency in ("filename_utils", "toolkit_logging"):
+    for dependency in ("filename_utils", "toolkit_logging", "output_paths"):
         full = f"{pkg_name}.{dependency}"
         if full in sys.modules:
             continue
@@ -44,15 +48,7 @@ def _load_saver_module():
         sys.modules[full] = module
         assert spec.loader is not None
         spec.loader.exec_module(module)
-    full = f"{pkg_name}.save_audio_smart_prefix"
-    if full in sys.modules:
-        return sys.modules[full]
-    spec = importlib.util.spec_from_file_location(full, ROOT / "save_audio_smart_prefix.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[full] = module
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    return sys.modules[f"{pkg_name}.output_paths"]
 
 
 def preview_all(
@@ -63,8 +59,8 @@ def preview_all(
     filename_mode: str = "album - title",
 ) -> list[dict]:
     """Return one preview entry per planned output file, nothing written."""
-    saver = _load_saver_module()
-    preview_output_files = saver.preview_output_files
+    output_paths = _load_path_module()
+    preview_output_files = output_paths.preview_output_files
 
     tags_meta = {"album": album, "title": title}
     base_output = base_output.rstrip("/\\")
@@ -73,7 +69,7 @@ def preview_all(
         prefix = f"{base_output}/{subdir}/" if base_output else f"{subdir}/"
         entry = preview_output_files(
             prefix, ext, collision_mode=collision_mode, filename_mode=filename_mode,
-            tags_meta=tags_meta, title=title,
+            tags_meta=tags_meta, title=title, error_prefix="Preview output paths",
         )
         entry["subdir"] = subdir
         entries.append(entry)

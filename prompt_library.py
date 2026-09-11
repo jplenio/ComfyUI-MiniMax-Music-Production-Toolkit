@@ -194,6 +194,64 @@ def default_combo_values(kind: str) -> list[str]:
     return [PLACEHOLDER, *values]
 
 
+def _custom_target(root: Path, safe_stem: str, kind: str) -> Path:
+    """Prepare ``<root>/_custom/<safe_stem>.txt`` with resolved containment.
+
+    ``_custom`` (or a file inside it) can be a symlink/junction pointing outside
+    the selected library.  Reads are already protected by ``_safe_selected_path``;
+    writes must offer the same protection instead of trusting the path join.
+    """
+    custom_dir = root / "_custom"
+    custom_dir.mkdir(parents=True, exist_ok=True)
+    resolved_dir = custom_dir.resolve()
+    try:
+        resolved_dir.relative_to(root.resolve())
+    except ValueError as exc:
+        raise PromptLibraryError(
+            f"Custom {kind} prompt directory resolves outside the selected library root: {resolved_dir}"
+        ) from exc
+
+    target = resolved_dir / f"{safe_stem}.txt"
+    if target.is_symlink():
+        raise PromptLibraryError(
+            f"Refusing to write custom {kind} prompt through the symlink '{target.name}'."
+        )
+    return target
+
+
+def _exclusive_write_text(target: Path, payload: str, overwrite: bool, kind: str) -> None:
+    """Write *payload* to *target* without ever clobbering an unrelated file.
+
+    ``overwrite=False`` uses ``O_CREAT|O_EXCL``, which is atomic: a file created
+    between the existence check and the write makes the call fail instead of
+    being silently replaced.  ``overwrite=True`` stages a same-directory file
+    and publishes it with ``os.replace`` so a failed write cannot leave a
+    truncated prompt behind.
+    """
+    if overwrite:
+        staging = target.with_name(f".{target.name}.{os.getpid()}.part")
+        try:
+            staging.write_text(payload, encoding="utf-8", newline="\n")
+            os.replace(staging, target)
+        finally:
+            try:
+                staging.unlink()
+            except OSError:
+                pass
+        return
+    try:
+        handle = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+    except FileExistsError as exc:
+        raise PromptLibraryError(
+            f"A custom {kind} prompt '{target.name}' already exists in _custom/. "
+            "Choose another name or allow overwrite."
+        ) from exc
+    except OSError as exc:
+        raise PromptLibraryError(f"Could not create custom {kind} prompt '{target.name}': {exc}") from exc
+    with os.fdopen(handle, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(payload)
+
+
 def save_custom_prompt(
     source: str,
     directory: str,
@@ -214,7 +272,6 @@ def save_custom_prompt(
     from .filename_utils import safe_filename_component
 
     root = resolve_root("user", source, directory)
-    custom_dir = root / "_custom"
     name = (filename or "").strip()
     if not name:
         raise PromptLibraryError("Prompt file name is empty.")
@@ -224,7 +281,7 @@ def save_custom_prompt(
     safe = safe_filename_component(stem)
     if not safe or safe == "song":
         raise PromptLibraryError(f"Prompt file name '{name}' is invalid after sanitizing.")
-    target = custom_dir / f"{safe}.txt"
+    target = _custom_target(root, safe, "user")
     if target.exists() and not overwrite:
         raise PromptLibraryError(
             f"A custom prompt '{safe}.txt' already exists in _custom/. "
@@ -256,8 +313,7 @@ def save_custom_prompt(
     lines.append("---")
     lines.append("")
     lines.append((description or "").strip() or "Custom prompt.")
-    custom_dir.mkdir(parents=True, exist_ok=True)
-    target.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    _exclusive_write_text(target, "\n".join(lines) + "\n", overwrite, "user")
     LOGGER.info("Saved custom user prompt: %s (%d lines)", target, len(lines))
     return f"_custom/{safe}.txt"
 
@@ -279,7 +335,6 @@ def save_custom_system_prompt(
     from .filename_utils import safe_filename_component
 
     root = resolve_root("system", source, directory)
-    custom_dir = root / "_custom"
     name = (filename or "").strip()
     if not name:
         raise PromptLibraryError("System prompt file name is empty.")
@@ -289,7 +344,7 @@ def save_custom_system_prompt(
     safe = safe_filename_component(stem)
     if not safe or safe == "song":
         raise PromptLibraryError(f"System prompt file name '{name}' is invalid after sanitizing.")
-    target = custom_dir / f"{safe}.txt"
+    target = _custom_target(root, safe, "system")
     if target.exists() and not overwrite:
         raise PromptLibraryError(
             f"A custom system prompt '{safe}.txt' already exists in _custom/. "
@@ -299,152 +354,106 @@ def save_custom_system_prompt(
     payload = (text or "").strip()
     if not payload:
         raise PromptLibraryError("System prompt text is empty.")
-    custom_dir.mkdir(parents=True, exist_ok=True)
-    target.write_text(payload + "\n", encoding="utf-8", newline="\n")
+    _exclusive_write_text(target, payload + "\n", overwrite, "system")
     LOGGER.info("Saved custom system prompt: %s (%d chars)", target, len(payload))
     return f"_custom/{safe}.txt"
 
 
+def _body_string(body: dict, key: str, default: str = "") -> str:
+    value = body.get(key, default)
+    if value is None:
+        return default
+    if not isinstance(value, str):
+        raise PromptLibraryError(f"Field '{key}' must be a string.")
+    return value
+
+
+def _body_bool(body: dict, key: str, default: bool = False) -> bool:
+    value = body.get(key, default)
+    if value is None:
+        return default
+    if not isinstance(value, bool):
+        raise PromptLibraryError(f"Field '{key}' must be a boolean.")
+    return value
+
+
+def _body_fields(body: dict) -> dict:
+    fields = body.get("fields")
+    if fields is None:
+        return {}
+    if not isinstance(fields, dict):
+        raise PromptLibraryError("Field 'fields' must be an object of string values.")
+    for name, value in fields.items():
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise PromptLibraryError("Field 'fields' must map string names to string values.")
+    return fields
+
+
 def register_routes() -> bool:
-    """Register the read-only prompt-file listing route used by the frontend."""
-    global _ROUTES_REGISTERED
-    if _ROUTES_REGISTERED:
-        return True
+    """Compatibility delegate; the HTTP adapter lives in :mod:`prompt_routes`."""
+    from .prompt_routes import register_routes as _register_routes
+
+    return _register_routes()
+
+
+# --- aggregated structured-field options -----------------------------------
+
+_LIBRARY_OPTIONS_MAX_PER_FIELD = 200
+_options_cache: Dict[str, Dict[str, list]] = {}
+_options_version = 0
+
+
+def invalidate_library_options(kind: str = "user") -> None:
+    """Drop the cached options after prompt files changed on disk.
+
+    Cache keys are ``kind|source|directory``, so a targeted invalidation drops
+    every entry of that kind regardless of source or directory.
+    """
+    global _options_version
+    _options_version += 1
+    if kind == "all":
+        _options_cache.clear()
+        return
+    prefix = f"{kind}|"
+    for key in [key for key in _options_cache if key.startswith(prefix)]:
+        _options_cache.pop(key, None)
+
+
+def library_option_version() -> int:
+    """Monotonic counter bumped on every invalidation (diagnostics/tests)."""
+    return _options_version
+
+
+def library_options(kind: str = "user", source: str = "bundled_library", directory: str = "") -> Dict[str, list]:
+    """Curated vocabulary merged with the values found in the prompt library.
+
+    Uses the same safe enumeration as every other library read (extension
+    filter, hidden-file skip, symlink containment) and the same per-file byte
+    limit as a selected prompt, so aggregation cannot be tricked into reading
+    something the library would refuse to load.
+    """
+    cache_key = f"{kind}|{source}|{directory}"
+    cached = _options_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    from .prompt_metadata import (
+        LYRICS_CHOICES,
+        collect_file_field_values,
+        merge_field_options,
+    )
+
     try:
-        from aiohttp import web
-        from server import PromptServer
-    except Exception as exc:
-        LOGGER.debug("Prompt-library HTTP route not registered outside ComfyUI: %s", exc)
-        return False
+        root = resolve_root(kind, source, directory)
+        collected = collect_file_field_values(
+            _iter_prompt_paths(root), max_options=_LIBRARY_OPTIONS_MAX_PER_FIELD, max_bytes=MAX_PROMPT_BYTES
+        )
+    except Exception as exc:  # keep ComfyUI node discovery alive on broken installs
+        LOGGER.warning("Could not aggregate %s prompt metadata: %s", kind, exc)
+        collected = {}
 
-    routes = PromptServer.instance.routes
-
-    @routes.get("/minimax_music_toolkit/prompt_files")
-    async def _prompt_files(request):
-        kind = request.rel_url.query.get("kind", "user")
-        source = request.rel_url.query.get("source", "bundled_library")
-        directory = request.rel_url.query.get("directory", "")
-        try:
-            files = list_prompt_files(kind, source, directory)
-            return web.json_response({"ok": True, "files": files})
-        except PromptLibraryError as exc:
-            return web.json_response({"ok": False, "error": str(exc), "files": []}, status=400)
-        except Exception as exc:  # pragma: no cover - defensive server boundary
-            LOGGER.exception("Unexpected prompt-library listing failure")
-            return web.json_response(
-                {"ok": False, "error": f"Unexpected prompt-library error: {type(exc).__name__}", "files": []},
-                status=500,
-            )
-
-    @routes.get("/minimax_music_toolkit/prompt_metadata")
-    async def _prompt_metadata(request):
-        """Return the structured metadata of one user prompt file plus the
-        aggregated unique field values used to refresh the combo options."""
-        source = request.rel_url.query.get("source", "bundled_library")
-        directory = request.rel_url.query.get("directory", "")
-        selected = request.rel_url.query.get("file", "")
-        try:
-            from .prompt_metadata import (
-                collect_file_field_values,
-                merge_field_options,
-                parse_prompt_front_matter,
-            )
-
-            text, _relative = load_prompt_file("user", source, directory, selected)
-            fields, description = parse_prompt_front_matter(text)
-            root = resolve_root("user", source, directory)
-            unique_values = merge_field_options(
-                collect_file_field_values(p for p in _iter_prompt_paths(root))
-            )
-            return web.json_response({
-                "ok": True,
-                "fields": fields,
-                "description": description,
-                "unique_values": unique_values,
-            })
-        except (PromptLibraryError, ValueError) as exc:
-            return web.json_response({"ok": False, "error": str(exc)}, status=400)
-        except Exception as exc:  # pragma: no cover - defensive server boundary
-            LOGGER.exception("Unexpected prompt-metadata failure")
-            return web.json_response(
-                {"ok": False, "error": f"Unexpected prompt-metadata error: {type(exc).__name__}"},
-                status=500,
-            )
-
-    @routes.post("/minimax_music_toolkit/save_prompt")
-    async def _save_prompt(request):
-        """Save the current structured-prompt widget values as a custom prompt
-        file inside the selected prompt library's _custom/ folder."""
-        try:
-            body = await request.json()
-        except Exception:
-            return web.json_response({"ok": False, "error": "Invalid JSON body."}, status=400)
-        source = str(body.get("source") or "bundled_library")
-        directory = str(body.get("directory") or "")
-        filename = str(body.get("file") or "")
-        fields = body.get("fields") or {}
-        description = str(body.get("description") or "")
-        overwrite = bool(body.get("overwrite", False))
-        try:
-            relative = save_custom_prompt(source, directory, filename, fields, description, overwrite)
-        except (PromptLibraryError, ValueError) as exc:
-            return web.json_response({"ok": False, "error": str(exc)}, status=400)
-        except Exception as exc:  # pragma: no cover - defensive server boundary
-            LOGGER.exception("Unexpected save_prompt failure")
-            return web.json_response(
-                {"ok": False, "error": f"Unexpected save_prompt error: {type(exc).__name__}"},
-                status=500,
-            )
-        try:
-            from .minimax_structured_prompt import invalidate_library_options_cache
-            invalidate_library_options_cache()
-        except Exception:  # pragma: no cover - option cache refresh is best-effort
-            pass
-        return web.json_response({"ok": True, "file": relative})
-
-    @routes.get("/minimax_music_toolkit/prompt_text")
-    async def _prompt_text(request):
-        """Return the raw text of one prompt file (user or system)."""
-        kind = request.rel_url.query.get("kind", "user")
-        source = request.rel_url.query.get("source", "bundled_library")
-        directory = request.rel_url.query.get("directory", "")
-        selected = request.rel_url.query.get("file", "")
-        try:
-            text, _relative = load_prompt_file(kind, source, directory, selected)
-            return web.json_response({"ok": True, "text": text})
-        except (PromptLibraryError, ValueError) as exc:
-            return web.json_response({"ok": False, "error": str(exc)}, status=400)
-        except Exception as exc:  # pragma: no cover - defensive server boundary
-            LOGGER.exception("Unexpected prompt-text failure")
-            return web.json_response(
-                {"ok": False, "error": f"Unexpected prompt-text error: {type(exc).__name__}"},
-                status=500,
-            )
-
-    @routes.post("/minimax_music_toolkit/save_system_prompt")
-    async def _save_system_prompt(request):
-        """Save the current system_prompt text as a plain system prompt file."""
-        try:
-            body = await request.json()
-        except Exception:
-            return web.json_response({"ok": False, "error": "Invalid JSON body."}, status=400)
-        source = str(body.get("source") or "bundled_library")
-        directory = str(body.get("directory") or "")
-        filename = str(body.get("file") or "")
-        text = str(body.get("text") or "")
-        overwrite = bool(body.get("overwrite", False))
-        try:
-            relative = save_custom_system_prompt(source, directory, filename, text, overwrite)
-        except (PromptLibraryError, ValueError) as exc:
-            return web.json_response({"ok": False, "error": str(exc)}, status=400)
-        except Exception as exc:  # pragma: no cover - defensive server boundary
-            LOGGER.exception("Unexpected save_system_prompt failure")
-            return web.json_response(
-                {"ok": False, "error": f"Unexpected save_system_prompt error: {type(exc).__name__}"},
-                status=500,
-            )
-        return web.json_response({"ok": True, "file": relative})
-
-    _ROUTES_REGISTERED = True
-    LOGGER.debug("Registered prompt-library route")
-    return True
+    options = merge_field_options(collected)
+    if not options.get("lyrics"):
+        options["lyrics"] = list(LYRICS_CHOICES)
+    _options_cache[cache_key] = options
+    return options

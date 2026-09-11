@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "note": "Twenty fixed LLM briefs for IMPROVE-TODO B01. They are synthetic fixtures, not the maintainer's private prompts. Each brief records the seed to use, so a run is reproducible.",
+  "briefs": [
+    {"id": "inst-01", "category": "instrumental", "language": "en", "seed": 1001, "caption": "Warm analog synth instrumental, slow arpeggio, tape saturation, no vocals", "lyrics": "[Instrumental]"},
+    {"id": "inst-02", "category": "instrumental", "language": "en", "seed": 1002, "caption": "Sparse piano and upright bass instrumental, late-night jazz club", "lyrics": "[Instrumental]"},
+    {"id": "inst-03", "category": "instrumental", "language": "de", "seed": 1003, "caption": "Ruhiges Ambient-Instrumental mit tiefen Flächen und leisem Puls", "lyrics": "[Instrumental]"},
+    {"id": "vocal-en-01", "category": "english_vocal", "language": "en", "seed": 2001, "caption": "Chiming indie pop with earnest male lead and bright backing vocals", "lyrics": "[Verse]\nI traced the window with your name\n[Chorus]\nHold the light a little longer"},
+    {"id": "vocal-en-02", "category": "english_vocal", "language": "en", "seed": 2002, "caption": "Slow soul ballad, Hammond organ, restrained female lead", "lyrics": "[Verse]\nThe kettle sings, the room stays still\n[Chorus]\nSay it softly, say it true"},
+    {"id": "vocal-en-03", "category": "english_vocal", "language": "en", "seed": 2003, "caption": "Driving rock anthem, gritty guitars, shouted gang chorus", "lyrics": "[Verse]\nStreetlights flicker on the overpass\n[Chorus]\nWe are not done yet"},
+    {"id": "vocal-en-04", "category": "english_vocal", "language": "en", "seed": 2004, "caption": "Minimal electronic ballad with close-miked vocal and sub bass", "lyrics": "[Verse]\nCount the ways I disappear\n[Chorus]\nCome and find me in the quiet"},
+    {"id": "vocal-de-01", "category": "german_vocal", "language": "de", "seed": 3001, "caption": "Deutscher Indie-Pop, klare weibliche Stimme, warme Gitarren", "lyrics": "[Strophe]\nIch zähl die Lichter an der Brücke\n[Refrain]\nBleib noch hier, bis es hell wird"},
+    {"id": "vocal-de-02", "category": "german_vocal", "language": "de", "seed": 3002, "caption": "Deutscher Schlager mit Bläsern, Chor und tanzbarem Beat", "lyrics": "[Strophe]\nDie Straßen glänzen nach dem Regen\n[Refrain]\nTanz mit mir durch diese Nacht"},
+    {"id": "vocal-de-03", "category": "german_vocal", "language": "de", "seed": 3003, "caption": "Deutsche Ballade, nur Klavier und Gesang, sehr zurückhaltend", "lyrics": "[Strophe]\nDer Winter zog durch unser Haus\n[Refrain]\nUnd ich lerne, ohne dich zu gehn"},
+    {"id": "sparse-01", "category": "sparse_vocal", "language": "en", "seed": 4001, "caption": "Almost empty arrangement, one whispered line over a low drone", "lyrics": "[Verse]\n(whispered)\nstay a while"},
+    {"id": "sparse-02", "category": "sparse_vocal", "language": "en", "seed": 4002, "caption": "Field recording texture with a single repeated vocal phrase", "lyrics": "[Chorus]\nonce more, once more"},
+    {"id": "sparse-03", "category": "sparse_vocal", "language": "de", "seed": 4003, "caption": "Sehr reduzierte Produktion, ein Satz Gesang über tiefem Bass", "lyrics": "[Strophe]\nnur ein Wort"},
+    {"id": "nonlatin-01", "category": "non_latin", "language": "ja", "seed": 5001, "caption": "City pop with bright synths and a clear female lead", "lyrics": "[Verse]\n夜の海を渡って\n[Chorus]\n君の名前を呼ぶ"},
+    {"id": "nonlatin-02", "category": "non_latin", "language": "zh", "seed": 5002, "caption": "Gentle folk ballad with acoustic guitar and strings", "lyrics": "[Verse]\n风穿过旧巷子\n[Chorus]\n月光落在肩上"},
+    {"id": "nonlatin-03", "category": "non_latin", "language": "ko", "seed": 5003, "caption": "Late-night hip hop with restrained drums and deep bass", "lyrics": "[Verse]\n어두운 골목 끝에서\n[Hook]\n새벽이 오면 다시"},
+    {"id": "nonlatin-04", "category": "non_latin", "language": "ur", "seed": 5004, "caption": "Traditional ghazal with sarangi and tabla", "lyrics": "[Verse]\nتیرے بغیر یہ شامیں ادھوری سی لگتی ہیں"},
+    {"id": "nonlatin-05", "category": "non_latin", "language": "ru", "seed": 5005, "caption": "Guitar rock with clean vocal and live drums", "lyrics": "[Verse]\nГород спит под серым снегом\n[Chorus]\nЗажги огонь, пока не поздно"},
+    {"id": "custom-01", "category": "custom_lyrics", "language": "en", "seed": 6001, "caption": "Uplifting house track with a spoken-word break", "lyrics": "CUSTOM - the user supplies the lyrics; the model must not rewrite them"},
+    {"id": "custom-02", "category": "custom_lyrics", "language": "mixed", "seed": 6002, "caption": "Bilingual pop song, German verse and English chorus", "lyrics": "CUSTOM - supplied by the user, must survive unchanged"}
+  ]
+}

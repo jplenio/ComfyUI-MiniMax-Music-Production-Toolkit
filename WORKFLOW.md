@@ -100,13 +100,13 @@ This stage targets sustained high-frequency smear while preserving attacks. Use 
 
 The POST filter can remove excessive extreme reconstructed treble. Treat it as cleanup, not as a substitute for good hybrid settings.
 
-## 11. Release preparation
+## 11. EQ, sample rate and final mastering
 
 `Audio Release Prep` performs high-quality sample-rate conversion, integrated loudness/true-peak measurement and optional static gain.
 
 Important: it applies **one constant gain to the entire program** and caps that gain when the true-peak target would be exceeded. There is no compressor, AGC or time-varying loudness normalization in this node.
 
-The example produces 44.1 kHz release audio.
+In release 2.5, this node is set to **Resample only**, default 44.1 kHz (48 kHz selectable). Before it, Auto-EQ is enabled by default and feeds its own application EQ; a separate manual 8-band EQ stays editable. After conversion, the mastering compressor targets -14 LUFS / -1 dBTP. Compression, Auto-EQ and manual EQ have independent controls. There is no second static-gain stage. See [the mastering workflow guide](WORKFLOW_OPTIMIZED.md).
 
 ## 12. FLUX.2 album artwork
 

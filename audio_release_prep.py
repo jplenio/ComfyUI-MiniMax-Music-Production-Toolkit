@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .ffmpeg_utils import find_ffmpeg as _find_ffmpeg_impl, run_ffmpeg as _run_ffmpeg
+from .audio_utils import resample_kaiser_polyphase, validate_audio
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("audio_release_prep")
@@ -7,8 +9,6 @@ LOGGER = get_logger("audio_release_prep")
 import json
 import math
 import os
-import shutil
-import subprocess
 import tempfile
 from fractions import Fraction
 from typing import Any, Dict, Tuple
@@ -37,48 +37,27 @@ else:
 
 
 def _validate_audio(audio: Any) -> Tuple[torch.Tensor, int]:
-    if not isinstance(audio, dict) or "waveform" not in audio or "sample_rate" not in audio:
-        raise ValueError("Audio Release Prep: expected ComfyUI AUDIO with waveform and sample_rate.")
-    waveform = audio["waveform"]
-    sr = int(audio["sample_rate"])
-    if not isinstance(waveform, torch.Tensor) or waveform.ndim != 3:
-        raise ValueError("Audio Release Prep: waveform must be torch.Tensor [B,C,T].")
-    return waveform, sr
+    """Delegates to :func:`audio_utils.validate_audio` (same messages/policy)."""
+    return validate_audio(audio, error_label="Audio Release Prep", template="compact", require_positive_rate=False)
 
 
 def _find_ffmpeg() -> str:
-    exe = shutil.which("ffmpeg")
-    if exe:
-        return exe
-    try:
-        import imageio_ffmpeg
-        exe = imageio_ffmpeg.get_ffmpeg_exe()
-        if exe and os.path.isfile(exe):
-            return exe
-    except Exception:
-        pass
-    raise RuntimeError("Audio Release Prep: FFmpeg not found. Run install_requirements.bat.")
+    return _find_ffmpeg_impl("Audio Release Prep: FFmpeg not found. Run install_requirements.bat.")
 
 
 def _run(cmd):
-    kwargs = {}
-    if os.name == "nt" and hasattr(subprocess, "CREATE_NO_WINDOW"):
-        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, **kwargs)
-    if p.returncode != 0:
-        raise RuntimeError("Audio Release Prep: FFmpeg failed:\n" + p.stderr[-5000:])
-    return p
+    # The loudnorm JSON lives in stderr, so a failure reports the last 5000
+    # characters of it (historic cap kept for readability).
+    return _run_ffmpeg(cmd, failure_message="Audio Release Prep: FFmpeg failed:", tail=5000)
 
 
 def _resample_hq(x_bct: np.ndarray, sr_in: int, sr_out: int) -> np.ndarray:
-    if sr_in == sr_out:
-        return np.asarray(x_bct, dtype=np.float32)
-    if resample_poly is None:
-        raise RuntimeError(f"Audio Release Prep: scipy required for HQ resampling. Import error: {_SCIPY_ERR}")
-    frac = Fraction(sr_out, sr_in).limit_denominator(10000)
-    y = resample_poly(x_bct, frac.numerator, frac.denominator, axis=-1, window=("kaiser", 14.769656459379492))
-    return np.asarray(y, dtype=np.float32)
-
+    """Delegates the kernel to :func:`audio_utils.resample_kaiser_polyphase`."""
+    return resample_kaiser_polyphase(
+        x_bct, sr_in, sr_out,
+        resample_poly=resample_poly,
+        missing_message=f"Audio Release Prep: scipy required for HQ resampling. Import error: {_SCIPY_ERR}",
+    )
 
 def _extract_loudnorm_json(stderr: str) -> Dict[str, str]:
     start = stderr.rfind('{\n\t"input_i"')
@@ -115,27 +94,61 @@ def _preset_values(preset: str, custom_lufs: float, custom_tp: float):
     return None, None
 
 
+def _loudnorm_metrics(measured: Dict[str, str]) -> Dict[str, float]:
+    """The BS.1770 numbers we take from loudnorm's JSON report."""
+    return {
+        "integrated_lufs": _safe_float(measured.get("input_i")),
+        "true_peak_dbtp": _safe_float(measured.get("input_tp")),
+        "lra_lu": _safe_float(measured.get("input_lra")),
+        "threshold_lufs": _safe_float(measured.get("input_thresh")),
+    }
+
+
 def _measure_bs1770(data_tc: np.ndarray, sr: int) -> Dict[str, float]:
     if sf is None:
         raise RuntimeError(f"Audio Release Prep requires soundfile. Import error: {_SF_ERR}")
     ffmpeg = _find_ffmpeg()
+    # We use loudnorm ONLY as an ITU-R BS.1770 / true-peak meter here. No processed audio
+    # from this filter is used. This prevents loudnorm from silently falling back to its
+    # dynamic mode and changing the song's internal dynamics.
+    filt = "loudnorm=I=-23:TP=-1:LRA=11:print_format=json"
+
+    # Preferred path (A05): stream the samples as raw f32le PCM through a pipe, so
+    # no temporary WAV has to be written, read back and deleted.  The transport is
+    # byte-identical to the WAV one (float32, same rate and channel count), and the
+    # temporary-file path below stays as the tested fallback.
+    from .ffmpeg_utils import run_ffmpeg_with_pcm
+
+    data = np.asarray(data_tc, dtype=np.float32)
+    channels = int(data.shape[0]) if data.ndim == 2 else 0
+    if channels:
+        try:
+            measured = run_ffmpeg_with_pcm(
+                [
+                    ffmpeg, "-hide_banner", "-nostdin",
+                    "-f", "f32le", "-ar", str(int(sr)), "-ac", str(channels),
+                    "-i", "pipe:0", "-af", filt, "-f", "null", "-",
+                ],
+                data,
+                int(sr),
+                failure_message="FFmpeg loudness measurement failed:",
+                tail=4000,
+            )
+            return _loudnorm_metrics(_extract_loudnorm_json(measured.stderr))
+        except Exception as exc:
+            LOGGER.warning(
+                "Raw-PCM loudness measurement failed (%s: %s); falling back to the temporary file.",
+                type(exc).__name__,
+                exc,
+            )
+
     path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             path = f.name
         sf.write(path, data_tc, sr, format="WAV", subtype="FLOAT")
-        # We use loudnorm ONLY as an ITU-R BS.1770 / true-peak meter here. No processed audio
-        # from this filter is used. This prevents loudnorm from silently falling back to its
-        # dynamic mode and changing the song's internal dynamics.
-        filt = "loudnorm=I=-23:TP=-1:LRA=11:print_format=json"
         p = _run([ffmpeg, "-hide_banner", "-nostdin", "-i", path, "-af", filt, "-f", "null", "-"])
-        m = _extract_loudnorm_json(p.stderr)
-        return {
-            "integrated_lufs": _safe_float(m.get("input_i")),
-            "true_peak_dbtp": _safe_float(m.get("input_tp")),
-            "lra_lu": _safe_float(m.get("input_lra")),
-            "threshold_lufs": _safe_float(m.get("input_thresh")),
-        }
+        return _loudnorm_metrics(_extract_loudnorm_json(p.stderr))
     finally:
         if path:
             try: os.remove(path)
@@ -192,6 +205,13 @@ class AudioReleasePrep:
         y = _resample_hq(x, sr_in, sr_out)
         reports = []
         target_lufs, target_tp = _preset_values(processing, custom_target_lufs, custom_true_peak_dbtp)
+        if target_lufs is not None:
+            # Ownership boundary.  When no resampling is needed, _resample_hq
+            # returns a NumPy view of the caller's tensor (a CPU float32
+            # ``.to()`` is a no-op, so ``.numpy()`` shares storage).  This
+            # branch scales ``y`` in place, so it must own its buffer - an
+            # upstream branch and ComfyUI's cached result must never change.
+            y = np.array(y, dtype=np.float32, copy=True)
 
         if target_lufs is None:
             peak_in = float(np.max(np.abs(x))) if x.size else 0.0

@@ -14,8 +14,31 @@ _DEFAULT_LEVEL = "INFO"
 
 
 def _level_from_env() -> int:
+    """Resolve the package log level from the environment, safely.
+
+    Only real integer level constants (or a numeric string) are accepted.
+    ``getattr(logging, raw)`` also matches non-level attributes such as
+    ``BASIC_FORMAT``; passing one of those to ``setLevel`` raised at import time
+    and took the whole package import down with it.
+    """
     raw = os.getenv("MINIMAX_MUSIC_TOOLKIT_LOG_LEVEL", _DEFAULT_LEVEL).strip().upper()
-    return getattr(logging, raw, logging.INFO)
+    if not raw:
+        return logging.INFO
+    if raw.isdigit():
+        value = int(raw)
+        if 0 <= value <= logging.CRITICAL + 10:
+            return value
+        logging.getLogger(LOGGER_NAME).warning(
+            "Ignoring out-of-range MINIMAX_MUSIC_TOOLKIT_LOG_LEVEL=%s; using %s.", raw, _DEFAULT_LEVEL
+        )
+        return logging.INFO
+    candidate = getattr(logging, raw, None)
+    if isinstance(candidate, int) and not isinstance(candidate, bool):
+        return candidate
+    logging.getLogger(LOGGER_NAME).warning(
+        "Ignoring unknown MINIMAX_MUSIC_TOOLKIT_LOG_LEVEL=%s; using %s.", raw, _DEFAULT_LEVEL
+    )
+    return logging.INFO
 
 
 _base_logger = logging.getLogger(LOGGER_NAME)

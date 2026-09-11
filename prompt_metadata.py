@@ -372,6 +372,152 @@ def parse_prompt_front_matter(text: str) -> tuple[Dict[str, str], str]:
     return fields, description
 
 
+# ---------------------------------------------------------------------------
+# Explicit brief blocks and conflict reporting (P01)
+# ---------------------------------------------------------------------------
+
+# What a new compact profile asks the model for.  The precedence sentence is part
+# of the brief, not a hidden hope: an explicit constraint must beat a style
+# default, and a contradiction must be reported instead of appended.
+CONSTRAINTS_PRECEDENCE = (
+    "Constraints are authoritative. If the creative description contradicts a constraint, "
+    "the constraint wins - do not append a contradicting sentence, and do not soften an "
+    "explicit request."
+)
+
+# Conservative conflict markers.  Two sides must match, so a system prompt that
+# merely mentions an instrument does not trigger a finding.  The concrete
+# elements are looked for everywhere; the diffuse ones (ambient surfaces, reverb
+# tails) only in the free-text description - a *genre* named "Ambient" is not a
+# request for an ambient surface, and firing on it would make the report noise.
+_CONCRETE_REQUEST_TERMS = ("bell", "chime", "glockenspiel", "cymbal", "shimmer", "metallic")
+_DIFFUSE_REQUEST_TERMS = ("ambient", "reverb", "pad")
+_CAUTIOUS_RULE_TERMS = ("avoid", "reduce", "suppress", "minimal", "cautious", "limit", "no harsh")
+_INSTRUMENTAL_MARKERS = ("instrumental", "instrumental only", "no vocals", "ohne gesang")
+
+
+def assemble_block_brief(fields: Dict[str, str], description: str, provided_lyrics: str = "") -> str:
+    """The explicit-block user brief: Constraints / Creative description / Provided lyrics.
+
+    Structured fields stay authoritative and win against a contradicting free-text
+    description - the difference to :func:`assemble_structured_user_prompt`, which
+    appends the description verbatim.  ``custom`` and empty values are omitted
+    entirely (``custom`` means "no instruction", not "anything").
+    """
+    constraints: list = []
+    for field in STRUCTURED_FIELDS:
+        raw = fields.get(field)
+        value = str(raw).strip() if raw is not None else ""
+        if not value or value == CUSTOM:
+            continue
+        constraints.append(f"- {FIELD_LABELS[field]}: {value}")
+
+    blocks: list = []
+    if constraints:
+        blocks.append("Constraints:\n" + "\n".join(constraints) + "\n" + CONSTRAINTS_PRECEDENCE)
+    else:
+        blocks.append("Constraints:\n(none given - use your style defaults)")
+
+    description = (description or "").strip()
+    blocks.append("Creative description:\n" + (description or "(none given)"))
+
+    lyrics = (provided_lyrics or "").strip()
+    if lyrics:
+        blocks.append(
+            "Provided lyrics (use verbatim, do not rewrite, shorten or extend):\n" + lyrics
+        )
+    return "\n\n".join(blocks)
+
+
+def detect_brief_conflicts(
+    fields: Dict[str, str],
+    description: str,
+    provided_lyrics: str = "",
+    system_prompt: str = "",
+    max_duration_s=None,
+) -> list:
+    """Known contradictions, reported **before** generation.
+
+    Each finding is ``{"code", "severity", "message", "resolution"}``.  This is a
+    conservative heuristic table, not a proof: it fires only when both sides of a
+    rule match, so it stays quiet on a clean brief.  Nothing here rewrites the
+    brief - the caller shows the findings and the user decides.
+    """
+    findings: list = []
+    description_text = str(description or "").lower()
+    fields_text = " ".join(str(fields.get(field) or "") for field in STRUCTURED_FIELDS).lower()
+    haystack = (description_text + " " + fields_text).strip()
+    prompt_lower = (system_prompt or "").lower()
+
+    requested = [term for term in _CONCRETE_REQUEST_TERMS if term in haystack]
+    requested += [
+        term for term in _DIFFUSE_REQUEST_TERMS if term in description_text and term not in requested
+    ]
+    rules = [term for term in _CAUTIOUS_RULE_TERMS if term in prompt_lower]
+    if requested and rules:
+        findings.append({
+            "code": "requested_element_vs_cautious_rules",
+            "severity": "warning",
+            "message": (
+                "The brief asks for " + ", ".join(sorted(set(requested)))
+                + " while the system prompt carries cautious wording (" + ", ".join(sorted(set(rules))) + ")."
+            ),
+            "resolution": "The user requirement wins: keep the requested element and drop the caution.",
+        })
+
+    if "positive-only" in prompt_lower or "positive only" in prompt_lower:
+        if "no text" in prompt_lower or "no text" in haystack:
+            findings.append({
+                "code": "image_prompt_negative_wording",
+                "severity": "info",
+                "message": (
+                    "The image prompt is described as positive-only, but the mandatory no-text line is itself a "
+                    "negative instruction."
+                ),
+                "resolution": (
+                    "Read it as 'one prompt without a separate negative field' - the no-text line stays."
+                ),
+            })
+
+    lyrics = (provided_lyrics or "").strip()
+    if lyrics and any(marker in haystack for marker in _INSTRUMENTAL_MARKERS):
+        findings.append({
+            "code": "instrumental_vs_provided_lyrics",
+            "severity": "warning",
+            "message": "The brief asks for an instrumental, but lyrics were supplied.",
+            "resolution": "Supplied lyrics win: write a vocal piece using them verbatim.",
+        })
+
+    duration = None
+    for token in str(description or "").replace("s", " s").split():
+        if token.isdigit() and 30 <= int(token) <= 3600:
+            duration = int(token)
+            break
+    if duration is not None and max_duration_s is not None and int(max_duration_s) != duration:
+        findings.append({
+            "code": "duration_mismatch",
+            "severity": "info",
+            "message": (
+                f"The brief names {duration} s while the generation setting allows {int(max_duration_s)} s."
+            ),
+            "resolution": (
+                "Both are shown; the shorter value bounds the lyrics. No setting is changed automatically."
+            ),
+        })
+    return findings
+
+
+def format_brief_conflicts(findings: list) -> str:
+    """Readable lines for the node's status text and the log."""
+    if not findings:
+        return "Brief conflicts: none detected."
+    lines = [f"Brief conflicts ({len(findings)}):"]
+    for finding in findings:
+        lines.append(f"  [{finding['severity']}] {finding['code']}: {finding['message']}")
+        lines.append(f"    -> {finding['resolution']}")
+    return "\n".join(lines)
+
+
 def assemble_structured_user_prompt(fields: Dict[str, str], description: str) -> str:
     """Build the LLM user prompt from resolved structured fields plus description.
 
@@ -423,14 +569,27 @@ def merge_field_options(file_values: Dict[str, list[str]]) -> Dict[str, list[str
     return merged
 
 
-def collect_file_field_values(paths: Iterable[Path], max_options: int = 200) -> Dict[str, list[str]]:
+def collect_file_field_values(
+    paths: Iterable[Path],
+    max_options: int = 200,
+    max_bytes: int | None = None,
+) -> Dict[str, list[str]]:
     """Aggregate unique structured field values from prompt files.
 
     Used for the node's COMBO option lists and for the frontend refresh.  Files
     that cannot be decoded or contain no metadata simply contribute nothing.
+    ``max_bytes`` applies the same size limit a selected prompt file gets, so
+    aggregation cannot read something the library would refuse to load.
     """
     collected: Dict[str, set[str]] = {field: set() for field in STRUCTURED_FIELDS}
     for path in paths:
+        if max_bytes is not None:
+            try:
+                if path.stat().st_size > max_bytes:
+                    LOGGER.warning("Skipping oversized prompt file for option aggregation: %s", path)
+                    continue
+            except OSError:
+                continue
         try:
             text = path.read_text(encoding="utf-8-sig")
         except (OSError, UnicodeDecodeError):

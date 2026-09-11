@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+from .file_writes import reserve_target as _reserve_target, staged_write
 from .filename_utils import apply_filename_mode
+from .output_paths import (
+    comfy_output_dir as _comfy_output_dir_impl,
+    expand_date_macros as _output_expand_date_macros,
+    is_abs_any_platform as _output_is_abs_any_platform,
+    javaish_date_to_strftime as _output_javaish_date_to_strftime,
+    pick_path as _pick_path_impl,
+    resolve_prefix as _resolve_prefix_impl,
+)
 from .toolkit_logging import get_logger
 
 LOGGER = get_logger("minimax_artwork")
@@ -21,81 +30,31 @@ except Exception as exc:
 else:
     _PIL_IMPORT_ERROR = None
 
-_DATE_RE = re.compile(r"%date:([^%]+)%")
-_WIN_ABS_RE = re.compile(r"^[A-Za-z]:[\/]")
-
 
 def _javaish_date_to_strftime(pattern: str) -> str:
-    replacements = [
-        ("yyyy", "%Y"), ("yy", "%y"),
-        ("MM", "%m"), ("dd", "%d"),
-        ("HH", "%H"), ("mm", "%M"), ("ss", "%S"),
-    ]
-    out = pattern
-    for src, dst in replacements:
-        out = out.replace(src, dst)
-    return out
+    return _output_javaish_date_to_strftime(pattern)
 
 
 def _expand_date_macros(value: str) -> str:
-    import datetime as _dt
-    now = _dt.datetime.now()
-    def repl(match):
-        pattern = match.group(1)
-        try:
-            return now.strftime(_javaish_date_to_strftime(pattern))
-        except Exception:
-            return match.group(0)
-    return _DATE_RE.sub(repl, value)
+    return _output_expand_date_macros(value)
 
 
 def _is_abs_any_platform(path: str) -> bool:
-    return os.path.isabs(path) or bool(_WIN_ABS_RE.match(path)) or path.startswith("\\") or path.startswith("//")
+    return _output_is_abs_any_platform(path)
 
 
 def _comfy_output_dir() -> str:
-    try:
-        import folder_paths
-        return folder_paths.get_output_directory()
-    except Exception:
-        return os.path.join(os.getcwd(), "output")
+    return _comfy_output_dir_impl()
 
 
 def _resolve_prefix(prefix: str) -> str:
-    raw = (prefix or "").strip()
-    if not raw:
-        raise ValueError("Save Image Smart Prefix: filename_prefix is empty.")
-    raw = _expand_date_macros(raw)
-    raw = os.path.expanduser(os.path.expandvars(raw))
-    if _is_abs_any_platform(raw):
-        return os.path.normpath(raw)
-    root = os.path.abspath(_comfy_output_dir())
-    candidate = os.path.abspath(os.path.join(root, raw))
-    try:
-        if os.path.commonpath([root, candidate]) != root:
-            raise ValueError("Save Image Smart Prefix: relative filename_prefix may not escape the ComfyUI output directory.")
-    except ValueError:
-        raise ValueError("Save Image Smart Prefix: invalid relative filename_prefix.")
-    return candidate
+    """Compatibility wrapper around :func:`output_paths.resolve_prefix`."""
+    return _resolve_prefix_impl(prefix, error_prefix="Save Image Smart Prefix")
 
 
 def _pick_path(prefix: str, ext: str, collision_mode: str) -> str:
-    target = f"{prefix}.{ext}"
-    if collision_mode == "overwrite":
-        return target
-    if collision_mode == "error_if_exists":
-        if os.path.exists(target):
-            raise FileExistsError(f"Save Image Smart Prefix: file exists: {target}")
-        return target
-    if collision_mode != "auto_increment":
-        raise ValueError(f"Save Image Smart Prefix: invalid collision mode '{collision_mode}'.")
-    if not os.path.exists(target):
-        return target
-    for i in range(1, 1_000_000):
-        p = f"{prefix}_{i:03d}.{ext}"
-        if not os.path.exists(p):
-            return p
-    raise RuntimeError("Save Image Smart Prefix: no free auto-increment filename found.")
+    """Compatibility wrapper around :func:`output_paths.pick_path`."""
+    return _pick_path_impl(prefix, ext, collision_mode, error_prefix="Save Image Smart Prefix")
 
 
 def _image_tensor_to_pil(image_tensor: Any) -> Image.Image:
@@ -204,7 +163,13 @@ class SaveImageSmartPrefix:
             else:
                 raise FileNotFoundError(f"Save Image Smart Prefix: directory does not exist: {directory}")
         target = _pick_path(prefix, 'jpg', collision_mode)
-        pil.save(target, format='JPEG', quality=int(jpeg_quality), optimize=True, subsampling=0)
+        with staged_write(
+            target,
+            reserve=lambda: _reserve_target(prefix, 'jpg', collision_mode, error_prefix="Save Image Smart Prefix"),
+            error_prefix="Save Image Smart Prefix",
+        ) as staged:
+            pil.save(staged.staging, format='JPEG', quality=int(jpeg_quality), optimize=True, subsampling=0)
+        target = staged.target
         LOGGER.info("Saved artwork: %s", target)
         return (target,)
 

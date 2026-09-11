@@ -13,6 +13,11 @@ nodes and rewires the parser for the optional/manual-fallback schema:
 Run this script from the repository root after the Python nodes exist.  It is
 idempotent in the sense that it re-derives the node entries every time; make a
 backup before experimenting.
+
+Preconditions: a fixed-template historical transformation for the supported v1
+layout (recognised node ids, the documented input orders and the known utility
+nodes).  It is not a general workflow migrator, and it is never re-run on the
+current public workflow - the bundled workflow is user-owned.
 """
 from __future__ import annotations
 

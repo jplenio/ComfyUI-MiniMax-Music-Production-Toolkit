@@ -12,7 +12,34 @@ _WINDOWS_RESERVED_RE = re.compile(r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$", re.I
 
 # Keep one filename component well below the Windows MAX_PATH component limit
 # (255 UTF-16 units) with headroom for suffixes such as "_001" or "_b001".
+# The budget is counted in UTF-16 code units, not Python characters: astral
+# characters (emoji, rare CJK extensions) occupy two units each, so a
+# character-counted budget would silently exceed the filesystem limit.
 MAX_COMPONENT_LENGTH = 180
+
+
+def utf16_length(value: str) -> int:
+    """Return the length of *value* in UTF-16 code units."""
+    return len(str(value or "").encode("utf-16-le")) // 2
+
+
+def truncate_to_utf16(value: str, limit: int = MAX_COMPONENT_LENGTH) -> str:
+    """Truncate *value* on a code-point boundary to at most *limit* UTF-16 units.
+
+    Never splits a surrogate pair, so the result stays encodable.
+    """
+    text = str(value or "")
+    if utf16_length(text) <= limit:
+        return text
+    kept: list[str] = []
+    used = 0
+    for char in text:
+        units = 2 if ord(char) > 0xFFFF else 1
+        if used + units > limit:
+            break
+        kept.append(char)
+        used += units
+    return "".join(kept)
 
 
 def safe_filename_component(value: str) -> str:
@@ -24,12 +51,12 @@ def safe_filename_component(value: str) -> str:
     """
     text = _FILENAME_INVALID_RE.sub("_", str(value or "").strip())
     text = re.sub(r"\s+", " ", text).strip(" .")
-    if len(text) > MAX_COMPONENT_LENGTH:
-        text = text[:MAX_COMPONENT_LENGTH].rstrip(" .")
+    if utf16_length(text) > MAX_COMPONENT_LENGTH:
+        text = truncate_to_utf16(text, MAX_COMPONENT_LENGTH).rstrip(" .")
         try:
+            # Never leave a lone surrogate behind after truncation.
             text.encode("utf-8")
         except UnicodeEncodeError:
-            # Never leave a lone surrogate behind after truncation.
             text = text[:-1]
     if not text or not text.strip("_"):
         return "song"
@@ -70,6 +97,10 @@ def apply_filename_mode(
         clean_title = safe_filename_component(tag_title or fallback_base)
         clean_album = safe_filename_component(album) if album else ""
         base = f"{clean_album} - {clean_title}" if clean_album else clean_title
+        # Two individually safe components can still exceed the filesystem
+        # limit when combined; bound the result too (the title is the part that
+        # gets shortened, the album prefix stays readable).
+        base = truncate_to_utf16(base, MAX_COMPONENT_LENGTH).rstrip(" .") or fallback_base
     else:
         raise ValueError(
             f"{error_prefix}: filename_mode must be "

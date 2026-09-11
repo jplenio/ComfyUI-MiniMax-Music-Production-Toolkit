@@ -17,13 +17,25 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_common import (  # noqa: E402  (script-local tooling module)
+    ARCHIVE_EXCLUDED_NAMES,
+    ARCHIVE_EXCLUDED_PARTS,
+    ARCHIVE_EXCLUDED_SUFFIXES,
+    PACKAGING_EXCLUDED_NAMES,
+    archive_should_include,
+    privacy_hits,
+)
 PROJECT_DIRNAME = "ComfyUI-MiniMax-Music-Production-Toolkit"
 WORKFLOW_SOURCE = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
+ENHANCEMENT_SOURCE = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
 
-EXCLUDED_PARTS = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
-EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+# Archive selection lives in scripts/release_common.py so the packager and the
+# validator cannot disagree about what a release contains.
+EXCLUDED_PARTS = ARCHIVE_EXCLUDED_PARTS
+EXCLUDED_SUFFIXES = ARCHIVE_EXCLUDED_SUFFIXES
 # Local-only files that must never reach GitHub, the Comfy Registry or a release ZIP.
-EXCLUDED_NAMES = {"KONTEXT.md", "PROJECT_STATE.md"}
+EXCLUDED_NAMES = PACKAGING_EXCLUDED_NAMES
 
 
 def sha256(path: Path) -> str:
@@ -35,16 +47,9 @@ def sha256(path: Path) -> str:
 
 
 def should_include(path: Path) -> bool:
-    rel = path.relative_to(ROOT)
-    if any(part in EXCLUDED_PARTS for part in rel.parts):
-        return False
-    if path.suffix.lower() in EXCLUDED_SUFFIXES:
-        return False
-    if path.name in {"SHA256SUMS.txt"} or path.name in EXCLUDED_NAMES:
-        return False
-    if path.suffix.lower() in {".zip"}:
-        return False
-    return True
+    """Shared archive rule: excludes VCS/caches, the local-only handoff files,
+    the generated release assets in ``dist/`` and any nested archive."""
+    return archive_should_include(ROOT, path)
 
 
 def run_validation() -> None:
@@ -108,27 +113,8 @@ def count_demo_tracks() -> int:
 
 
 def privacy_scan_summary() -> list[str]:
-    """Light privacy scan mirroring validate_release; returns offending files."""
-    import re as _re
-    patterns = [
-        _re.compile(r"[A-Za-z]:\\Users\\[^\\\s\"']+", _re.I),
-        _re.compile(r"[A-Za-z]:/Users/[^/\s\"']+", _re.I),
-        _re.compile(r"(?:192\.168\.|10\.\d+\.\d+\.|172\.(?:1[6-9]|2\d|3[01])\.)\d+\.\d+"),
-        _re.compile("YOUR_" + "GITHUB_USERNAME|YOUR_" + "COMFY_PUBLISHER_ID"),
-    ]
-    text_extensions = {".py", ".js", ".md", ".txt", ".toml", ".json", ".yml", ".yaml", ".bat"}
-    hits = []
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in text_extensions:
-            continue
-        if any(part in {".git", "__pycache__"} for part in path.parts):
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        for pattern in patterns:
-            if pattern.search(text):
-                hits.append(str(path.relative_to(ROOT)))
-                break
-    return hits
+    """Shared privacy scan; returns the offending files (no-duplicates)."""
+    return [relative for relative, _pattern in privacy_hits(ROOT, published_only=True)]
 
 
 def print_dry_run_summary(version: str) -> None:
@@ -137,7 +123,7 @@ def print_dry_run_summary(version: str) -> None:
 
     workflow_data = _json.loads(WORKFLOW_SOURCE.read_text(encoding="utf-8"))
     user_prompts, system_prompts = count_prompts()
-    local_only = [name for name in EXCLUDED_NAMES if (ROOT / name).exists()]
+    local_only = sorted(name for name in EXCLUDED_NAMES if (ROOT / name).exists())
     privacy_hits = privacy_scan_summary()
     included_files = [p for p in ROOT.rglob("*") if p.is_file() and should_include(p)]
 
@@ -151,9 +137,9 @@ def print_dry_run_summary(version: str) -> None:
     print(f"  workflow links:   {len(workflow_data.get('links', []))}")
     print(f"  workflow rev:     {workflow_data.get('revision')}")
     print(f"  files in zip:     {len(included_files)}")
-    print(f"  local-only files: {', '.join(local_only) or 'none'} (excluded from the ZIP)")
+    print(f"  local-only files: {', '.join(local_only) or 'none'} (never in the ZIP)")
     print(f"  privacy scan:     {'CLEAN' if not privacy_hits else 'HITS: ' + ', '.join(privacy_hits)}")
-    print(f"  planned assets:   {PROJECT_DIRNAME}-v{version}.zip, MiniMax_Music3_Production_Toolkit_v{version}.json, SHA256SUMS.txt")
+    print(f"  planned assets:   {PROJECT_DIRNAME}-v{version}.zip, MiniMax_Music3_Production_Toolkit_v{version}.json, MiniMax_Music3_Production_Toolkit_AudioEnhance_v{version}.json, SHA256SUMS.txt")
 
 
 
@@ -174,7 +160,7 @@ def create_zip(output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output-dir", type=Path, default=ROOT.parent)
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "dist")
     parser.add_argument("--skip-validation", action="store_true")
     parser.add_argument("--dry-run", action="store_true", help="Print a release contents summary without creating assets.")
     args = parser.parse_args()
@@ -197,19 +183,22 @@ def main() -> None:
 
     archive = outdir / f"{PROJECT_DIRNAME}-v{version}.zip"
     workflow = outdir / f"MiniMax_Music3_Production_Toolkit_v{version}.json"
+    enhancement = outdir / f"MiniMax_Music3_Production_Toolkit_AudioEnhance_v{version}.json"
     checksums = outdir / "SHA256SUMS.txt"
 
     if archive.exists():
         archive.unlink()
     create_zip(archive)
     shutil.copyfile(WORKFLOW_SOURCE, workflow)
+    shutil.copyfile(ENHANCEMENT_SOURCE, enhancement)
 
-    assets = [archive, workflow]
+    assets = [archive, workflow, enhancement]
     checksum_text = "".join(f"{sha256(p)}  {p.name}\n" for p in assets)
     checksums.write_text(checksum_text, encoding="utf-8", newline="\n")
 
     print(f"Created: {archive}")
     print(f"Created: {workflow}")
+    print(f"Created: {enhancement}")
     print(f"Created: {checksums}")
     print(checksum_text, end="")
 

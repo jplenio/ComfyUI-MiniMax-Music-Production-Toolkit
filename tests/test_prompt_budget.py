@@ -119,6 +119,57 @@ class SoftTrimTests(unittest.TestCase):
         for line in trimmed_lines[:-1]:
             self.assertTrue(line.rstrip().endswith(tuple(str(i) for i in range(10))))
 
+    def test_combined_postcondition_for_oversized_caption_and_lyrics(self):
+        # F18 reproduction: 20,000-character caption and lyrics used to return
+        # an estimate of 4501 against a 4500 budget.
+        result = budget.trim_prompt_to_budget("x" * 20000, "y" * 20000, 4500)
+        self.assertLessEqual(result["estimated_tokens"], 4500)
+        self.assertEqual(
+            result["estimated_tokens"],
+            budget.estimate_prompt_tokens(result["caption"], result["lyrics"]),
+        )
+        self.assertTrue(result["hard_cut_used"])
+
+    def test_postcondition_holds_across_budgets_and_shapes(self):
+        cases = [
+            ("x" * 20000, "y" * 20000, 4500),
+            ("A caption with words. " * 40, "line\n" * 900, 500),
+            ("short caption", "word " * 3000, 120),
+            ("c" * 4000, "[Intro]\nverse\n[Outro]", 200),
+            ("\u00fcber \u00fcber " * 300, "\u65e5\u672c\u8a9e" * 500, 300),
+            ("a", "b", 1),
+            ("a", "b", 0),
+        ]
+        for caption, lyrics, max_tokens in cases:
+            with self.subTest(budget=max_tokens, caption=len(caption), lyrics=len(lyrics)):
+                result = budget.trim_prompt_to_budget(caption, lyrics, max_tokens)
+                self.assertLessEqual(result["estimated_tokens"], max_tokens)
+                self.assertLessEqual(len(result["caption"]), len(caption))
+                self.assertLessEqual(len(result["lyrics"]), len(lyrics))
+
+    def test_under_budget_inputs_are_never_modified(self):
+        caption = "A concise caption."
+        lyrics = "[Intro]\nshort verse\n[Outro]"
+        result = budget.trim_prompt_to_budget(caption, lyrics, 4500)
+        self.assertFalse(result["trimmed"])
+        self.assertFalse(result["hard_cut_used"])
+        self.assertEqual(result["caption"], caption)
+        self.assertEqual(result["lyrics"], lyrics)
+        self.assertEqual(result["estimated_tokens"], result["original_estimated_tokens"])
+
+    def test_hard_cut_flag_accumulates_across_both_fields(self):
+        # Both fields need a hard cut; the flag must not be overwritten by the
+        # second stage.
+        result = budget.trim_prompt_to_budget("x" * 20000, "y" * 20000, 1000)
+        self.assertTrue(result["hard_cut_used"])
+        self.assertLessEqual(result["estimated_tokens"], 1000)
+
+    def test_orphan_tags_are_still_removed(self):
+        lyrics = "[Intro]\nline one\n[Verse]\n" + "\n".join("more lyrics " * 5 for _ in range(60)) + "\n[Outro]"
+        result = budget.trim_prompt_to_budget("caption", lyrics, 300)
+        self.assertLessEqual(result["estimated_tokens"], 300)
+        self.assertFalse(result["lyrics"].rstrip().endswith("[Outro]"))
+
 
 class ParserBudgetIntegrationTests(unittest.TestCase):
     def _parse(self, caption, lyrics, **overrides):

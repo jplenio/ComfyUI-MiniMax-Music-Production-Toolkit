@@ -140,3 +140,43 @@ Whenever code in these areas changes, explicitly test them:
 - Windows paths and Unicode filenames
 - duplicate demo titles / multiple takes
 - SoundCloud URL preservation when refreshing demo metadata
+
+## Performance and quality baseline
+
+`scripts/benchmark_toolkit.py` measures the audio chain on deterministic
+synthetic audio, so a before/after comparison uses byte-identical input and a
+result can be attributed to a machine instead of to folklore.
+
+- `python scripts/benchmark_toolkit.py --list` lists the measurable stages and
+the stages that cannot be measured with fixtures alone (FlashSR, MiniMax
+generation, FLUX artwork, LLM chat, downloads) together with the reason.
+- A default run measures the fast profile (10 s, stereo, 48 kHz, batch 1).
+`--full` measures the whole axis product described in
+`tests/fixtures/benchmark_matrix.json` (10 s / 1 min / 5 min, mono/stereo,
+44.1/48/96 kHz, batch 1/2).
+- Every widget value comes from the node's own `INPUT_TYPES()` defaults, so the
+benchmark never times settings the product would not use.
+- The report carries median, min, max and spread of the timed runs; warm-up runs
+are excluded. `--json <file>` writes the raw report.
+- Process RSS (current and peak) is reported instead of torch's
+`allocated`/`reserved` counters, because those do not cover llama.cpp or the
+aimdo/VBAR allocator. Unknown values are reported as unknown, never as zero.
+- Standard telemetry carries sizes, parameters and timings only - never prompt
+text or audio content. The fixed LLM briefs live in
+`tests/fixtures/benchmark_briefs.json`.
+- Hardware classes that do not exist on the measuring machine stay `untested`;
+a mocked detection test is never a substitute for a measurement.
+
+A benchmark improvement claim is only valid when the workload, the settings and
+the machine are the same. Compare the medians, and keep cold and warm starts
+separate.
+
+## Tooling requirements
+
+The runtime package supports the Python version ComfyUI provides (3.10+), but
+several maintenance scripts use `tomllib` for `pyproject.toml` parsing
+(`scripts/validate_release.py`, `scripts/bump_version.py`), which requires
+Python 3.11 or newer. Run the *tooling* with 3.11+; that is independent of the
+ComfyUI runtime version. `scripts/release_common.py` holds the archive
+selection and privacy patterns shared by the packager and the validator, so
+the two can no longer disagree about what a release contains.
