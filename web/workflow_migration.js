@@ -4,6 +4,7 @@ import {
     repairLLMChatWidgets,
     repairParserNodeLinks,
     repairStructuredPromptWidgets,
+    removeLegacyLLMSessionInput,
 } from "./migration_utils.js";
 
 // ComfyUI extension wrapper around the pure graph/widget migration adapters in
@@ -44,6 +45,7 @@ app.registerExtension({
             queueMicrotask(() => repairJsonNodeLinks(node));
         }
         if (matches(node, LLM_CHAT_TYPE)) {
+            removeLegacyLLMSessionInput(node);
             queueMicrotask(() => repairLLMChatWidgets(node));
         }
         if (matches(node, STRUCTURED_PROMPT_TYPE)) {

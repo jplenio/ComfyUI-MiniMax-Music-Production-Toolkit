@@ -39,7 +39,7 @@ class EntryPointTests(unittest.TestCase):
     """The real ``__init__.py`` must run outside ComfyUI and register cleanly."""
 
     def test_all_identifiers_are_registered(self):
-        self.assertEqual(len(ENTRY_POINT.NODE_CLASS_MAPPINGS), 32)
+        self.assertEqual(len(ENTRY_POINT.NODE_CLASS_MAPPINGS), 33)
         self.assertEqual(set(ENTRY_POINT.NODE_CLASS_MAPPINGS), set(NODE_OWNER))
 
     def test_display_name_for_every_identifier(self):

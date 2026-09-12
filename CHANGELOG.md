@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.5.1] - 2026-09-13
+
+### Added
+- LLM backend selection: integrated GGUF, local API servers, and cloud services.
+  Presets include LM Studio, Ollama, llama.cpp, Unsloth Studio, vLLM, OpenAI,
+  Claude, Gemini, DeepSeek, Qwen, MiniMax, OpenRouter and Groq, plus custom endpoints.
+- Conditional LLM controls, model discovery, session-only API key entry and a
+  connection setup dialog. Existing node identifiers, outputs and GGUF defaults
+  remain compatible; obsolete session input wires migrate on load.
+- FLUX.2 cover switch, enabled by default, wired to image execution and preflight
+  downloads. Audio export continues without generated artwork when switched off.
+- Provider/transport/UI/cover regression tests and `LLM_PROVIDERS.md` setup guide.
+
+### Changed
+- LLM execution now uses ComfyUI's native cache invalidation to generate fresh
+  text on every enabled run. Removed the session-ID helper from the example and
+  the session input from the LLM; old wires migrate without disturbing other links.
+- **The production workflow got a visual pass.** The LLM node is titled
+  `LLM · In ComfyUI / Local app / Cloud`, its panel and the prompt-report panel
+  are taller so the new controls fit, and node positions and group sizes were
+  tidied. The workflow opens on the mastering chain and the artwork lane.
+- The full workflow's generic LLM preflight is off: the integrated LLM downloads
+  its selected GGUF on demand; external providers manage their models separately.
+
+### Fixed
+- The documentation of the FLUX.2 cover switch matches the shipped workflow
+  again: it lives in `05 · ILLUSTRATE / Cover artwork` with the cover nodes it
+  controls, not at the top of the start group. The layout test pins that
+  placement and the two connections it feeds.
+- `PreviewImage` and `PreviewAudio` are registered as ComfyUI-core node types in
+  the node-ownership test.
+- The FFmpeg pipe timeout test no longer races the process start (long workload
+  instead of 0.2 s), so the release gate is deterministic.
+
 ## [2.5.0] - 2026-09-11
 
 ### Added

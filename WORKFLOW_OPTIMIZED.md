@@ -14,9 +14,18 @@ Auto-EQ analyzes the same post-restoration audio that its application EQ receive
 Its settings feed a dedicated EQ, leaving the second, manual EQ freely editable.
 Numbered nodes and a separate green mastering area show the processing order.
 In production, artwork occupies the lower lane; output records stay beside the
-savers. Color supplements text labels. The saved view opens on setup.
+savers. Color supplements text labels. The production workflow opens on the
+mastering chain and that artwork lane; the Audio Enhancement Lab opens on its
+source setup.
 
 ## Independent controls
+
+The production LLM offers **In ComfyUI / Local app / Cloud** modes and generates
+fresh text on each queued execution; the old session-ID helper has been removed.
+The **FLUX.2 cover · ON / OFF** control in **05 · ILLUSTRATE / Cover artwork**
+defaults to ON. OFF skips
+FLUX preflight downloads and image computation and exports audio without a new
+cover. See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for setup and compatibility details.
 
 | Control | Effect | Starting setting |
 |---|---|---|

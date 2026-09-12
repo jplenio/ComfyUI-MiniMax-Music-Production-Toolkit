@@ -1,5 +1,10 @@
 # LLM Session ID / Cache Buster
 
+**Legacy helper:** no longer needed by MiniMax LLM Chat, which generates fresh
+text on every enabled execution without a session input. Removed from the
+bundled workflow; still registered for personal workflows using its seed output
+or another LLM implementation.
+
 Creates a changing text session ID from a seed so an external LLM node is re-executed when the creative prompt itself is unchanged. Set the seed widget's control-after-generate mode to Randomize or Increment for batch use.
 
 **Node ID:** `MiniMaxLLMSessionId`  

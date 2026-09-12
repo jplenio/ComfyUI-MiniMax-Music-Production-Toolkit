@@ -3,6 +3,13 @@
 Saves generated artwork as JPEG using smart output paths, collision handling and the same filename convention as the audio/JSON savers.
 
 **Node ID:** `SaveImageSmartPrefix`  
+
+**Optional cover:** `enabled` defaults to true. When false, the node returns an
+empty saved path, requests no upstream image and writes no file. In the full
+workflow, the Cover Generation control connects this input and the FLUX model
+preflight flag. Keep the saver active; do not bypass it to disable a cover.
+An independent image preview/output can still request the same image branch.
+
 **Category:** `MiniMax Music Production Toolkit/artwork`
 
 ## Inputs

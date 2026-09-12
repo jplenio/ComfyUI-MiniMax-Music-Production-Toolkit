@@ -12,6 +12,30 @@ def read(name):
 
 
 class OptimizedWorkflowTests(unittest.TestCase):
+    def test_cover_switch_sits_in_the_cover_area(self):
+        """The FLUX.2 switch belongs with the artwork stage it controls.
+
+        The maintainer's layout decision places it in
+        05 · ILLUSTRATE / Cover artwork (not at the top of the start group).
+        This pins that placement, the ON default and the two connections that
+        make the switch effective.
+        """
+        wf = read("MiniMax_Music3_Production_Toolkit")
+        control = next(n for n in wf["nodes"] if n["type"] == "MiniMaxCoverControl")
+        cover = next(g for g in wf["groups"] if g["title"].startswith("05"))
+        x, y = control["pos"]
+        w, h = control["size"]
+        bx, by, bw, bh = cover["bounding"]
+        self.assertTrue(bx <= x and by <= y - 30 and bx + bw >= x + w and by + bh >= y + h,
+                        "the switch must sit inside the cover-artwork group")
+        self.assertTrue(control["widgets_values_named"]["enabled"],
+                        "the cover switch is ON by default")
+        nodes = {n["id"]: n for n in wf["nodes"]}
+        connected = {(nodes[l[3]]["type"], nodes[l[3]]["inputs"][l[4]]["name"])
+                     for l in wf["links"] if l[1] == control["id"]}
+        self.assertIn(("SaveImageSmartPrefix", "enabled"), connected)
+        self.assertIn(("MiniMaxModelAutodownload", "flux2_models"), connected)
+
     def test_only_canonical_examples_are_shipped(self):
         files = {p.name for p in (ROOT / "example_workflows").glob("*.json")}
         self.assertEqual(files, {"MiniMax_Music3_Production_Toolkit.json",

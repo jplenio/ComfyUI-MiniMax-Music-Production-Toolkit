@@ -2,6 +2,10 @@
 
 Releases the loaded LLM model(s) and session state so VRAM/RAM is free for the following music and artwork stages.
 
+Only models loaded inside this toolkit are released. Models in LM Studio,
+Ollama, llama.cpp, Unsloth Studio or other servers remain under that app's
+control; this node does not send external unload/shutdown requests.
+
 **Node ID:** `MiniMaxLLMUnload`  
 **Category:** `MiniMax Music Production Toolkit/llm`
 

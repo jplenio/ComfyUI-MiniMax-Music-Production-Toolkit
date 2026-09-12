@@ -5,6 +5,16 @@ export const PARSER_INPUT_NAME = "structured_llm_output";
 export const JSON_METADATA_INPUT_NAME = "metadata_json";
 export const LLM_SPLIT_MODE_OPTIONS = ["none", "layer", "row"];
 
+// ComfyUI's removeInput updates inbound link slots and disconnects the removed
+// wire. Do not splice the input array directly or touch the source node: its
+// seed output may still be in use elsewhere in a personal workflow.
+export function removeLegacyLLMSessionInput(node) {
+    const index = node.inputs?.findIndex(input => input.name === "session_id") ?? -1;
+    if (index < 0 || typeof node.removeInput !== "function") return false;
+    node.removeInput(index);
+    return true;
+}
+
 // Historical positional widget orders of MiniMaxStructuredPromptV20, used to
 // repair positional-only serializations.  Pre-2.0.5 had no meter; 2.0.5 added
 // meter but kept the old system-prompt field order.  The current order moved

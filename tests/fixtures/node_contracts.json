@@ -846,9 +846,35 @@
       ],
       "enabled": [
         "BOOLEAN",
-        {"default": true}
+        {
+          "default": true
+        }
       ]
     },
+    "hidden": {}
+  },
+  "MiniMaxCoverControl": {
+    "python_class": "MiniMaxCoverControl",
+    "category": "MiniMax Music Production Toolkit/artwork",
+    "function": "configure",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "BOOLEAN"
+    ],
+    "return_names": [
+      "cover_enabled"
+    ],
+    "required": {
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "optional": {},
     "hidden": {}
   },
   "MiniMaxFlashSRAudio": {
@@ -933,12 +959,6 @@
         {
           "forceInput": true,
           "multiline": true
-        }
-      ],
-      "session_id": [
-        "STRING",
-        {
-          "forceInput": true
         }
       ],
       "model": [
@@ -1116,7 +1136,87 @@
         }
       ]
     },
-    "optional": {},
+    "optional": {
+      "backend": [
+        [
+          "In ComfyUI (GGUF)",
+          "Local app / server",
+          "Cloud service"
+        ],
+        {
+          "default": "In ComfyUI (GGUF)"
+        }
+      ],
+      "local_provider": [
+        [
+          "LM Studio",
+          "Ollama",
+          "llama.cpp",
+          "Unsloth Studio",
+          "vLLM",
+          "Other OpenAI-compatible server"
+        ],
+        {
+          "default": "LM Studio"
+        }
+      ],
+      "cloud_provider": [
+        [
+          "OpenAI",
+          "Claude (Anthropic)",
+          "Gemini (Google)",
+          "DeepSeek",
+          "Qwen (Alibaba Cloud)",
+          "MiniMax",
+          "OpenRouter",
+          "Groq",
+          "Other OpenAI-compatible cloud"
+        ],
+        {
+          "default": "OpenAI"
+        }
+      ],
+      "server_url": [
+        "STRING",
+        {
+          "default": ""
+        }
+      ],
+      "remote_model": [
+        "STRING",
+        {
+          "default": ""
+        }
+      ],
+      "api_key_env": [
+        "STRING",
+        {
+          "default": ""
+        }
+      ],
+      "credential_id": [
+        "STRING",
+        {
+          "default": ""
+        }
+      ],
+      "remote_max_tokens": [
+        "INT",
+        {
+          "default": 4096,
+          "min": 1,
+          "max": 131072
+        }
+      ],
+      "request_timeout": [
+        "INT",
+        {
+          "default": 120,
+          "min": 5,
+          "max": 600
+        }
+      ]
+    },
     "hidden": {}
   },
   "MiniMaxLLMSessionId": {
@@ -4349,7 +4449,9 @@
     "required": {
       "image": [
         "IMAGE",
-        {}
+        {
+          "lazy": true
+        }
       ],
       "filename_prefix": [
         "STRING",
@@ -4404,6 +4506,12 @@
         ],
         {
           "default": "album - title"
+        }
+      ],
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
         }
       ]
     },

@@ -34,6 +34,12 @@ PyTorch and NumPy are expected from ComfyUI and are deliberately not replaced by
 
 ### Optional: integrated LLM chat
 
+The LLM node also supports **Local app / server** and **Cloud service** modes.
+Those modes do not require llama-cpp-python or a GGUF in ComfyUI. Start your local
+app's API server or configure a cloud API key, then select a model on the node.
+See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for supported apps, addresses and setup.
+The GGUF requirements below apply only to **In ComfyUI (GGUF)**.
+
 `MiniMaxLLMChat` uses the public `llama-cpp-python` API:
 
 ```bash

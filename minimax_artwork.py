@@ -115,7 +115,7 @@ class SaveImageSmartPrefix:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
+                "image": ("IMAGE", {"lazy": True}),
                 "filename_prefix": ("STRING", {"forceInput": True}),
                 "collision_mode": (["auto_increment", "overwrite", "error_if_exists"], {"default": "auto_increment"}),
                 "create_directories": ("BOOLEAN", {"default": True}),
@@ -125,6 +125,7 @@ class SaveImageSmartPrefix:
                 "title": ("STRING", {"forceInput": True}),
                 "audio_tags_json": ("STRING", {"forceInput": True}),
                 "filename_mode": (["album - title", "title only", "prefix as provided"], {"default": "album - title"}),
+                "enabled": ("BOOLEAN", {"default": True, "tooltip": "Off skips the upstream image branch and writes no cover. Connect the Cover Generation switch here and to the model check's flux2_models input."}),
             },
         }
 
@@ -134,10 +135,15 @@ class SaveImageSmartPrefix:
     CATEGORY = "MiniMax Music Production Toolkit/artwork"
     OUTPUT_NODE = True
 
+    def check_lazy_status(self, image=None, enabled=True, **kwargs):
+        return ["image"] if enabled and image is None else []
+
     def save(
         self, image, filename_prefix, collision_mode, create_directories, jpeg_quality,
-        title="", audio_tags_json="", filename_mode="album - title",
+        title="", audio_tags_json="", filename_mode="album - title", enabled=True,
     ):
+        if not enabled:
+            return ("",)
         pil = _image_tensor_to_pil(image)
         prefix = _resolve_prefix(filename_prefix)
 
@@ -174,11 +180,30 @@ class SaveImageSmartPrefix:
         return (target,)
 
 
+class MiniMaxCoverControl:
+    """One visible switch for generation and the preflight download group."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {"enabled": ("BOOLEAN", {"default": True, "tooltip": "Generate a FLUX.2 cover. Off skips FLUX execution and downloads in the bundled workflow; audio export continues without artwork."})}}
+
+    RETURN_TYPES = ("BOOLEAN",)
+    RETURN_NAMES = ("cover_enabled",)
+    FUNCTION = "configure"
+    CATEGORY = "MiniMax Music Production Toolkit/artwork"
+    SEARCH_ALIASES = ["Flux", "Flux.2", "Cover", "Artwork", "Cover switch"]
+
+    def configure(self, enabled=True):
+        return (bool(enabled),)
+
+
 NODE_CLASS_MAPPINGS = {
+    "MiniMaxCoverControl": MiniMaxCoverControl,
     "MiniMaxSquareImageSize": MiniMaxSquareImageSize,
     "SaveImageSmartPrefix": SaveImageSmartPrefix,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
+    "MiniMaxCoverControl": "FLUX.2 Cover – On / Off",
     "MiniMaxSquareImageSize": "MiniMax Square Image Size",
     "SaveImageSmartPrefix": "Save Image Smart Prefix",
 }

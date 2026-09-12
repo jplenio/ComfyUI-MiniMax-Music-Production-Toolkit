@@ -56,6 +56,7 @@ NODE_OWNER = {
     "SaveAudioAbsolutePath": "save_audio_absolute",
     "SaveAudioSmartPrefix": "save_audio_smart_prefix",
     "SaveImageSmartPrefix": "minimax_artwork",
+    "MiniMaxCoverControl": "minimax_artwork",
 }
 
 # At least these routes must be registered; the assertions are additive, so a new
@@ -69,6 +70,8 @@ EXPECTED_ROUTES = (
     # The deliberately triggered model preflight (D04): GET reports, POST downloads.
     ("GET", "/minimax_music_toolkit/model_preflight"),
     ("POST", "/minimax_music_toolkit/model_preflight"),
+    ("GET", "/minimax_music_toolkit/llm/providers"),
+    ("POST", "/minimax_music_toolkit/llm/configure"),
 )
 
 

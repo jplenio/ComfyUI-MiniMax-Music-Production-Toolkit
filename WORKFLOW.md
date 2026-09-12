@@ -28,9 +28,12 @@ The bundled production system prompt requires the LLM to return:
 
 The parser is intentionally order-tolerant for resilience, but the system prompt asks for this exact order.
 
-## 2. Integrated LLM (llama.cpp)
+## 2. LLM — ComfyUI, local app or cloud
 
-The example uses the integrated `LLM Chat (llama.cpp)` node with a local GGUF model — no external LLM custom node is required.
+The example defaults to a GGUF inside ComfyUI. The same LLM node also supports
+local API servers and cloud providers. Select its mode; only relevant settings
+are shown. See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for app addresses, model
+selection and API key setup. No external LLM custom node is required.
 
 The bundled example uses the user-tested local-LLM settings:
 
@@ -41,7 +44,11 @@ n_ctx      = 32768
 
 This is intentionally generous because the model may need to produce a detailed Caption, long instrumental section structure, lyrics, title and cover prompt in one response. If your selected GGUF model or hardware needs less context, reduce these values together rather than assuming the example settings are universal.
 
-`LLM Session ID / Cache Buster` can randomize/increment the session ID so identical high-level genre prompts still trigger a fresh creative LLM pass in batch generation. `Unload LLM (integrated)` runs after the chat and frees the model memory before music generation.
+The LLM reruns on every queued execution through ComfyUI's `IS_CHANGED` hook,
+even with unchanged prompts. The session-ID helper and input are no longer
+needed. Cloud mode can therefore incur a new API charge on each run.
+`Unload LLM (integrated)` releases toolkit-owned model memory after the chat;
+it does not unload models in another local app.
 
 ### Switching the LLM section off
 

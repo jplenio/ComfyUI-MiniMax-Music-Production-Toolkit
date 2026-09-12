@@ -335,6 +335,39 @@ def _repair_node(
         )
 
 
+def _remove_llm_session_input(node, graph, changes):
+    """Remove only the obsolete session wire, preserving all other slot targets."""
+    if node.get("type") != "MiniMaxLLMChat":
+        return
+    inputs = node.get("inputs") or []
+    removed_slots = {i for i, entry in enumerate(inputs) if entry.get("name") == "session_id"}
+    if not removed_slots:
+        return
+    removed_links = set()
+    removed_raw = set()
+    for link in _iter_links(graph):
+        if link.target_id != node.get("id") or link.target_slot_index is None:
+            continue
+        slot = link.target_slot_index
+        if not 0 <= slot < len(inputs):
+            continue
+        if slot in removed_slots:
+            removed_links.add(link.id)
+            removed_raw.add(id(link.raw))
+        else:
+            link.set_target_slot(slot - sum(index < slot for index in removed_slots))
+    node["inputs"] = [entry for i, entry in enumerate(inputs) if i not in removed_slots]
+    graph["links"] = [raw for raw in graph.get("links", []) if id(raw) not in removed_raw]
+    for source in graph.get("nodes", []):
+        for output in source.get("outputs", []):
+            if output.get("links"):
+                output["links"] = [lid for lid in output["links"] if lid not in removed_links]
+    for boundary in (graph.get("inputs") or []) + (graph.get("outputs") or []):
+        if boundary.get("linkIds"):
+            boundary["linkIds"] = [lid for lid in boundary["linkIds"] if lid not in removed_links]
+    changes.append(f"migrated node {node.get('id')} (MiniMaxLLMChat): removed obsolete session input; LLM now runs fresh automatically")
+
+
 def migrate_workflow(workflow: Dict[str, Any], diagnostics: Optional[List[str]] = None) -> List[str]:
     """Repair serialized link slots for the 2.0.0 parser/JSON input reorders.
 
@@ -345,6 +378,9 @@ def migrate_workflow(workflow: Dict[str, Any], diagnostics: Optional[List[str]] 
     """
     changes: List[str] = []
     for graph in _iter_graphs(workflow):
+        for node in graph.get("nodes") or []:
+            if isinstance(node, dict):
+                _remove_llm_session_input(node, graph, changes)
         nodes = _node_by_id(graph)
         links = list(_iter_links(graph))
         for node in graph.get("nodes") or []:

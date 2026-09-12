@@ -1,6 +1,31 @@
-# MiniMax LLM Chat (integrated)
+# MiniMax LLM Chat — ComfyUI / local app / cloud
 
 Integrated LLM chat node based on the public `llama-cpp-python` API. It replaces the external `ComfyUI-LLM-Session` chat node in the example workflow. No GPL code from the external node is used.
+
+Choose **Run language model**: **In ComfyUI (GGUF)**, **Local app / server** or
+**Cloud service**. Existing workflows default to the integrated mode. Its basic
+controls stay visible; **Show / hide advanced GGUF settings** exposes the rest
+without changing stored values.
+
+External modes show the app/provider, API base, model ID, optional key variable,
+output limit and timeout. **Set API key** stores a key in server RAM until restart,
+not in the workflow. **Find models** lists the server's model IDs. **Connection
+setup / status** explains the selected connection. Only text chat is supported.
+
+Local presets: LM Studio, Ollama, llama.cpp, Unsloth Studio and vLLM. Cloud:
+OpenAI, Claude, Gemini, DeepSeek, Qwen, MiniMax, OpenRouter and Groq. Both modes
+also accept a custom OpenAI-compatible Chat Completions API base. For Qwen, copy
+the regional workspace base from Alibaba Cloud; its key must match that region.
+
+External modes use fresh single turns and provider sampling/reasoning defaults.
+The GGUF settings below apply only inside ComfyUI. External requests do not load
+local model weights; another app's model memory remains owned by that app.
+Cloud sends both prompts to the provider and may incur charges. Generation is
+not automatically retried after failure. Stopping ComfyUI may not cancel remote
+work immediately; a blocking call can take until its network timeout to return.
+
+For addresses, keys, memory advice and troubleshooting, see **LLM_PROVIDERS.md**
+in the repository.
 
 **Node ID:** `MiniMaxLLMChat`  
 **Category:** `MiniMax Music Production Toolkit/llm`
@@ -9,7 +34,10 @@ Integrated LLM chat node based on the public `llama-cpp-python` API. It replaces
 
 - **`user_text`** (`STRING`, forceInput) — assembled user prompt (normally from `MiniMaxStructuredPromptV20`).
 - **`system_prompt`** (`STRING`, forceInput) — resolved system prompt.
-- **`session_id`** (`STRING`, forceInput) — session/cache-buster from `MiniMaxLLMSessionId`; a new value re-runs generation instead of reusing ComfyUI's output cache.
+- **Fresh execution:** no session-ID input is needed. ComfyUI's `IS_CHANGED` hook
+  makes an enabled LLM execute on every queued run, including unchanged prompts.
+  Each cloud run may incur another API charge. Old session input wires are removed
+  on workflow load; the helper remains registered for other legacy uses.
 - **`model`** — llama.cpp-compatible GGUF from `models/llm`. The bundled workflow's example model name is always offered so existing workflows keep loading.
 - **`max_tokens`** — response token budget (example: `16384`).
 - **`temperature`** / **`top_p`** / **`top_k`** / **`min_p`** — sampling controls (LM Studio defaults: `0.7` / `0.8` / `40` / `0.0`).
@@ -23,7 +51,7 @@ Integrated LLM chat node based on the public `llama-cpp-python` API. It replaces
 - **`tensor_split`** — VRAM distribution: empty = auto, `even` = evenly across all GPUs, or comma-separated fractions/weights.
 - **`main_gpu`** — GPU index for intermediate results (normally `0`).
 - **`tensor_parallel`** — true tensor parallelism when the installed llama-cpp-python build supports it (0.3.48 does not; falls back to split modes with a warning).
-- **`reset_session`** — ON = fresh single-turn chat every run (recommended). OFF = llama.cpp session state per `session_id`.
+- **`reset_session`** — ON = fresh single-turn chat every run (recommended). OFF = advanced reuse of the default llama.cpp state cache. This does not control ComfyUI's output cache; the node executes on every enabled queued run.
 - **`auto_download`** — fetch a missing GGUF when a download URL is configured in `models_config.json`.
 
 ## Verified models
@@ -37,10 +65,12 @@ The generic chatml fallback plus the thinking split keep the node working with m
 
 - **`text`** (`STRING`) — assistant response, parsed downstream by `MiniMaxParseExternalLLMOutputV16`.
 - **`status`** (`STRING`) — one-line status (model, session mode, character count).
+- **`thinking`** (`STRING`) — separately supplied reasoning or reasoning split from the answer.
 
 ## Requirements
 
-The node needs the `llama-cpp-python` package in the ComfyUI Python environment:
+The integrated mode needs the `llama-cpp-python` package in the ComfyUI Python environment;
+external modes need no provider SDK or llama-cpp-python:
 
 ```bash
 python -m pip install llama-cpp-python

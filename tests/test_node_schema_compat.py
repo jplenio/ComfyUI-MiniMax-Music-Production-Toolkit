@@ -29,6 +29,7 @@ NODE_MODULE = {
     "MiniMaxMetadataLoader": "minimax_metadata",
     "MiniMaxStandardAudioTags": "minimax_audio_tags",
     "SaveImageSmartPrefix": "minimax_artwork",
+    "MiniMaxCoverControl": "minimax_artwork",
     "MiniMaxStructuredPromptV20": "minimax_structured_prompt",
     "MiniMaxLLMChat": "llm_chat",
     "MiniMaxLLMUnload": "llm_chat",
@@ -53,7 +54,7 @@ CORE_NODE_TYPES = {
     "UNETLoader", "CLIPLoader", "VAELoader", "CLIPTextEncode", "ConditioningZeroOut",
     "CFGGuider", "RandomNoise", "KSamplerSelect", "Flux2Scheduler",
     "EmptyFlux2LatentImage", "SamplerCustomAdvanced", "VAEDecode", "MarkdownNote",
-    "LoadAudio", "PrimitiveString", "PrimitiveInt",
+    "LoadAudio", "PrimitiveString", "PrimitiveInt", "PreviewImage", "PreviewAudio",
 }
 
 # Order dependencies: toolkit_logging first, then anything using it.

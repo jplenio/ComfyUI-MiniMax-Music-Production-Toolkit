@@ -1,11 +1,12 @@
-"""Integrated LLM chat and unload nodes (llama.cpp via llama-cpp-python).
+"""LLM chat (integrated GGUF or external API) and integrated model unloading.
 
 These replace the external ``ComfyUI-LLM-Session`` nodes used by the example
 workflow with a small, self-contained implementation:
 
-- ``MiniMaxLLMChat`` loads a GGUF from ``models/llm``, sends one system+user
-  turn and returns the assistant text.  Optional session state keyed by
-  ``session_id`` supports multi-turn conversations across runs.
+- ``MiniMaxLLMChat`` loads a GGUF from ``models/llm`` or delegates to a local
+  server/cloud adapter. It returns final text, status and separate reasoning.
+  IS_CHANGED makes every enabled queued execution fresh; no session node is
+  needed. The old Python session_id argument remains for direct callers.
 - ``MiniMaxLLMUnload`` releases loaded LLM models (and optionally cached
   FlashSR runners) so VRAM/RAM is available for the music generation stage.
 
@@ -30,6 +31,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .comfy_resources import free_comfyui_model_cache
+from .llm_providers import MODES, LOCAL, CLOUD, remote_chat
 from .llm_sampling import (
     adapter_report,
     build_runtime_options,
@@ -1104,7 +1106,6 @@ class MiniMaxLLMChat:
                 "enabled": ("BOOLEAN", {"default": True}),
                 "user_text": ("STRING", {"forceInput": True, "multiline": True}),
                 "system_prompt": ("STRING", {"forceInput": True, "multiline": True}),
-                "session_id": ("STRING", {"forceInput": True}),
                 "model": (models, {"default": EXAMPLE_MODEL_NAME if EXAMPLE_MODEL_NAME in models else models[0]}),
                 "max_tokens": ("INT", {"default": 16384, "min": 1, "max": 131072, "step": 1}),
                 "temperature": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 2.0, "step": 0.01}),
@@ -1125,7 +1126,18 @@ class MiniMaxLLMChat:
                 "tensor_split": ("STRING", {"default": "", "multiline": False}),
                 "main_gpu": ("INT", {"default": 0, "min": 0, "max": 16, "step": 1}),
                 "tensor_parallel": ("BOOLEAN", {"default": False}),
-            }
+            },
+            "optional": {
+                "backend": (MODES, {"default": MODES[0], "tooltip": "Where the language model runs: inside ComfyUI, in another local app, or at a cloud provider."}),
+                "local_provider": (list(LOCAL), {"default": "LM Studio", "tooltip": "Start the app's API server and load a text chat model there."}),
+                "cloud_provider": (list(CLOUD), {"default": "OpenAI", "tooltip": "Cloud sends your user and system prompts to this provider and may incur API charges."}),
+                "server_url": ("STRING", {"default": "", "tooltip": "API base address including /v1. Leave empty for the selected provider's default. Qwen: paste your regional workspace API base."}),
+                "remote_model": ("STRING", {"default": "", "tooltip": "Exact server model ID. Use Find models to select one, or copy it from the provider/app."}),
+                "api_key_env": ("STRING", {"default": "", "tooltip": "Optional environment variable NAME containing the key. Leave empty to use the provider's standard variable or Set API key."}),
+                "credential_id": ("STRING", {"default": "", "tooltip": "Internal reference to a session key entered via Set API key. Contains no provider secret. Expires when ComfyUI restarts."}),
+                "remote_max_tokens": ("INT", {"default": 4096, "min": 1, "max": 131072, "tooltip": "Output token budget, including reasoning where the provider counts it. Increase if output is truncated; model-specific limits apply."}),
+                "request_timeout": ("INT", {"default": 120, "min": 5, "max": 600, "tooltip": "Network timeout in seconds. Slow local models may need more time. Failed requests are never retried automatically."}),
+            },
         }
 
     RETURN_TYPES = ("STRING", "STRING", "STRING")
@@ -1133,13 +1145,33 @@ class MiniMaxLLMChat:
     FUNCTION = "chat"
     CATEGORY = "MiniMax Music Production Toolkit/llm"
 
+    @classmethod
+    def IS_CHANGED(cls, enabled=True, **kwargs):
+        # Comfy compares successive values; NaN != NaN forces a fresh response
+        # on every queued execution without an auxiliary seed/session node.
+        return float("nan") if enabled else "disabled"
+
+    @classmethod
+    def VALIDATE_INPUTS(cls, model=None, backend=MODES[0], enabled=True):
+        # A remembered GGUF filename may not exist on a machine using a server.
+        # Validate only these named fields; Comfy keeps validating the others.
+        if backend not in MODES:
+            return "Select a supported LLM backend."
+        if not isinstance(enabled, bool):
+            return "LLM enabled must be a BOOLEAN."
+        if not enabled or backend != MODES[0] or model is None:
+            return True
+        if model not in cls.INPUT_TYPES()["required"]["model"][0]:
+            return "Select an available GGUF model, or choose Local app / server or Cloud service."
+        return True
+
     def chat(
         self,
         enabled,
         user_text,
         system_prompt,
-        session_id,
-        model,
+        session_id="",  # retained for direct Python callers of the old signature
+        model=EXAMPLE_MODEL_NAME,
         max_tokens=16384,
         temperature=0.7,
         top_p=0.8,
@@ -1159,6 +1191,15 @@ class MiniMaxLLMChat:
         tensor_split="",
         main_gpu=0,
         tensor_parallel=False,
+        backend=MODES[0],
+        local_provider="LM Studio",
+        cloud_provider="OpenAI",
+        server_url="",
+        remote_model="",
+        api_key_env="",
+        credential_id="",
+        remote_max_tokens=4096,
+        request_timeout=120,
     ):
         if not enabled:
             status = "LLM disabled (enabled=False): returning empty text; the parser can fall back to its manual fields."
@@ -1166,6 +1207,24 @@ class MiniMaxLLMChat:
             return ("", status, "")
         if not (user_text or "").strip():
             raise ValueError("LLM Chat: user_text is empty (is the upstream prompt node bypassed?).")
+        if backend not in MODES:
+            raise ValueError("LLM Chat: select a supported backend.")
+        if backend != MODES[0]:
+            if _processing_interrupted():
+                raise _interrupt_exception()
+            text, status, remote_thinking = remote_chat(
+                backend=backend, user_text=user_text, system_prompt=system_prompt,
+                local_provider=local_provider, cloud_provider=cloud_provider,
+                server_url=server_url, remote_model=remote_model, api_key_env=api_key_env,
+                credential_id=credential_id, remote_max_tokens=remote_max_tokens,
+                request_timeout=request_timeout,
+            )
+            if _processing_interrupted():
+                raise _interrupt_exception()
+            text, tag_thinking = _split_thinking_tags(text)
+            if not text.strip():
+                raise RuntimeError("LLM returned reasoning only. Increase Output token limit or choose another model.")
+            return text, status, "\n\n".join(p for p in (remote_thinking, tag_thinking) if p)
         if model == PLACEHOLDER_MODEL:
             raise RuntimeError(
                 "LLM Chat: no GGUF model was found in models/llm. "
@@ -1295,6 +1354,6 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "MiniMaxLLMChat": "LLM Chat (llama.cpp, integrated)",
+    "MiniMaxLLMChat": "LLM Chat – ComfyUI / Local / Cloud",
     "MiniMaxLLMUnload": "Unload LLM Model (integrated)",
 }

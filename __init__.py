@@ -182,4 +182,10 @@ except Exception:  # pragma: no cover - an optional surface must not break the n
 
 LOGGER.info("Loaded %s %s (%d nodes)", PROJECT_NAME, VERSION, len(NODE_CLASS_MAPPINGS))
 
+try:
+    from .llm_provider_routes import register_routes as register_llm_provider_routes
+    register_llm_provider_routes()
+except Exception:
+    LOGGER.exception("LLM-provider route registration failed")
+
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

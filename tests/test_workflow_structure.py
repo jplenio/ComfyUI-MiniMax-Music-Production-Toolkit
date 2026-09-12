@@ -97,7 +97,7 @@ class WorkflowTests(unittest.TestCase):
             artwork,
             [
                 "image", "filename_prefix", "collision_mode", "create_directories",
-                "jpeg_quality", "title", "audio_tags_json", "filename_mode",
+                "jpeg_quality", "title", "audio_tags_json", "filename_mode", "enabled",
             ],
             "artwork saver",
         )
@@ -161,14 +161,14 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(values["album"], "Example Album")
         self.assertEqual(values["composer"], "Example Composer")
 
-    def test_prompt_library_and_cache_buster_are_in_example(self):
+    def test_prompt_library_and_llm_work_without_cache_buster(self):
         types = {n["type"] for n in self.wf["nodes"]}
         self.assertIn("MiniMaxStructuredPromptV20", types)
         self.assertIn("MiniMaxLLMChat", types)
         self.assertIn("MiniMaxLLMUnload", types)
         self.assertIn("MiniMaxFlashSRAudio", types)
         self.assertIn("MiniMaxModelAutodownload", types)
-        self.assertIn("MiniMaxLLMSessionId", types)
+        self.assertNotIn("MiniMaxLLMSessionId", types)
         self.assertNotIn("Number to Text", types)
         self.assertNotIn("Seed", types)
         self.assertNotIn("LLMSessionChatNode", types)

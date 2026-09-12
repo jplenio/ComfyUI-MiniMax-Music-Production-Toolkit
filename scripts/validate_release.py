@@ -204,8 +204,8 @@ def check_workflow() -> None:
     errors: list[str] = []
     if errors:
         fail("Invalid example workflow: " + "; ".join(errors[:10]))
-    if "MiniMaxLLMSessionId" not in {n.get("type") for n in wf.get("nodes", [])}:
-        fail("Public workflow is missing MiniMaxLLMSessionId")
+    if "MiniMaxLLMSessionId" in {n.get("type") for n in wf.get("nodes", [])}:
+        fail("Public workflow still contains the obsolete LLM session helper")
     if {"Number to Text", "Seed"} & {n.get("type") for n in wf.get("nodes", [])}:
         fail("Public workflow still depends on legacy utility nodes")
 
@@ -247,7 +247,7 @@ def check_workflow() -> None:
     artwork = artwork_nodes[0]
     expected_artwork_inputs = [
         "image", "filename_prefix", "collision_mode", "create_directories",
-        "jpeg_quality", "title", "audio_tags_json", "filename_mode",
+        "jpeg_quality", "title", "audio_tags_json", "filename_mode", "enabled",
     ]
     artwork_entries = artwork.get("inputs", [])
     actual_artwork_inputs = [i.get("name") for i in artwork_entries]
@@ -418,6 +418,8 @@ def check_migration_logic() -> None:
     for relative in (
         "tests/test_workflow_migration.mjs",
         "tests/test_structured_prompt_frontend.mjs",
+        "tests/test_llm_provider_frontend.mjs",
+        "tests/test_llm_provider_browser.mjs",
         # The EQ frontend compares its JS coefficient/response math against the
         # Python implementation, so a drift between the two is a release blocker.
         "tests/test_audio_eq_frontend.mjs",

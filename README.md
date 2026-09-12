@@ -17,6 +17,19 @@ recording without generating it again.
 Created by [Johannes Plenio](https://github.com/jplenio).
 [Listen to the demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/).
 
+## What's new in 2.5.1
+
+- **Use any language model.** The LLM node runs the bundled GGUF inside ComfyUI,
+  a model served by a local app (LM Studio, Ollama, llama.cpp, Unsloth Studio,
+  vLLM) or a cloud service (OpenAI, Claude, Gemini, DeepSeek, Qwen, MiniMax,
+  OpenRouter, Groq) — with model discovery, a connection setup dialog and
+  session-only API keys that are never written into the workflow.
+- **Switch the cover off.** A dedicated control in the **cover artwork** area
+  turns FLUX.2 artwork off completely: no rendering, no cover file, no FLUX
+  download. Your audio export continues as usual.
+- **Smaller fixes.** The cover switch now sits where the documentation says it
+  does, and the release checks no longer depend on timing.
+
 ## What's new in 2.5
 
 This release brings the improvements together into a clearer, more capable music
@@ -57,13 +70,34 @@ workflow explain where to start and which controls matter.
 3. Check the model settings for your computer, then queue the workflow.
 4. Listen to the result and adjust the restoration or mastering to taste.
 
-The integrated local LLM prepares the caption, lyrics, title and cover idea.
+Your chosen LLM prepares the caption, lyrics, title and cover idea: use a GGUF
+inside ComfyUI, a model in another local app, or a cloud provider.
 MiniMax Music 3 generates the music. Audio restoration and mastering prepare the
-release sound, while the FLUX.2 branch creates matching artwork.
+release sound, while the optional FLUX.2 branch creates matching artwork.
 
 The production workflow saves source FLAC, mastered FLAC and MP3, cover JPG,
 standard audio tags, a prompt report and one central production JSON. Files use
 the `Album - Title` naming convention.
+
+### Choose your language model and artwork
+
+The LLM node has three clear modes: **In ComfyUI (GGUF)**, **Local app / server**,
+and **Cloud service**. Choose LM Studio, Ollama, llama.cpp, Unsloth Studio or
+vLLM locally; or OpenAI, Claude, Gemini, DeepSeek, Qwen, MiniMax, OpenRouter or
+Groq in the cloud. Other OpenAI-compatible endpoints can be entered manually.
+Only the relevant settings are shown. **Set API key** keeps the secret out of
+your workflow; **Find models** helps select a model from your server.
+The LLM generates fresh text on each queued execution, without a separate
+session-ID node. In cloud mode, each new request may incur API charges.
+
+The **FLUX.2 cover · ON / OFF** switch sits in **05 · ILLUSTRATE / Cover artwork**,
+with the cover nodes it controls, and defaults to **ON**. Turn it off to skip
+cover computation and FLUX downloads in the workflow, and export audio without
+generated artwork. EQ, mastering and the audio output remain available.
+
+Cloud mode sends your prompts to the selected provider and may incur API charges.
+Local apps manage their own model memory; ComfyUI's LLM unload node cannot unload
+another app's model. See the [step-by-step connection and cover guide](LLM_PROVIDERS.md).
 
 ### Enhance an existing recording
 
@@ -107,7 +141,8 @@ You do not need the author's PC configuration. Choose models and processing
 settings that fit your available RAM and VRAM.
 
 - **Less memory:** select a smaller GGUF language model, reduce its context/output
-  budget, and lower artwork resolution. Audio Enhancement Lab avoids the music
+  budget, lower artwork resolution or switch the cover off. A cloud LLM avoids
+  local LLM model memory. Audio Enhancement Lab avoids the music
   and artwork generation stages entirely.
 - **More memory:** use larger compatible language models or higher artwork
   resolutions when they benefit your project.
@@ -144,7 +179,7 @@ python -m pip install -r requirements.txt
 ```
 
 The integrated local LLM additionally requires a suitable `llama-cpp-python`
-installation. Backend builds and GPU support vary; follow
+installation; local-server and cloud modes do not. Backend builds and GPU support vary; follow
 [INSTALLATION.md](INSTALLATION.md) rather than assuming a generic package
 installation enables GPU acceleration.
 
@@ -160,6 +195,7 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
+- [Release 2.5.1 notes](RELEASE_NOTES_v2.5.1.md)
 - [Release 2.5 notes](RELEASE_NOTES_v2.5.0.md)
 - [Installation and dependencies](INSTALLATION.md)
 - [Complete workflow guide](WORKFLOW.md)
