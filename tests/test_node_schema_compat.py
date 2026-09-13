@@ -32,6 +32,7 @@ NODE_MODULE = {
     "MiniMaxCoverControl": "minimax_artwork",
     "MiniMaxStructuredPromptV20": "minimax_structured_prompt",
     "MiniMaxLLMChat": "llm_chat",
+    "MiniMaxSafeAudioDecode": "audio_decode",
     "MiniMaxLLMUnload": "llm_chat",
     "AudioReleasePrep": "audio_release_prep",
     "FlashSRHybridCrossover": "audio_hf_repair",
@@ -84,6 +85,7 @@ MODULE_NAMES = (
     "audio_hf_repair",
     "audio_declip",
     "audio_release_prep",
+    "audio_decode",
     # V01: the Audio Enhancement Lab workflow now carries these stages.
     "audio_eq",
     "audio_auto_eq",
@@ -148,7 +150,9 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
         # name set must match INPUT_TYPES exactly - otherwise link slot
         # indexes in older saved workflows land on the wrong inputs.
         for name, wf in self.workflows.items():
-            for node in wf["nodes"]:
+            inner_nodes = [node for subgraph in wf.get("definitions", {}).get("subgraphs", [])
+                           for node in subgraph.get("nodes", [])]
+            for node in wf["nodes"] + inner_nodes:
                 node_type = node.get("type")
                 if node_type not in NODE_MODULE:
                     continue

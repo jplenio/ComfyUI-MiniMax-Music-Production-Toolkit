@@ -74,6 +74,15 @@ All music generation, LLM, restoration and artwork settings are retained.
 The original audio saver still archives the branch before restoration, with its
 existing peak-handling policy (not a guaranteed bit-exact archive).
 
+Both source decoder alternatives inside the MiniMax Music 3 subgraph now use
+`MiniMaxSafeAudioDecode`. The public `tiled_decode` input, decoder connections
+and configured tile size are preserved. Valid audio keeps ComfyUI's original
+gain rule. Non-finite decoder output triggers at most one conservative tiled
+retry, while invalid sampler latents stop immediately with a specific error.
+Reopen the updated example to use this decoder in a previously saved workflow,
+or replace both audio decode nodes inside its subgraph manually. See
+[audio export troubleshooting](TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
+
 Production JSON receives the manual EQ report, Auto-EQ analysis and final
 mastering report through the existing optional metadata inputs. The analyzer's
 applied=false describes analysis itself; the following EQ applies its settings.

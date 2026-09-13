@@ -28,9 +28,133 @@ Since v2.0.0 FlashSR is integrated (`MiniMaxFlashSRAudio`). Missing code/weights
 
 The package first looks for a system `ffmpeg`, then falls back to the executable provided by `imageio-ffmpeg`. Reinstall requirements if neither is available.
 
+## Audio export fails with a blank `AssertionError`
+
+A traceback ending in `SaveAudioSmartPrefix.save`, `sf.write(...)`, and
+`soundfile.py: assert written == len(data)` means the audio encoder returned a
+short write. It does not by itself identify an LLM failure. In the reported
+run, LLM generation, cover generation and the music sampler had completed;
+the failure occurred during the source FLAC export after audio VAE decoding.
+
+This exact empty assertion was reproduced with NaN audio using SoundFile 0.13.0
+and libsndfile 1.2.2, for both 16-bit and 24-bit FLAC. NaN also defeats a normal
+peak comparison; Infinity can become NaN when peak normalization multiplies it
+by zero. The original run's waveform/latents were not captured, so the traceback
+alone cannot prove where invalid values originated or exclude a separate codec
+or disk problem. Switching formats is not a repair for invalid audio.
+
+The toolkit now provides two protections:
+
+1. **MiniMax Safe Audio Decode**, included in both decoder branches of the
+   production subgraph, validates sampler latents and decoded audio. When only
+   decoding fails numerically, it retries once with conservative tiles using
+   the same latents. It never replaces bad samples with silence.
+2. **Both Save Audio nodes** check all samples in the entire batch before
+   normalization or file writing. A remaining SoundFile short-write assertion
+   becomes a message containing the encoder format, sample rate and library
+   versions, while the incomplete staging file is removed.
+
+Apply the update to the toolkit folder that **your running ComfyUI actually
+loads** (`ComfyUI/custom_nodes/ComfyUI-MiniMax-Music-Production-Toolkit`), then
+fully restart ComfyUI and open the updated production example. A separate Git
+working copy does not update that installed folder automatically. The update
+includes new `audio_decode.py` and `audio_file_io.py` modules, package
+registration, shared audio validation and both audio savers; copying only a
+single saver file is insufficient. Models do not need to be downloaded again.
+
+For personal workflows, replace `VAEDecodeAudio` and `VAEDecodeAudioTiled`
+inside the music subgraph with **MiniMax Safe Audio Decode**, keeping LATENT,
+VAE and AUDIO connections. Use `tiled = false` for the former normal decoder;
+use `tiled = true` and retain your tile size/overlap for the tiled decoder.
+An already open/saved workflow is not rewritten automatically by a code update.
+
+If the new error says:
+
+- **Music sampler latents**: the invalid values already came from music
+  sampling. Rerun that stage and check the diffusion model, settings and
+  precision; decoding cannot recover these latents.
+- **Retry also failed / incoming latents were finite**: check the audio VAE
+  file and the ComfyUI decoder/backend. The automatic retry is deliberately
+  limited and cannot repair invalid weights or every numerical failure.
+- **Save Audio ... NaN or Infinity**: invalid audio reached the saver. Verify
+  that the checked decoder is in the graph, then inspect subsequent processing
+  if decoding succeeded.
+- **Encoder wrote fewer samples than requested**, with valid audio: check
+  destination free space and the SoundFile/libsndfile installation used by
+  ComfyUI. Include the new diagnostic and full traceback in a bug report.
+
 ## Long batch fails with CUDA graph / allocator errors
 
 This is normally a ComfyUI/PyTorch/CUDA/model interaction rather than the prompt toolkit itself. Restart ComfyUI after a CUDA capture failure. If the error specifically mentions `CUDAMallocAsyncAllocator` / stream capture invalidation, testing ComfyUI with `--disable-cuda-malloc` can help isolate allocator/capture instability. Expect a possible performance trade-off.
+
+## MiniMax Music 3 sounds distorted, or the next run returns NaN/Infinity
+
+There are two different failure classes here; they need different remedies.
+
+**Incoherent audio with finite values.** ComfyUI 0.35 enables its
+compiler/CUDA allocation graphs by default. MiniMax Music 3 combines those
+graphs with dynamic layer loading, and the AR text encoder's graph replay can
+then emit corrupted conditioning even though every number is technically
+finite (`graph breaks: 0, rogues: 0` looks clean; upstream report:
+Comfy-Org/ComfyUI#16222). The toolkit keeps the normal performance profile by
+default. Set `MINIMAX_MUSIC3_RUNTIME_SAFETY=auto` to disable CUDA graph capture
+automatically only on a backend marked risky (Blackwell-class CUDA or ROCm),
+`=on` to force it on any backend, or `=strict` to disable the allocation
+compiler as well. Disabling graph capture keeps the faster allocation compiler
+active and is the cheapest fix for this class.
+
+**Non-finite latents reported by the sampler.** The MiniMax Music 3 diffusion
+model runs in fp16 with the official fp16 checkpoint. For some
+seed/prompt/length combinations the fp16 DiT path then writes non-finite
+latents for the whole track at once; that is reproducible for the same seed and
+is *not* fixed by disabling CUDA graphs or the compiler (upstream report:
+Comfy-Org/ComfyUI#16249). The sampler therefore fails immediately instead of
+repeating the identical sampling, which could only reproduce the same values.
+No node can change this afterwards: ComfyUI picks the dtype while the
+checkpoint loads (`unet_dtype` / `unet_manual_cast`), so only launch flags or a
+new seed change the outcome. Measured with ComfyUI's own logic on an RTX 5060 Ti
+(16 GiB), with the official fp16 DiT and the FLUX.2 Klein cover:
+
+| Launch flags | MiniMax DiT (fp16 checkpoint) | FLUX.2 cover (bf16 checkpoint) |
+| --- | --- | --- |
+| none | float16 - the path that fails | bfloat16, unchanged |
+| `--bf16-unet` | bfloat16 | bfloat16, unchanged |
+| `--fp32-unet` | float32 | float32, about twice the VRAM |
+
+Experiments, cheapest first:
+
+1. **`--bf16-unet`** - the only flag that changes the DiT without touching the
+   cover model, and it is VRAM-neutral (bf16 keeps fp32's exponent range, so the
+   fp16 overflow/underflow class disappears). Not verified by upstream, but the
+   cheapest real chance.
+2. **`--fp32-unet`** - upstream-verified for this class. It also switches the
+   FLUX.2 cover to fp32, so on a 16 GiB card switch the cover off
+   (`FLUX.2 cover - ON / OFF`) for that test. Expect it to be much slower.
+3. **Queue the prompt again** - a new seed often succeeds, because the defect
+   depends on the seed/prompt/length combination.
+4. If neither flag helps, separate the remaining classes:
+   `MINIMAX_MUSIC3_RUNTIME_SAFETY=on` (rules out the graph-replay class of
+   Comfy-Org/ComfyUI#16222) and `PYTORCH_NO_CUDA_MEMORY_CACHING=1` (the
+   allocator/unwritten-memory observation in #16249; expect it to be slower).
+
+`KSamplerWithConfig` retries once for backend/capture *errors* (a `RuntimeError`
+mentioning capture, CUDA graphs, NaN or Infinity): that class is a state
+problem, so clearing the captured state and repeating the sampling can help.
+It never replaces bad audio with silence and never passes non-finite latents to
+the decoder.
+
+If a clean run is still not possible, start ComfyUI with:
+
+```text
+--disable-comfy-compiler --disable-cuda-graphs --fp32-unet
+```
+
+The first two flags are the strict compatibility test and are expected to be
+slower. `--fp32-unet` addresses the fp16 diffusion path (overflow or reads of
+unwritten memory) and costs more VRAM/time. If the machine cannot hold the FP32
+diffusion model, use the official MiniMax INT8 diffusion model or a BF16-capable
+model instead. The default toolkit mode is `MINIMAX_MUSIC3_RUNTIME_SAFETY=off`,
+which preserves the original ComfyUI performance.
 
 ## Cymbals/hi-hats sound watery after FlashSR
 
@@ -95,4 +219,3 @@ git reset --mixed origin/main
 ```
 
 Use `--mixed`, not `--hard`, so current working files are preserved. Then inspect `git status`, commit the intended local differences and push normally.
-

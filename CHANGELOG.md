@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.5.2] - 2026-09-13
+
+A bug-fix release. Nothing changes in the node interfaces, the workflow layout or
+any stored setting; the generated cover and the finished song stay visible in the
+workflow through the `PreviewImage` and `PreviewAudio` nodes.
+
+### Fixed
+- `TROUBLESHOOTING.md` documents the non-finite MiniMax DiT latents with the
+  measured dtype decision (ComfyUI picks float16 for the fp16 DiT with no flags;
+  `--bf16-unet` changes only the DiT and is VRAM-neutral, `--fp32-unet` also
+  switches the FLUX.2 cover to fp32) plus the experiment order, so the remaining
+  upstream failure class is not re-investigated from scratch.
+- `KSamplerWithConfig` no longer repeats an identical non-finite sampling run.
+  The noise follows the seed and the conditioning and weights are unchanged, so
+  a second pass reproduced the same latents and only doubled the longest stage
+  of the prompt (observed: two identical 8:48 sampling runs before the error).
+  Non-finite latents now stop immediately with the precise remedy
+  (`--fp32-unet`, a MiniMax FP32/BF16 model, or a new seed); the one retry for
+  capture/CUDA-graph backend errors, where repeating after clearing the captured
+  state can help, is unchanged. This restores the documented behavior
+  ("invalid sampler latents stop immediately with a specific error").
+- `MINIMAX_MUSIC3_RUNTIME_SAFETY=auto` now works as documented. The policy
+  parser folded `auto` into `off`, which made the risky-backend branch
+  (Blackwell-class CUDA or ROCm) unreachable, so the automatic mode silently did
+  nothing. `off` remains the default and stays inert.
+- Audio savers reject empty/non-finite audio across the entire batch before
+  peak handling and encoding. NaN audio can trigger a blank SoundFile FLAC
+  short-write assertion; remaining encoder assertions now include actionable
+  format/library diagnostics and preserve staging-file cleanup.
+- The production subgraph uses `MiniMaxSafeAudioDecode` in both normal and
+  tiled branches. It checks sampler latents, decoded audio and normalization,
+  with one conservative tiled retry for non-finite decoder output. Valid audio
+  retains the host gain rule; sampling settings, output rates and export
+  interfaces stay unchanged. No invalid samples are silently zeroed.
+- Added regression coverage for bounded decoder recovery, input ownership,
+  real FLAC/WAV roundtrips, batch validation and failed-export cleanup.
+- Made the existing FFmpeg pipe timeout test independent of encoder speed and
+  pipe backpressure, using a controlled child process that stays alive after
+  consuming its input. Production FFmpeg behavior is unchanged.
+
 ## [2.5.1] - 2026-09-13
 
 ### Added

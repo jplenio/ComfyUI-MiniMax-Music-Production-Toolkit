@@ -2598,6 +2598,57 @@
     "optional": {},
     "hidden": {}
   },
+  "MiniMaxSafeAudioDecode": {
+    "python_class": "MiniMaxSafeAudioDecode",
+    "category": "MiniMax Music Production Toolkit/audio",
+    "function": "decode",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO"
+    ],
+    "return_names": [
+      "AUDIO"
+    ],
+    "required": {
+      "samples": [
+        "LATENT",
+        {}
+      ],
+      "vae": [
+        "VAE",
+        {}
+      ]
+    },
+    "optional": {
+      "tile_size": [
+        "INT",
+        {
+          "default": 512,
+          "min": 32,
+          "max": 8192,
+          "step": 8
+        }
+      ],
+      "overlap": [
+        "INT",
+        {
+          "default": 64,
+          "min": 0,
+          "max": 1024,
+          "step": 8
+        }
+      ],
+      "tiled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
   "MiniMaxSaveProductionJSON": {
     "python_class": "MiniMaxSaveProductionJSON",
     "category": "MiniMax Music Production Toolkit/save",

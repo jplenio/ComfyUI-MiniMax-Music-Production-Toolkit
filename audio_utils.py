@@ -50,6 +50,37 @@ KAISER_BETA = 14.769656459379492
 AUDIO_PROBLEMS = ("not_mapping", "missing_fields", "torch_missing", "not_tensor", "wrong_ndim", "invalid_rate")
 
 
+class NonFiniteAudioError(ValueError):
+    """Invalid numerical output, distinct from a codec or filesystem failure."""
+
+
+def require_finite_samples(samples: np.ndarray, *, error_label: str) -> None:
+    """Check every sample with bounded scratch space, without changing input."""
+    array = np.asarray(samples)
+    if not array.size or any(size == 0 for size in array.shape):
+        raise ValueError(f"{error_label}: audio is empty; there are no samples to save.")
+    for block in np.nditer(array, flags=["external_loop", "buffered"],
+                           op_flags=["readonly"], buffersize=262144, order="K"):
+        if not np.isfinite(block).all():
+            raise NonFiniteAudioError(
+                f"{error_label}: audio contains NaN or Infinity (invalid numerical samples). "
+                "The upstream generation/decoder or audio processing failed. No audio file was written. "
+                "Use MiniMax Safe Audio Decode in the music workflow; if it reports invalid latents, "
+                "rerun the sampler and check model/precision settings. Invalid samples are not replaced with silence."
+            )
+
+
+def require_finite_tensor(tensor, *, error_label: str) -> None:
+    """Check BCT/latent tensors on their current device with small masks."""
+    if not tensor.numel():
+        raise NonFiniteAudioError(f"{error_label}: empty tensor.")
+    leading = max(1, tensor.numel() // tensor.shape[-1])
+    step = max(1, 262144 // leading)
+    for start in range(0, tensor.shape[-1], step):
+        if not torch.isfinite(tensor[..., start:start + step]).all().item():
+            raise NonFiniteAudioError(f"{error_label}: NaN or Infinity detected (shape={tuple(tensor.shape)}, dtype={tensor.dtype}).")
+
+
 def validate_audio(
     audio: Any,
     *,

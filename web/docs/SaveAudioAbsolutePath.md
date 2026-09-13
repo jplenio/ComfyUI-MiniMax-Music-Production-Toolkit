@@ -26,4 +26,10 @@ Saves FLAC/MP3/WAV to an explicit absolute directory with configurable quality, 
 
 ## Usage notes
 
+The entire batch is checked for empty audio and NaN/Infinity before peak handling
+or encoding. Invalid samples stop the export instead of being replaced with
+silence. A short SoundFile write reports encoder/library details and discards
+the incomplete staging file. Existing files survive a failed overwrite.
+See [audio error help](../../TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
+
 Start with the defaults used by the bundled example workflow unless you have a specific reason to change this stage. Hover each input label in ComfyUI for parameter guidance.

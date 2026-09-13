@@ -24,6 +24,7 @@ _INSTANCES = itertools.count()
 
 # Toolkit node identifier -> defining module (section 2 of REFACTOR-PLAN.md).
 NODE_OWNER = {
+    "MiniMaxSafeAudioDecode": "audio_decode",
     "MiniMaxParametricEQ": "audio_eq",
     "MiniMaxAutoEQAnalyze": "audio_auto_eq",
     "MiniMaxMasteringCompressor": "audio_mastering",

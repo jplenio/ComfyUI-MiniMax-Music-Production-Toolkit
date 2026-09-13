@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from .audio_utils import validate_audio
+from .audio_utils import validate_audio, require_finite_samples
+from .audio_file_io import write_soundfile
 from .ffmpeg_utils import (
     find_ffmpeg as _find_ffmpeg_impl,
     prepare_samples as _prepare_samples_impl,
@@ -209,6 +210,10 @@ class SaveAudioSmartPrefix:
                 raise FileNotFoundError(f"Save Audio Smart Prefix: directory does not exist: {directory}")
 
         x = waveform.detach().to(device="cpu", dtype=torch.float32).numpy()
+        # Validate the entire batch before the first encode/peak calculation:
+        # NaN poisons peak normalization and can cause libsndfile's FLAC writer
+        # to return a short write, exposed by soundfile as a blank AssertionError.
+        require_finite_samples(x, error_label="Save Audio Smart Prefix")
         saved: List[str] = []
         sidecars: List[str] = []
         save_infos: List[Dict[str, Any]] = []
@@ -249,10 +254,12 @@ class SaveAudioSmartPrefix:
             ) as staged:
                 if fmt == "flac":
                     subtype = "PCM_24" if flac_bit_depth == "24-bit" else "PCM_16"
-                    sf.write(staged.staging, data_tc, sample_rate, format="FLAC", subtype=subtype)
+                    write_soundfile(sf, staged.staging, data_tc, sample_rate, format="FLAC", subtype=subtype,
+                                    error_label="Save Audio Smart Prefix")
                 elif fmt == "wav":
                     subtype = {"32-bit float": "FLOAT", "24-bit": "PCM_24", "16-bit": "PCM_16"}[wav_bit_depth]
-                    sf.write(staged.staging, data_tc, sample_rate, format="WAV", subtype=subtype)
+                    write_soundfile(sf, staged.staging, data_tc, sample_rate, format="WAV", subtype=subtype,
+                                    error_label="Save Audio Smart Prefix")
                 elif fmt == "mp3":
                     _write_mp3(staged.staging, data_tc, sample_rate, mp3_quality)
                 else:

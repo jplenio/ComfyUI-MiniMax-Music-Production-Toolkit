@@ -17,6 +17,21 @@ recording without generating it again.
 Created by [Johannes Plenio](https://github.com/jplenio).
 [Listen to the demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/).
 
+## What's new in 2.5.2
+
+A bug-fix release: no new controls, no changed settings.
+
+- **Safer audio export.** Both audio savers check the whole batch before peak
+  handling and encoding, so invalid samples can no longer end in a blank
+  SoundFile assertion, and the encoder messages name the format and library
+  involved. Both decoder branches check their input and their output, retry the
+  decoding once with smaller tiles instead of writing broken audio, and never
+  replace bad samples with silence. The music sampler no longer repeats an
+  identical non-finite run; it stops immediately and names the remedy.
+- **Preview image and song.** The generated cover and the finished track stay
+  visible right in the workflow: `PreviewImage` shows the artwork as soon as it
+  is saved, and `PreviewAudio` plays the exported song.
+
 ## What's new in 2.5.1
 
 - **Use any language model.** The LLM node runs the bundled GGUF inside ComfyUI,
@@ -78,6 +93,10 @@ release sound, while the optional FLUX.2 branch creates matching artwork.
 The production workflow saves source FLAC, mastered FLAC and MP3, cover JPG,
 standard audio tags, a prompt report and one central production JSON. Files use
 the `Album - Title` naming convention.
+
+Audio decoding checks for invalid model output and can retry once with smaller
+tiles without generating the music again. Audio savers reject invalid samples
+instead of writing a broken file. See [audio error help](TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
 
 ### Choose your language model and artwork
 
@@ -195,6 +214,7 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
+- [Release 2.5.2 notes](RELEASE_NOTES_v2.5.2.md)
 - [Release 2.5.1 notes](RELEASE_NOTES_v2.5.1.md)
 - [Release 2.5 notes](RELEASE_NOTES_v2.5.0.md)
 - [Installation and dependencies](INSTALLATION.md)

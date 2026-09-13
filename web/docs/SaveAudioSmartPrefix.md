@@ -19,6 +19,14 @@ Saves FLAC/MP3/WAV using smart output prefixes, safe filesystem naming, standard
 - **`filename_mode`** — Default `album - title`; affects only the filesystem filename, not the embedded TITLE tag.
 - **`embedded_cover_size`** — Target embedded cover resolution.
 
+## Audio validation
+
+All samples in the complete batch are checked before peak handling or writing
+any audio file. Empty audio and NaN/Infinity stop with an upstream-audio error;
+invalid samples are never replaced with silence. A SoundFile short-write error
+reports the encoder/library details and discards the incomplete staging file.
+See [audio error help](../../TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
+
 ## Centralized JSON behavior
 
 `write_json_sidecar` remains available for **backward compatibility**. When enabled and `metadata_json` is connected, this saver can still create an individual sidecar beside the audio file.

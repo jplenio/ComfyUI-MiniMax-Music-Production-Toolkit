@@ -19,7 +19,8 @@ Design goals:
 
 from __future__ import annotations
 
-from .audio_utils import validate_audio
+from .audio_utils import validate_audio, require_finite_samples
+from .audio_file_io import write_soundfile
 from .ffmpeg_utils import (
     find_ffmpeg as _find_ffmpeg_impl,
     prepare_samples as _prepare_samples_impl,
@@ -305,6 +306,7 @@ class SaveAudioAbsolutePath:
 
         # CPU float32; shape remains [B,C,T].
         x = waveform.detach().to(device="cpu", dtype=torch.float32).numpy()
+        require_finite_samples(x, error_label="Save Audio Absolute Path")
 
         saved: List[str] = []
         warnings: List[str] = []
@@ -331,20 +333,24 @@ class SaveAudioAbsolutePath:
                 error_prefix="Save Audio Absolute Path",
             ) as staged:
                 if fmt == "flac":
-                    sf.write(
+                    write_soundfile(
+                        sf,
                         staged.staging,
                         data_tc,
                         sample_rate,
                         format="FLAC",
                         subtype=_subtype_for_flac(flac_bit_depth),
+                        error_label="Save Audio Absolute Path",
                     )
                 elif fmt == "wav":
-                    sf.write(
+                    write_soundfile(
+                        sf,
                         staged.staging,
                         data_tc,
                         sample_rate,
                         format="WAV",
                         subtype=_subtype_for_wav(wav_bit_depth),
+                        error_label="Save Audio Absolute Path",
                     )
                 else:
                     _write_mp3(

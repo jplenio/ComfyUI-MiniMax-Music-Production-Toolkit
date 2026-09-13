@@ -111,15 +111,15 @@ class PipeRunTests(unittest.TestCase):
         self.assertIn("FFmpeg loudness measurement failed", str(ctx.exception))
 
     def test_a_timeout_is_reported_without_hanging(self):
-        # The timeout only starts once the input has been written, so a short
-        # signal let FFmpeg finish inside the deadline and the call returned
-        # normally - the test was flaky.  Keep FFmpeg busy for seconds of audio
-        # so the deadline is always reached while it is still working.
-        data = signal(seconds=30.0)
+        # Pipe backpressure lets a real encoder do most of its work before
+        # run_ffmpeg_with_pcm reaches wait(timeout=...). Increasing the track
+        # length therefore still races CPU speed. This child drains stdin,
+        # then stays alive, exercising the real timeout/kill/reap path reliably.
+        data = signal(seconds=0.01)
+        child = "import sys, time; sys.stdin.buffer.read(); time.sleep(30)"
         with self.assertRaises(RuntimeError) as ctx:
             ffmpeg_utils.run_ffmpeg_with_pcm(
-                [self.ffmpeg, "-hide_banner", "-nostdin", "-f", "f32le", "-ar", "48000", "-ac", "2",
-                 "-i", "pipe:0", "-af", "loudnorm=print_format=json", "-f", "null", "-"],
+                [sys.executable, "-c", child],
                 data,
                 48000,
                 timeout=0.05,

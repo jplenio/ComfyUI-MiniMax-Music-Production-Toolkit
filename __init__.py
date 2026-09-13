@@ -11,6 +11,16 @@ from .toolkit_logging import get_logger
 
 LOGGER = get_logger("startup")
 
+# MiniMax Music 3 uses dynamic layer loading and can be affected by stale
+# ComfyUI 0.35 compiler/CUDA-graph captures on some accelerator backends.
+# The helper is deliberately opt-in, so installing the toolkit does not change
+# the user's normal performance profile. It is also a no-op outside ComfyUI.
+try:
+    from .runtime_safety import configure_runtime
+    configure_runtime()
+except Exception:  # pragma: no cover - startup must remain resilient
+    LOGGER.debug("Runtime safety configuration was unavailable", exc_info=True)
+
 from .audio_lowpass import (
     NODE_CLASS_MAPPINGS as LOWPASS_NODE_CLASS_MAPPINGS,
     NODE_DISPLAY_NAME_MAPPINGS as LOWPASS_NODE_DISPLAY_NAME_MAPPINGS,
@@ -147,13 +157,16 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 from .audio_eq import MiniMaxParametricEQ
 from .audio_auto_eq import MiniMaxAutoEQAnalyze
 from .audio_mastering import MiniMaxMasteringCompressor
+from .audio_decode import MiniMaxSafeAudioDecode
 
 NODE_CLASS_MAPPINGS.update({
+    "MiniMaxSafeAudioDecode": MiniMaxSafeAudioDecode,
     "MiniMaxParametricEQ": MiniMaxParametricEQ,
     "MiniMaxAutoEQAnalyze": MiniMaxAutoEQAnalyze,
     "MiniMaxMasteringCompressor": MiniMaxMasteringCompressor,
 })
 NODE_DISPLAY_NAME_MAPPINGS.update({
+    "MiniMaxSafeAudioDecode": "MiniMax Safe Audio Decode",
     "MiniMaxParametricEQ": "Parametric EQ – 8 Bands",
     "MiniMaxAutoEQAnalyze": "Auto-EQ – Analyze / Propose",
     "MiniMaxMasteringCompressor": "Mastering Compressor – LUFS / True Peak",

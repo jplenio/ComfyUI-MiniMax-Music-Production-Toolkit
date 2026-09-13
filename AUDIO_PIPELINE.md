@@ -13,7 +13,9 @@ This document describes the restoration/release stages used by the example workf
 ## Signal flow
 
 ```text
-MiniMax Music 3 source
+MiniMax Music 3 sampler
+        ↓
+MiniMax Safe Audio Decode → source archive
         ↓
 Source Declip / Overload Repair
         ├────────────────────────────→ clean source branch
@@ -36,6 +38,28 @@ Mastering compressor → LUFS / true-peak limiter
         ↓
 44.1 kHz release FLAC + MP3
 ```
+
+## Source decoding and export safety
+
+Both decoding alternatives inside the production subgraph use
+`MiniMaxSafeAudioDecode`. Valid output follows ComfyUI's `std * 5` gain rule,
+channel layout and sample-rate precedence. The existing `tiled_decode` control
+and the normal tiled size remain in effect.
+
+Sampler latents are checked before decoding. Invalid latents stop immediately.
+If decoded audio or its normalization becomes non-finite (NaN/Infinity), the
+node retries decoding once with a conservative tile size of at most 512 and
+overlap of at most 32. It reuses the latents, releases failed audio before the
+retry and leaves model precision and device management to ComfyUI. The retry
+can help with tile-dependent failures; it does not repair invalid sampler
+output or model weights.
+
+Both audio savers check every batch element before peak handling or encoding
+FLAC, WAV or MP3. Empty/non-finite audio is rejected; it is never silently
+replaced with zeroes. Finite audio retains the selected export format, bit
+depth, gain policy and metadata. Encoder failures discard the staged file.
+See [the decoder reference](web/docs/MiniMaxSafeAudioDecode.md) and
+[troubleshooting](TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
 
 ## 1. Source de-clipping
 
