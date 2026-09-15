@@ -1,5 +1,7 @@
 # Complete workflow guide
 
+**Version 2.6:** Start with [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2 or MiniMax. Model, Cover, Refinement and Mastering are controlled centrally in CHOOSE. See [the dual-model guide](YUE2.md) for defaults and requirements. The classic MiniMax workflow below keeps its existing processing chain.
+
 The included workflow is designed as an end-to-end MiniMax Music 3 production example. You can remove stages you do not need, but this document describes the complete graph.
 
 ## 1. Prompt preparation
@@ -213,3 +215,7 @@ For batches, use a changing generation/session seed and prompt-library entries. 
 - generation seed.
 
 The output-path and JSON structure keeps the resulting assets associated without duplicating configuration records.
+
+## YuE2 and model selection
+
+The new `example_workflows/Yue2_MM3_Production_Toolkit.json` supports both MiniMax and YuE2 through its first Song model control. It includes matched templates, native ABC planning and generation records. See [YUE2.md](YUE2.md) for setup, prompt examples and verification scope. The classic MiniMax workflow remains fixed to MiniMax.

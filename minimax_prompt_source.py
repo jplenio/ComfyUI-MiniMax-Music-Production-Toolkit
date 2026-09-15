@@ -7,6 +7,7 @@ import secrets
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .model_profiles import profile_from_payload
 from .prompt_library import (PLACEHOLDER, PromptLibraryError, default_combo_values, load_prompt_file, prompt_selection_fingerprint)
 from .prompt_sources import (
     DEFAULT_SYSTEM_PROMPT,
@@ -32,7 +33,14 @@ from .toolkit_logging import get_logger
 
 LOGGER = get_logger("prompts")
 
-_SECTION_RE = re.compile(r"^\s*\[(Title|Caption|Lyrics|Count|Song-Count|Image[_ ]Prompt)\]\s*$", re.IGNORECASE)
+# Top-level sections the parser understands.  ``Style``/``Styles``/``Tags``/
+# ``Genre`` are the YuE2 names for the primary conditioning text; they are
+# parsed into the same ``caption`` field, because that field *is* "the text
+# that conditions the music model" - MiniMax calls it a caption, YuE2 calls it
+# a style line.
+_CONDITIONING_LABELS = r"Caption|Style|Styles|Tags|Genre"
+_SECTION_LABELS = rf"Title|{_CONDITIONING_LABELS}|Lyrics|Count|Song[-_ ]?Count|Image[-_ ]?Prompt"
+_SECTION_RE = re.compile(rf"^\s*\[({_SECTION_LABELS})\]\s*$", re.IGNORECASE)
 
 # The default prompt constants, their loader and the small source helpers live in
 # prompt_sources so the structured-prompt node no longer has to import them from
@@ -114,7 +122,7 @@ def _clean_section_content(text: str, *, drop_ellipsis: bool = True) -> str:
     return "\n".join(lines).strip()
 
 
-def _parse_sections(text: str) -> Dict[str, Any]:
+def _parse_sections(text: str, required_section: str = "Caption") -> Dict[str, Any]:
     """Parse structured LLM output robustly.
 
     Accepted examples for top-level headers include:
@@ -124,6 +132,12 @@ def _parse_sections(text: str) -> Dict[str, Any]:
       Title:
       ## Caption
       Image_Prompt:
+      [Style]
+      [Tags]
+
+    ``required_section`` only names the model's own label in the error message
+    (MiniMax Music 3 asks for ``[Caption]``, YuE2 for ``[Style]``); the accepted
+    vocabulary is the same for both.
 
     MiniMax section tags inside Lyrics such as [Intro] / [Instrumental] are
     deliberately NOT treated as top-level sections.
@@ -145,16 +159,20 @@ def _parse_sections(text: str) -> Dict[str, Any]:
     # names so [Intro], [Verse], [Instrumental] etc. remain Lyrics content.
     header_re = re.compile(
         r"^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*"
-        r"(?:\[\s*)?(Title|Caption|Lyrics|Count|Song[-_ ]?Count|Image[-_ ]?Prompt)"
+        rf"(?:\[\s*)?({_SECTION_LABELS})"
         r"(?:\s*\])?\s*(?:\*\*|__)?\s*:?[ \t]*$",
         re.IGNORECASE,
     )
     inline_re = re.compile(
         r"^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*"
-        r"(?:\[\s*)?(Title|Caption|Lyrics|Count|Song[-_ ]?Count|Image[-_ ]?Prompt)"
+        rf"(?:\[\s*)?({_SECTION_LABELS})"
         r"(?:\s*\])?\s*(?:\*\*|__)?\s*:\s*(.+?)\s*$",
         re.IGNORECASE,
     )
+
+    # The model's own names for its primary conditioning text all land in
+    # ``caption`` so the rest of the graph stays model-agnostic.
+    conditioning_aliases = {"style", "styles", "tags", "genre"}
 
     def key_for(label: str) -> str:
         key = label.lower().replace("-", "_").replace(" ", "_")
@@ -162,6 +180,8 @@ def _parse_sections(text: str) -> Dict[str, Any]:
             return "count"
         if key in {"imageprompt", "image__prompt"}:
             return "image_prompt"
+        if key in conditioning_aliases:
+            return "caption"
         return key
 
     for line in normalized.split("\n"):
@@ -200,7 +220,7 @@ def _parse_sections(text: str) -> Dict[str, Any]:
 
     missing = []
     if not caption:
-        missing.append("Caption")
+        missing.append(required_section)
     if not lyrics:
         missing.append("Lyrics")
     if missing:
@@ -211,11 +231,14 @@ def _parse_sections(text: str) -> Dict[str, Any]:
         for item in detected:
             if item not in unique_detected:
                 unique_detected.append(item)
+        sections_hint = f"[{required_section}], [Lyrics], [Title], and [Image_Prompt]"
+        if required_section != "Caption":
+            sections_hint += " ([Caption]/[Tags] are accepted as well)"
         raise ValueError(
             "Could not parse required LLM sections. "
             f"Missing/non-empty: {', '.join(missing)}. "
             f"Detected top-level sections: {unique_detected or ['none']}.\n\n"
-            "The external LLM should return [Caption], [Lyrics], [Title], and [Image_Prompt] in that order.\n\n"
+            f"The external LLM should return {sections_hint} in that order.\n\n"
             "Beginning of received assistant_text:\n"
             + preview
         )
@@ -505,6 +528,10 @@ class MiniMaxParseExternalLLMOutputV16:
                 "llm_status": ("STRING", {"default": "", "multiline": True}),
                 "max_prompt_tokens": ("INT", {"default": DEFAULT_PROMPT_TOKEN_BUDGET, "min": 500, "max": MINIMAX_MAX_PROMPT_TOKENS - 200, "step": 50}),
                 "trim_long_prompt": ("BOOLEAN", {"default": True}),
+                # Appended optional input (2.6.0): the selected song model. It
+                # names the LLM output section in errors and provenance and
+                # enforces that model's own hard prompt limit.
+                "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
             },
         }
 
@@ -535,11 +562,14 @@ class MiniMaxParseExternalLLMOutputV16:
         llm_status="",
         max_prompt_tokens=DEFAULT_PROMPT_TOKEN_BUDGET,
         trim_long_prompt=True,
+        model_profile_json="",
     ):
+        profile = profile_from_payload(model_profile_json)
+        required_section = profile.conditioning_section if profile is not None else "Caption"
         raw = (structured_llm_output or "").strip()
         status = (llm_status or "").strip()
         try:
-            parsed = _parse_sections(raw) if raw else {}
+            parsed = _parse_sections(raw, required_section) if raw else {}
         except ValueError as exc:
             # Carry the upstream LLM status into the error so a failed LLM
             # generation is recognizable instead of looking like a format error.
@@ -553,7 +583,9 @@ class MiniMaxParseExternalLLMOutputV16:
             if raw:
                 # _parse_sections already raised for non-empty unparseable text;
                 # this guards the edge case of text that parsed but stayed empty.
-                raise ValueError("Could not parse required LLM sections. Caption or Lyrics stayed empty.")
+                raise ValueError(
+                    f"Could not parse required LLM sections. {required_section} or Lyrics stayed empty."
+                )
             if status:
                 raise ValueError(
                     "The LLM chat node returned no text, so there is nothing to parse. "
@@ -565,9 +597,12 @@ class MiniMaxParseExternalLLMOutputV16:
                 "Fill manual_caption and manual_lyrics, or re-enable the LLM chat node."
             )
 
+        effective_budget, budget_note = self._effective_token_budget(int(max_prompt_tokens), profile)
         caption, lyrics, budget_info = self._apply_prompt_budget(
-            caption, lyrics, int(max_prompt_tokens), bool(trim_long_prompt)
+            caption, lyrics, effective_budget, bool(trim_long_prompt), profile
         )
+        if budget_note:
+            budget_info["budget_note"] = budget_note
 
         title = (parsed.get("title") or "").strip() or (manual_title or "").strip() or fallback_title or "llm-song"
         image_prompt = (parsed.get("image_prompt") or "").strip() or (manual_image_prompt or "").strip()
@@ -584,6 +619,9 @@ class MiniMaxParseExternalLLMOutputV16:
             "user_prompt": user_prompt,
             "raw_response": raw,
             "manual_fields_used": used_manual,
+            "song_model": profile.id if profile is not None else None,
+            "song_model_name": profile.display_name if profile is not None else None,
+            "conditioning_section": required_section,
         }
         provenance.update(budget_info)
         out = {k: [] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"]}
@@ -603,7 +641,28 @@ class MiniMaxParseExternalLLMOutputV16:
         return tuple(out[k] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"])
 
     @staticmethod
-    def _apply_prompt_budget(caption: str, lyrics: str, max_prompt_tokens: int, trim_long_prompt: bool):
+    def _effective_token_budget(max_prompt_tokens: int, profile) -> tuple:
+        """Clamp the trim budget to the selected model's own hard prompt limit.
+
+        A budget *above* the model's technical limit cannot be honoured - the
+        encoder rejects the prompt - so it is lowered to that limit with a note
+        instead of failing later. A budget below it is left exactly as the user
+        set it.
+        """
+        if profile is None:
+            return int(max_prompt_tokens), None
+        hard_limit = int(profile.prompt_token_hard_limit)
+        if int(max_prompt_tokens) > hard_limit:
+            note = (
+                f"max_prompt_tokens {int(max_prompt_tokens)} is above the {profile.display_name} hard prompt limit "
+                f"of {hard_limit} tokens; using {hard_limit}."
+            )
+            LOGGER.warning("LLM prompt budget reduced: %s", note)
+            return hard_limit, note
+        return int(max_prompt_tokens), None
+
+    @staticmethod
+    def _apply_prompt_budget(caption: str, lyrics: str, max_prompt_tokens: int, trim_long_prompt: bool, profile=None):
         """Keep the combined Caption+Lyrics inside the MiniMax token budget.
 
         The decision counts with the real MiniMax tokenizer when its checkpoint
@@ -616,7 +675,7 @@ class MiniMaxParseExternalLLMOutputV16:
         with trim_long_prompt disabled, a clear error is raised instead of
         letting the MiniMax encoder fail cryptically.
         """
-        counter, tokenizer_id = token_counter()
+        counter, tokenizer_id = (None, "") if profile is not None and profile.is_yue2 else token_counter()
         count = counter or estimate_prompt_tokens
         method = "tokenizer" if counter is not None else "estimate"
         count_now = count(caption, lyrics)
@@ -629,22 +688,30 @@ class MiniMaxParseExternalLLMOutputV16:
                 "prompt_trimmed": False,
             }
         if not trim_long_prompt:
+            model_name = profile.display_name if profile is not None else "MiniMax"
+            hard_limit_text = (
+                f", {profile.display_name} hard limit {profile.prompt_token_hard_limit}"
+                if profile is not None
+                else f", MiniMax hard limit {MINIMAX_MAX_PROMPT_TOKENS}"
+            )
             raise ValueError(
-                f"LLM prompt exceeds the MiniMax token budget: {count_now} "
+                f"LLM prompt exceeds the {model_name} token budget: {count_now} "
                 f"{'tokens (measured)' if method == 'tokenizer' else 'estimated tokens'} "
-                f"(budget {max_prompt_tokens}, MiniMax hard limit {MINIMAX_MAX_PROMPT_TOKENS}). "
+                f"(budget {max_prompt_tokens}{hard_limit_text}). "
                 "Shorten the source prompt, lower the LLM response length, or enable trim_long_prompt."
             )
         trimmed = trim_prompt_to_budget(caption, lyrics, max_prompt_tokens, counter=counter)
         hard_cut = bool(trimmed["hard_cut_used"])
         if not (trimmed["caption"] or trimmed["lyrics"]):
+            model_name = profile.display_name if profile is not None else "MiniMax"
             raise ValueError(
-                f"The MiniMax token budget ({max_prompt_tokens}) is too small for any content: "
+                f"The {model_name} token budget ({max_prompt_tokens}) is too small for any content: "
                 f"trimming removed everything. Raise max_prompt_tokens or shorten the prompt."
             )
         LOGGER.warning(
-            "LLM prompt exceeded the MiniMax token budget: trimmed from %d to %d %s "
+            "LLM prompt exceeded the %s token budget: trimmed from %d to %d %s "
             "(%d lines and %d section tags removed)%s. Shorten the source prompt for a cleaner result.",
+            profile.display_name if profile is not None else "MiniMax",
             trimmed["original_estimated_tokens"],
             trimmed["estimated_tokens"],
             "measured tokens" if method == "tokenizer" else "estimated tokens",

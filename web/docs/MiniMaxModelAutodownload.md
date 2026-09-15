@@ -12,6 +12,10 @@ Checks the model files referenced by the bundled workflow and downloads missing 
 - **`flashsr_models`** (`BOOLEAN`) — check the FlashSR weight files used by `MiniMaxFlashSRAudio`.
 - **`llm_model`** (`BOOLEAN`) — check the example LLM GGUF referenced by the workflow.
 - **`auto_download`** (`BOOLEAN`) — download every missing file that has a configured URL.
+- **`yue2_models`** (`BOOLEAN`) — check/download the YuE2 BF16 checkpoint; enabled
+  on new nodes and the Yue2 workflow. Older workflows keep it off on restore.
+- **`model_profile_json`** — optional song-model connection. With it, only the
+  selected music engine is checked; artwork and FlashSR switches remain independent.
 
 ## Behavior
 
@@ -26,4 +30,4 @@ Checks the model files referenced by the bundled workflow and downloads missing 
 
 ## Notes
 
-The node is placed early in the example workflow and its report feeds the parser node, so the checks run before the MiniMax generation subgraph. The integrated FlashSR and LLM chat nodes additionally perform their own lazy first-use checks, so those two models are covered even when this node is removed.
+The node is placed early in the example workflow and its report feeds the parser node, so the checks run before generation. The selected YuE2 or MiniMax song model is chosen through `model_profile_json`; artwork, FlashSR and LLM checks remain independently switchable. The integrated FlashSR and LLM chat nodes additionally perform their own lazy first-use checks.

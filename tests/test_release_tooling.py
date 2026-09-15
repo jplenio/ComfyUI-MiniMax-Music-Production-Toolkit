@@ -61,7 +61,9 @@ class ReleaseDryRunSummaryTests(unittest.TestCase):
     def test_node_count_matches_registered_mappings(self):
         count = PACKAGE.count_registered_nodes()
         self.assertGreaterEqual(count, 27, "expected the 2.0.0 node set")
-        self.assertLessEqual(count, 40)
+        from _toolkit_bootstrap import load_entry_point
+        package, _ = load_entry_point()
+        self.assertEqual(count, len(package.NODE_CLASS_MAPPINGS))
 
     def test_prompt_and_demo_counts(self):
         user, system = PACKAGE.count_prompts()

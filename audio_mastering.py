@@ -5,6 +5,7 @@ from .audio_dsp_utils import audio_numpy, as_audio, check_cancelled, number, rep
 from .audio_analysis import measure_loudness
 from .audio_compressor import compress
 from .audio_limiter import limit_peaks
+from .mastering_presets import PRESETS, CUSTOM, preset_settings
 
 
 def master_track(x_ct, sr, *, target_lufs=-14, ceiling_dbtp=-1,
@@ -84,6 +85,8 @@ class MiniMaxMasteringCompressor:
             "max_limiter_reduction_db": ("FLOAT", {"default": 6, "min": 1, "max": 18}),
             "lookahead_ms": ("FLOAT", {"default": 3, "min": 1, "max": 5, "step": 0.1}),
             "limiter_release_ms": ("FLOAT", {"default": 100, "min": 10, "max": 1000}),
+        }, "optional": {
+            "preset": ([CUSTOM, *PRESETS], {"default": CUSTOM}),
         }}
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "mastering_json", "info")
@@ -93,7 +96,20 @@ class MiniMaxMasteringCompressor:
     def process(self, audio, bypass=False, target_lufs=-14, ceiling_dbtp=-1, target_sample_rate="keep",
                 compressor_enabled=True, threshold_db=-18, ratio=1.5, knee_db=6, attack_ms=20,
                 release_ms=150, sidechain_hz=80, detector="RMS", input_gain_db=0,
-                max_makeup_db=18, max_limiter_reduction_db=6, lookahead_ms=3, limiter_release_ms=100):
+                max_makeup_db=18, max_limiter_reduction_db=6, lookahead_ms=3, limiter_release_ms=100, preset=CUSTOM):
+        selected = preset_settings(preset)
+        if selected is not None:
+            # Explicit preset also works in API runs. Custom preserves all
+            # legacy parameters; the frontend switches to it on manual edits.
+            import json
+            result = self.process(audio, bypass=bypass, target_sample_rate=target_sample_rate,
+                                  preset=CUSTOM, **selected)
+            output, encoded, info = result["result"]
+            record = json.loads(encoded)
+            record["preset"] = preset
+            record["preset_settings"] = selected
+            result["result"] = (output, report_json(record), info)
+            return result
         import numpy as np
         from .audio_utils import resample_kaiser_polyphase
         x, sr = audio_numpy(audio, "Mastering", stereo_only=True)
@@ -123,7 +139,7 @@ class MiniMaxMasteringCompressor:
             value = f"{m['integrated_lufs']:.1f} LUFS / {m['true_peak_dbtp']:.1f} dBTP" if m["valid"] else "unmeasurable loudness"
             summaries.append(f"Item {i+1}: {value} ({r['reason']})")
         info = " | ".join(summaries)
-        encoded = report_json({"schema": "minimax_mastering_v1", "bypass": False,
+        encoded = report_json({"schema": "minimax_mastering_v1", "bypass": False, "preset": CUSTOM,
                                "input_sample_rate": sr, "output_sample_rate": target_sr, "batch_reports": reports})
         return {"ui": {"text": [info]}, "result": (as_audio(y, target_sr), encoded, info)}
 

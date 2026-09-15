@@ -68,6 +68,8 @@ class ArchiveSelectionTests(unittest.TestCase):
             ".git/config",
             "__pycache__/x.pyc",
             "scripts/__pycache__/x.pyc",
+            ".scratch/native_stage_base/test.json",
+            ".scratch/workflow_before_26.json",
             "KONTEXT.md",
             "PROJECT_STATE.md",
             "REFACTOR-PLAN.md",

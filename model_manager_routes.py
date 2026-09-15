@@ -30,7 +30,7 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("model_manager")
 
 PREFLIGHT_PATH = "/minimax_music_toolkit/model_preflight"
-GROUP_FLAGS = ("minimax", "flux2", "flashsr", "llm")
+GROUP_FLAGS = ("minimax", "yue2", "flux2", "flashsr", "llm")
 _ROUTES_REGISTERED = False
 
 
@@ -39,6 +39,7 @@ def selected_entries(flags: dict):
     return normalize_model_entries(
         load_models_config(),
         minimax=bool(flags.get("minimax", True)),
+        yue2=bool(flags.get("yue2", True)),
         flux2=bool(flags.get("flux2", True)),
         flashsr=bool(flags.get("flashsr", True)),
         llm=bool(flags.get("llm", True)),

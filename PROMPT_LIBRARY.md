@@ -136,3 +136,7 @@ The dropdown is populated through the toolkit's `/minimax_music_toolkit/prompt_f
 `IS_CHANGED` includes a content fingerprint for file-backed prompts, so an edit to a selected file invalidates ComfyUI caching even when its filename is unchanged.
 
 The selected external path refers to the filesystem of the machine running ComfyUI. A generic browser-side server filesystem explorer is intentionally not exposed by default; typed/configured server paths are the safer baseline for local and remote ComfyUI deployments.
+
+## YuE2 and model selection
+
+The new `example_workflows/Yue2_MM3_Production_Toolkit.json` supports both MiniMax and YuE2 through its first Song model control. It includes matched templates, native ABC planning and generation records. See [YUE2.md](YUE2.md) for setup, prompt examples and verification scope. The classic MiniMax workflow remains fixed to MiniMax.

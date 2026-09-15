@@ -19,7 +19,7 @@ from typing import Iterable, List, Optional, Sequence, Set, Tuple
 # VCS state, caches and build output.  ``dist`` holds the generated release
 # assets themselves - a re-packaged ZIP must not swallow the previous build.
 ARCHIVE_EXCLUDED_PARTS = {
-    ".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "dist",
+    ".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "dist", ".scratch",
 }
 ARCHIVE_EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".zip"}
 # Local-only handoff files: present on the maintainer machine, never pushed and

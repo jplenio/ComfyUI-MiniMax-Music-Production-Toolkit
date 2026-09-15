@@ -39,7 +39,8 @@ class OptimizedWorkflowTests(unittest.TestCase):
     def test_only_canonical_examples_are_shipped(self):
         files = {p.name for p in (ROOT / "example_workflows").glob("*.json")}
         self.assertEqual(files, {"MiniMax_Music3_Production_Toolkit.json",
-                                 "MiniMax_Music3_Production_Toolkit_AudioEnhance.json"})
+                                 "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
+                                 "Yue2_MM3_Production_Toolkit.json"})
 
     def test_enhancement_has_no_processing_after_final_mastering(self):
         result = read("MiniMax_Music3_Production_Toolkit_AudioEnhance")

@@ -22,6 +22,7 @@ import hashlib
 import json
 from pathlib import Path
 
+from .model_profiles import SongModelProfile, profile_from_payload
 from .prompt_sources import (
     DEFAULT_SYSTEM_PROMPT,
     DEFAULT_SYSTEM_PROMPT_FILE,
@@ -33,6 +34,7 @@ from .prompt_library import (
     default_combo_values,
     invalidate_library_options,
     library_options,
+    load_prompt_file,
     prompt_selection_fingerprint,
     resolve_prompt,
 )
@@ -75,16 +77,34 @@ def _safe_choices(default: list) -> list:
     return default or [CUSTOM]
 
 
-def _resolve_system_prompt(system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt):
+def _resolve_system_prompt(
+    system_prompt_source,
+    system_prompt_directory,
+    system_prompt_file,
+    system_prompt,
+    profile=None,
+):
     """Resolve the effective system prompt text and its origin.
 
     The ``system_prompt`` field is authoritative in every mode: the frontend
     copies the selected system-prompt file into it on selection (exactly like
     ``description_override`` for the user prompt), so editing the field always
     changes the prompt the LLM receives.  Headless/API runs without the
-    frontend prefill fall back to loading the selected file directly.
+    frontend prefill fall back to loading the selected file directly, and when
+    no file is selected either they fall back to the selected *song model's*
+    own default system prompt (``profile``).
     """
     source = (system_prompt_source or "manual").strip().lower()
+    # Only bundled, known model templates are translated. Manual and external
+    # text stays authoritative; same-family edits are preserved as before.
+    if source == "bundled_library" and profile is not None:
+        selected = (system_prompt_file or "").strip()
+        if selected.startswith("minimax-music3-") and profile.is_yue2:
+            selected = "yue2/" + selected.removeprefix("minimax-music3-")
+        elif selected.startswith("yue2/") and not profile.is_yue2:
+            selected = "minimax-music3-" + selected.removeprefix("yue2/")
+        if selected != (system_prompt_file or "").strip():
+            return load_prompt_file("system", source, "", selected)
     if source == "manual":
         text = (system_prompt or "").strip()
         if not text:
@@ -95,7 +115,19 @@ def _resolve_system_prompt(system_prompt_source, system_prompt_directory, system
     if text:
         origin = (system_prompt_file or "").strip() or PLACEHOLDER
         return text, origin
-    return resolve_prompt("system", source, system_prompt_directory, system_prompt_file)
+
+    selected = (system_prompt_file or "").strip()
+    if profile is not None and profile.system_prompt_file and (not selected or selected == PLACEHOLDER):
+        # Nothing was prefilled and no file was chosen: use the model's own
+        # default prompt instead of failing on an empty selection.
+        try:
+            return load_prompt_file("system", source, system_prompt_directory, profile.system_prompt_file)
+        except Exception as exc:
+            LOGGER.warning(
+                "Could not load the %s default system prompt '%s' (%s); falling back to the node selection.",
+                profile.display_name, profile.system_prompt_file, exc,
+            )
+    return resolve_prompt("system", source, system_prompt_directory, selected)
 
 
 class MiniMaxStructuredPromptV20:
@@ -128,6 +160,13 @@ class MiniMaxStructuredPromptV20:
                 "system_prompt_file": (default_combo_values("system"), {"default": DEFAULT_SYSTEM_PROMPT_FILE}),
                 "source_name_override": ("STRING", {"default": "", "multiline": False}),
                 "system_prompt": ("STRING", {"default": DEFAULT_SYSTEM_PROMPT, "multiline": True}),
+            },
+            "optional": {
+                # Appended optional input (2.6.0): the selected song model. The
+                # profile decides which system-prompt family this node expects
+                # and is recorded in the summary, so a prompt written for the
+                # other model is visible instead of silent.
+                "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
             },
         }
 
@@ -163,6 +202,7 @@ class MiniMaxStructuredPromptV20:
         system_prompt_file,
         source_name_override="",
         system_prompt="",
+        model_profile_json="",
         **kwargs,
     ):
         # "custom" selects free mode (no file is loaded); fingerprint it as such
@@ -191,7 +231,8 @@ class MiniMaxStructuredPromptV20:
                 ("theme", theme), ("length", length),
             )
         )
-        return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}"
+        profile_fp = hashlib.sha256((model_profile_json or "").encode("utf-8", errors="replace")).hexdigest()[:16]
+        return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}|model={profile_fp}"
 
     def build(
         self,
@@ -213,10 +254,23 @@ class MiniMaxStructuredPromptV20:
         system_prompt_file,
         source_name_override="",
         system_prompt="",
+        model_profile_json="",
     ):
+        profile: SongModelProfile | None = profile_from_payload(model_profile_json)
         resolved_system, system_origin = _resolve_system_prompt(
-            system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt
+            system_prompt_source, system_prompt_directory, system_prompt_file, system_prompt, profile
         )
+        model_prompt_mismatch = False
+        if profile is not None:
+            family = profile.family_of_file(system_origin)
+            if family is not None and family != profile.id:
+                model_prompt_mismatch = True
+                LOGGER.warning(
+                    "Structured Song Prompt: the selected system prompt '%s' belongs to a different song model "
+                    "than '%s'. The prompt is used as selected - switch the system-prompt file if the model "
+                    "should write its own prompt format.",
+                    system_origin, profile.display_name,
+                )
 
         widget_values = {
             "genre": genre, "tempo": tempo, "meter": meter, "key": key,
@@ -273,6 +327,15 @@ class MiniMaxStructuredPromptV20:
             )
 
         user_prompt = assemble_structured_user_prompt(resolved, description)
+        if profile is not None and profile.is_yue2 and resolved.get("lyrics", "").casefold() in {"instrumental", "no", "nein", "none"}:
+            user_prompt += (
+                "\n\nINSTRUMENTAL CONSTRAINT: Lyrics mode is instrumental and overrides any "
+                "inherited vocal/language fields or vocal template suggestions above. "
+                "Style must explicitly say instrumental, no sung or spoken words, no lead or "
+                "backing vocals, no choir. Lyrics must contain only a short instrumental section "
+                "map, with no words, syllables, scat or vocalizations. Only if explicitly requested, "
+                "allow quiet closed-mouth humming in Style; never transcribe it in Lyrics."
+            )
 
         if (source_name_override or "").strip():
             source_name = _clean_source_name(source_name_override)
@@ -284,6 +347,11 @@ class MiniMaxStructuredPromptV20:
         summary = json.dumps({
             "user_prompt_origin": user_origin,
             "system_prompt_origin": system_origin,
+            "song_model": profile.id if profile is not None else None,
+            "song_model_name": profile.display_name if profile is not None else None,
+            "model_system_prompt_file": profile.system_prompt_file if profile is not None else None,
+            "model_prompt_mismatch": model_prompt_mismatch,
+            "conditioning_section": profile.conditioning_section if profile is not None else "Caption",
             "fields": {field: resolved.get(field, CUSTOM) for field in STRUCTURED_FIELDS},
             "overrides": overrides,
             "description_chars": len(description),
@@ -291,8 +359,9 @@ class MiniMaxStructuredPromptV20:
         }, ensure_ascii=False)
 
         LOGGER.info(
-            "Structured prompt resolved: user=%s, system=%s, fields=%d, user_prompt_chars=%d",
-            user_origin, system_origin, len(resolved), len(user_prompt),
+            "Structured prompt resolved: user=%s, system=%s, model=%s, fields=%d, user_prompt_chars=%d",
+            user_origin, system_origin, profile.id if profile is not None else "<none>",
+            len(resolved), len(user_prompt),
         )
         return (resolved_system, user_prompt, source_name, summary)
 

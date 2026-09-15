@@ -102,6 +102,22 @@ GENERIC_INPUT_TOOLTIPS = {
 
 # Node-specific help for fields whose names are ambiguous or whose behavior is unique.
 NODE_INPUT_TOOLTIPS = {
+    "MusicProductionControl": {
+        "model": "Select the actual song generator and matching prompt family. YuE2 is the default in the dual-model workflow.",
+        "cover_enabled": "On creates and previews cover artwork. Off skips the image branch and its FLUX.2 model check/download.",
+        "refinement": "Model default means OFF for YuE2 and ON for MiniMax. On/Off override that choice. Controls declipping, filtering, FlashSR, crossover and HF repair, including FlashSR model downloads.",
+        "mastering_enabled": "On runs Auto-EQ, manual EQ, sample-rate preparation and mastering compression. Off passes incoming audio through at its existing sample rate. Independent of Refinement.",
+    },
+    "MusicOptionalStage": {
+        "enabled": "Connect the central refinement or mastering Boolean. Off skips both audio processing and report dependencies.",
+        "stage": "Labels bypass records. Refinement slots 2 and 4 carry preset names; other report slots carry JSON.",
+        "original_audio": "Audio before this stage. Requested only when the stage is disabled.",
+        "processed_audio": "Audio after this stage. Requested only when enabled.",
+    },
+    "MusicOptionalCoverPreview": {
+        "images": "Generated artwork. Requested only while cover creation is enabled.",
+        "enabled": "Connect the central cover Boolean to skip rendering and clear the preview when disabled.",
+    },
     "AudioDeclipRepair": {
         "audio": "Original MiniMax/source audio before FlashSR processing. The node searches this signal for near-ceiling flat-topped regions and reconstructs plausible peak curvature before later enhancement stages can exaggerate clipping distortion.",
         "mode": "De-clipping preset. Auto / conservative repairs only strong near-peak plateau evidence and is recommended for unattended batches. Standard widens detection and allows longer repairs. Strong is intentionally aggressive and may alter merely limited peaks. Custom uses the visible values exactly. Analyze only reports clipping without changing audio. Bypass performs no analysis or repair.",
@@ -368,7 +384,7 @@ def _decorate_spec(spec, tooltip: str):
 def install_input_tooltips(node_class_mappings):
     """Decorate every required/optional INPUT_TYPES field in every registered node."""
     for comfy_name, cls in node_class_mappings.items():
-        if getattr(cls, "_minimax_tooltips_installed", False):
+        if cls.__dict__.get("_minimax_tooltips_installed", False):
             continue
         original = getattr(cls, "INPUT_TYPES", None)
         if original is None:

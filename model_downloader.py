@@ -443,6 +443,7 @@ def normalize_model_entries(
     flashsr: bool = True,
     llm: bool = True,
     include_optional: bool = False,
+    yue2: bool = False,
 ) -> List[Dict[str, Any]]:
     """Expand the configured model groups into flat check entries.
 
@@ -473,6 +474,10 @@ def normalize_model_entries(
             expanded["target"] = expanded.get("target") or default_target
         entries.append(expanded)
 
+    if yue2:
+        group = config.get("yue2", {}) or {}
+        for entry in group.get("files", []) or []:
+            add(entry, note=group.get("note", ""), default_target="models/checkpoints")
     if minimax:
         group = config.get("minimax", {}) or {}
         for entry in group.get("files", []) or []:

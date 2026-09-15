@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "_provenance": {
+    "verified_on": "2026-09-14",
+    "sources": [
+      "https://github.com/multimodal-art-projection/YuE/blob/main/docs/generation.md",
+      "https://github.com/multimodal-art-projection/YuE/blob/main/examples/song.json",
+      "https://github.com/Comfy-Org/ComfyUI/blob/yue2/comfy_extras/nodes_yue2.py"
+    ],
+    "implementation": "Checked against native nodes_yue2.py and the user-supplied yue2_full.json. Toolkit prompt budgets and duration recommendations are policies, not model specifications."
+  },
+  "default": "minimax_music3",
+  "profiles": [
+    {
+      "id": "minimax_music3",
+      "display_name": "MiniMax Music 3",
+      "short_name": "MiniMax",
+      "engine": "MiniMax Music 3 diffusion (DiT) + MiniMax text encoder",
+      "system_prompt_file": "minimax-music3-production.txt",
+      "system_prompt_folder": "prompts/system",
+      "conditioning_section": "Caption",
+      "conditioning_section_aliases": [
+        "Caption",
+        "Style",
+        "Tags"
+      ],
+      "conditioning_kind": "caption",
+      "conditioning_description": "One long-form production caption: Global Metadata, Vocal Details and a chronological Arrangement. Roughly 250-450 words.",
+      "lyrics_kind": "sectioned",
+      "lyrics_description": "Section tags alone on their own line, lyric words underneath.",
+      "prompt_token_budget": 4500,
+      "prompt_token_hard_limit": 5000,
+      "prompt_token_counter": "minimax_music3_text_encoder",
+      "default_duration_seconds": 300.0,
+      "max_duration_seconds": 360.0,
+      "practical_max_duration_seconds": 360.0,
+      "sampler_defaults": {
+        "steps": 40,
+        "cfg": 1.7,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0
+      },
+      "text_defaults": {
+        "cfg_scale": 1.7,
+        "top_k": 50
+      },
+      "output_sample_rate": 44100,
+      "generation_nodes": [
+        "UNETLoader + CLIPLoader + VAELoader",
+        "MiniMax Music 3 subgraph (MiniMaxMusic3TextEncode, EmptyMiniMaxMusic3LatentAudio, KSamplerWithConfig, MiniMaxSafeAudioDecode)"
+      ],
+      "model_files": {
+        "diffusion_model": "minimax_music3_dit_fp16.safetensors",
+        "text_encoder": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+        "vae": "minimax_music3_dav.safetensors"
+      },
+      "documentation": "WORKFLOW.md",
+      "notes": [
+        "The MiniMax text encoder rejects a caption+lyrics prompt above 5000 tokens; the parser trims to the configured budget instead of letting the encoder fail.",
+        "Generation and the whole audio chain of the shipped example are unchanged by the YuE2 addition."
+      ]
+    },
+    {
+      "id": "yue2",
+      "display_name": "YuE2",
+      "short_name": "YuE2",
+      "engine": "YuE2-3B auto-regressive score + semantic planner with an acoustic flow-matching stage",
+      "system_prompt_file": "yue2/production.txt",
+      "system_prompt_folder": "prompts/system",
+      "conditioning_section": "Style",
+      "conditioning_section_aliases": [
+        "Style",
+        "Styles",
+        "Tags",
+        "Genre",
+        "Caption"
+      ],
+      "conditioning_kind": "style",
+      "conditioning_description": "Concise musical description: language, genre, vocals, instruments, mood, tempo and meter. Comma-separated descriptors are a toolkit writing preference, not a model grammar.",
+      "lyrics_kind": "sectioned",
+      "lyrics_description": "Singable text with section tags such as [Verse] and [Chorus]. No engineering directions or ABC notation.",
+      "prompt_token_budget": 4500,
+      "prompt_token_hard_limit": 24576,
+      "prompt_token_counter": "estimate",
+      "context_tokens": 24576,
+      "frames_per_second": 25,
+      "default_duration_seconds": 360,
+      "max_duration_seconds": 900.0,
+      "practical_max_duration_seconds": 900.0,
+      "sampler_defaults": {
+        "steps": 32,
+        "cfg": 1.0,
+        "sampler_name": "dpm_2",
+        "scheduler": "sgm_uniform",
+        "denoise": 1.0
+      },
+      "text_defaults": {
+        "mode": "full",
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 100,
+        "repetition_penalty": 1.2
+      },
+      "output_sample_rate": 48000,
+      "generation_nodes": [
+        "CheckpointLoaderSimple",
+        "YuE2GenerateABC",
+        "YuE2GenerateMusic",
+        "EmptyYuE2LatentAudio",
+        "KSamplerWithConfig",
+        "MiniMaxSafeAudioDecode"
+      ],
+      "model_files": {
+        "checkpoint": "yue2_3b_bf16.safetensors"
+      },
+      "documentation": "YUE2.md",
+      "notes": [
+        "The native ComfyUI implementation shares 24576 context tokens with generated music at 25 frames per second. The context must also accommodate ABC and instruction tokens; the text budget is not a guaranteed maximum duration.",
+        "The 4500-token parser budget is a toolkit estimate, not a YuE2 tokenizer measurement or a model-specific text limit.",
+        "max_duration is a ceiling. Neither repeated section tags nor a requested duration guarantee an exact song length.",
+        "Full and melody modes explicitly generate ABC before music. SheetSage2 is only needed for audio-to-score covers, not new songs.",
+        "Native output is 48000 Hz. Release sample rate is selected independently."
+      ]
+    }
+  ]
+}

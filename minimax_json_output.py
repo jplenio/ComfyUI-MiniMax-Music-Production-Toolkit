@@ -338,7 +338,8 @@ class MiniMaxSaveProductionJSON:
             error_prefix="Save Production JSON",
         )
         if prompt_report_target:
-            body = markdown_text if markdown_text.endswith("\n") else markdown_text + "\n"
+            body = markdown_text.replace("\r\n", "\n").replace("\r", "\n").rstrip("\n") + "\n"
+            body = body.replace("\n", "\r\n")
             write_text_staged(prompt_report_target, body, error_prefix="Save Production JSON")
             LOGGER.info("Saved MiniMax prompt report: %s", prompt_report_target)
 

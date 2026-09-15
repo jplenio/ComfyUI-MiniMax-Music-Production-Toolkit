@@ -29,3 +29,8 @@ Shows exactly what MiniMax Music 3 received for the current song, as readable Ma
 
 - Wire it from the parser (`MiniMaxParseExternalLLMOutputV16`): `caption`, `lyrics`, `title`, `image_prompt`.
 - Place it near the Save Audio section; it has no downstream requirement — its value is the visible report.
+# Line breaks on Windows
+
+Lyrics and musical descriptions use literal Markdown blocks, preserving every
+line in Markdown previews. Saved reports use UTF-8 with Windows CRLF line endings
+for both MiniMax and YuE2. Original model input strings are not modified.

@@ -29,6 +29,7 @@ from release_common import (  # noqa: E402  (script-local tooling module)
 PROJECT_DIRNAME = "ComfyUI-MiniMax-Music-Production-Toolkit"
 WORKFLOW_SOURCE = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
 ENHANCEMENT_SOURCE = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
+DUAL_MODEL_SOURCE = ROOT / "example_workflows" / "Yue2_MM3_Production_Toolkit.json"
 
 # Archive selection lives in scripts/release_common.py so the packager and the
 # validator cannot disagree about what a release contains.
@@ -139,7 +140,7 @@ def print_dry_run_summary(version: str) -> None:
     print(f"  files in zip:     {len(included_files)}")
     print(f"  local-only files: {', '.join(local_only) or 'none'} (never in the ZIP)")
     print(f"  privacy scan:     {'CLEAN' if not privacy_hits else 'HITS: ' + ', '.join(privacy_hits)}")
-    print(f"  planned assets:   {PROJECT_DIRNAME}-v{version}.zip, MiniMax_Music3_Production_Toolkit_v{version}.json, MiniMax_Music3_Production_Toolkit_AudioEnhance_v{version}.json, SHA256SUMS.txt")
+    print(f"  planned assets:   {PROJECT_DIRNAME}-v{version}.zip, Yue2_MM3_Production_Toolkit_v{version}.json, MiniMax_Music3_Production_Toolkit_v{version}.json, MiniMax_Music3_Production_Toolkit_AudioEnhance_v{version}.json, SHA256SUMS.txt")
 
 
 
@@ -170,6 +171,9 @@ def main() -> None:
         raise SystemExit("VERSION is empty")
     if not WORKFLOW_SOURCE.exists():
         raise SystemExit(f"Missing public workflow: {WORKFLOW_SOURCE}")
+    for source in (ENHANCEMENT_SOURCE, DUAL_MODEL_SOURCE):
+        if not source.exists():
+            raise SystemExit(f"Missing public workflow: {source}")
 
     if args.dry_run:
         print_dry_run_summary(version)
@@ -184,6 +188,7 @@ def main() -> None:
     archive = outdir / f"{PROJECT_DIRNAME}-v{version}.zip"
     workflow = outdir / f"MiniMax_Music3_Production_Toolkit_v{version}.json"
     enhancement = outdir / f"MiniMax_Music3_Production_Toolkit_AudioEnhance_v{version}.json"
+    dual_model = outdir / f"Yue2_MM3_Production_Toolkit_v{version}.json"
     checksums = outdir / "SHA256SUMS.txt"
 
     if archive.exists():
@@ -191,14 +196,16 @@ def main() -> None:
     create_zip(archive)
     shutil.copyfile(WORKFLOW_SOURCE, workflow)
     shutil.copyfile(ENHANCEMENT_SOURCE, enhancement)
+    shutil.copyfile(DUAL_MODEL_SOURCE, dual_model)
 
-    assets = [archive, workflow, enhancement]
+    assets = [archive, dual_model, workflow, enhancement]
     checksum_text = "".join(f"{sha256(p)}  {p.name}\n" for p in assets)
     checksums.write_text(checksum_text, encoding="utf-8", newline="\n")
 
     print(f"Created: {archive}")
     print(f"Created: {workflow}")
     print(f"Created: {enhancement}")
+    print(f"Created: {dual_model}")
     print(f"Created: {checksums}")
     print(checksum_text, end="")
 

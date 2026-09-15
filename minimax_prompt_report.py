@@ -20,6 +20,14 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("prompt_report")
 
 
+def literal_block(text: str) -> str:
+    """Preserve line breaks and literal section tags in Markdown renderers."""
+    import re
+    text = (text or "").replace("\r\n", "\n").replace("\r", "\n")
+    fence = "`" * max(3, 1 + max((len(m.group()) for m in re.finditer(r"`+", text)), default=0))
+    return f"{fence}text\n{text}\n{fence}"
+
+
 def _minimax_prompt_builder() -> Tuple[Optional[Any], Optional[Any], Optional[Any]]:
     """Import ComfyUI's own prompt builder, or return None on older builds."""
     try:
@@ -89,11 +97,11 @@ def build_prompt_report(caption: str, lyrics: str, title: str, image_prompt: str
         lines += [
             "## Caption (musical brief, as sent to MiniMax)",
             "",
-            clean_caption(caption) or "_(empty)_",
+            literal_block(clean_caption(caption) or "(empty)"),
             "",
             "## Lyrics (as sent to MiniMax)",
             "",
-            normalize_lyrics(lyrics) or "_(none)_",
+            literal_block(normalize_lyrics(lyrics) or "(none)"),
             "",
             "## Final prompt sent to MiniMax (verbatim)",
             "",
@@ -106,11 +114,11 @@ def build_prompt_report(caption: str, lyrics: str, title: str, image_prompt: str
         lines += [
             "## Caption (raw)",
             "",
-            caption or "_(empty)_",
+            literal_block(caption or "(empty)"),
             "",
             "## Lyrics (raw)",
             "",
-            lyrics or "_(none)_",
+            literal_block(lyrics or "(none)"),
             "",
             "_Note: the exact final prompt could not be reconstructed because "
             "`comfy.ldm.minimax_music.prompt` is not importable in this ComfyUI build; "
@@ -142,7 +150,8 @@ class MiniMaxPromptReport:
                 "lyrics": ("STRING", {"forceInput": True, "multiline": True}),
                 "title": ("STRING", {"forceInput": True}),
                 "image_prompt": ("STRING", {"forceInput": True, "multiline": True}),
-            }
+            },
+            "optional": {"model_profile_json": ("STRING", {"forceInput": True})},
         }
 
     RETURN_TYPES = ("STRING",)
@@ -160,8 +169,18 @@ class MiniMaxPromptReport:
         "as not part of the MiniMax prompt."
     )
 
-    def report(self, caption: str, lyrics: str, title: str, image_prompt: str):
-        markdown = build_prompt_report(caption, lyrics, title, image_prompt)
+    def report(self, caption: str, lyrics: str, title: str, image_prompt: str, model_profile_json=""):
+        from .model_profiles import profile_from_payload
+        profile = profile_from_payload(model_profile_json)
+        if profile is not None and profile.is_yue2:
+            markdown = (f"# YuE2 – Prompt Report\n\n**Title:** {title}\n\n"
+                        f"## Style (raw input)\n\n{literal_block(caption)}\n\n## Lyrics (raw input)\n\n{literal_block(lyrics)}\n\n"
+                        "The native ABC and music nodes build their own conditioning. These are the input "
+                        "strings, not a reconstructed tokenizer prompt. ABC and effective settings are in "
+                        "the production JSON under generation.\n\n"
+                        f"## Image Prompt (FLUX.2 cover)\n\n{image_prompt}\n")
+        else:
+            markdown = build_prompt_report(caption, lyrics, title, image_prompt)
         LOGGER.info("MiniMaxPromptReport generated %d chars.", len(markdown))
         return {"ui": {"text": (markdown,)}, "result": (markdown,)}
 

@@ -17,8 +17,9 @@ import re
 from typing import Any, Dict, Optional
 
 from .metadata_schema import CURRENT_PRODUCTION_METADATA_SCHEMA
+from .project_info import PROJECT_NAME, VERSION
 
-DEFAULT_WORKFLOW_NAME = "MiniMax Music Production Toolkit 2.0.0"
+DEFAULT_WORKFLOW_NAME = f"{PROJECT_NAME} {VERSION}"
 
 
 def parse_legacy_object(text: Any) -> Dict[str, Any]:
@@ -254,6 +255,12 @@ def build_generation_metadata(
     model_identity = parse_object(model_identity_json, "model_identity_json")
     if model_identity:
         payload["models"] = model_identity
+        if model_identity.get("schema") == "minimax_music_model_settings_v1":
+            payload["generation"] = model_identity
+            payload["song_model"] = model_identity["song_model"]
+            if model_identity["song_model"] == "yue2":
+                payload.pop("minimax_music3", None)
+                payload["style"] = caption
 
     return payload
 

@@ -210,6 +210,15 @@ class LimiterTests(unittest.TestCase):
 
 
 class MeterAndMasterTests(unittest.TestCase):
+    def test_balanced_preset_is_sample_identical_to_previous_defaults(self):
+        t=np.arange(48000)/48000
+        source=audio(np.stack([.2*np.sin(2*np.pi*440*t)]*2)[None].astype('float32'))
+        node=master.MiniMaxMasteringCompressor()
+        original=node.process(source)['result'][0]
+        selected,record,_=node.process(source,preset='Balanced - gentle glue')['result']
+        self.assertTrue(torch.equal(original['waveform'],selected['waveform']))
+        self.assertEqual(json.loads(record)['preset'],'Balanced - gentle glue')
+
     @classmethod
     def setUpClass(cls):
         if not module('ffmpeg_utils').discover_ffmpeg():

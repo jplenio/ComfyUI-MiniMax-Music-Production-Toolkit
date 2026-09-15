@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [2.6.0] - 2026-09-15
+
+- Main feature: choose YuE2 or MiniMax Music 3 in the renamed
+  `Yue2_MM3_Production_Toolkit.json`; YuE2 is the default.
+- Central Cover (on), Refinement (model default: MiniMax on / YuE2 off) and
+  Mastering (on) controls. Lazy audio/report routing skips disabled stages,
+  including previews and unneeded FLUX.2 / FlashSR downloads.
+- Stricter YuE2 instrumental prompts: no lyric words, vocal syllables or
+  unintended voices; only explicitly requested background humming in Style.
+- Release assets now include the dual-model workflow as a standalone JSON.
+
+- Yue2 workflow defaults: 40 sampler steps, independent 360-second duration,
+  BF16 checkpoint and enabled model check/download for the selected song engine.
+- Release-tag comment defaults to "Generated with jplenio Music Production Toolkit".
+- Prompt reports preserve lyric line breaks in Markdown and use CRLF on disk.
+- Added twelve mastering presets plus Custom; Balanced - gentle glue retains
+  the previous processing settings. Manual edits select Custom in the frontend.
+
+- Added a model-selectable Yue2 production workflow with native ABC planning,
+  YuE2/MiniMax generation, separate settings and twelve YuE2 prompt templates.
+- Model-aware parsing, prompt reports and production records preserve Style,
+  lyrics and generated ABC without using MiniMax's tokenizer for YuE2.
+- The classic MiniMax workflow remains fixed to MiniMax; legacy node interfaces
+  retain their widget order. See `YUE2.md` for setup and validation limits.
+
 ## [2.5.2] - 2026-09-13
 
 A bug-fix release. Nothing changes in the node interfaces, the workflow layout or

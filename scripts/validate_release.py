@@ -21,6 +21,7 @@ REQUIRED = [
     "example_workflows/MiniMax_Music3_Production_Toolkit.json",
     "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
     "prompts/system/minimax-music3-production.txt",
+    "example_workflows/Yue2_MM3_Production_Toolkit.json", "YUE2.md", "model_profiles.json",
 ]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_common import (  # noqa: E402  (script-local tooling module)
@@ -416,6 +417,8 @@ def check_migration_logic() -> None:
         print("Skipping Node frontend tests: 'node' not available")
         return
     for relative in (
+        "tests/test_song_model_frontend.mjs",
+        "tests/test_mastering_presets_frontend.mjs",
         "tests/test_workflow_migration.mjs",
         "tests/test_structured_prompt_frontend.mjs",
         "tests/test_llm_provider_frontend.mjs",
@@ -444,6 +447,7 @@ def main() -> None:
     check_pyproject()
     check_workflow()
     check_audio_enhance_workflow()
+    _check_workflow_graph(json.loads((ROOT / "example_workflows/Yue2_MM3_Production_Toolkit.json").read_text(encoding="utf-8")), "YuE2")
     check_prompt_library()
     check_privacy_and_placeholders()
     check_demo_catalog()

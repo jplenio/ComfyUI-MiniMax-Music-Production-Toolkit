@@ -142,5 +142,20 @@
       "target": "models/llm",
       "url": ""
     }
+  },
+  "yue2": {
+    "note": "Comfy-Org native YuE2 BF16 checkpoint. Verified via the public HF tree API on 2026-09-14.",
+    "files": [
+      {
+        "name": "yue2_3b_bf16.safetensors",
+        "filename": "checkpoints/yue2_3b_bf16.safetensors",
+        "repo_id": "Comfy-Org/YuE2",
+        "repo_type": "model",
+        "revision": "8e6fcf0f23252ed188b634bd50d44f4b01fba890",
+        "target": "models/checkpoints",
+        "bytes": 7799983228,
+        "timeout": 7200
+      }
+    ]
   }
 }

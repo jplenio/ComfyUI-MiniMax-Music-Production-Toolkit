@@ -39,7 +39,11 @@ class MiniMaxModelAutodownload:
                 "flashsr_models": ("BOOLEAN", {"default": True}),
                 "llm_model": ("BOOLEAN", {"default": True}),
                 "auto_download": ("BOOLEAN", {"default": True}),
-            }
+            },
+            "optional": {
+                "yue2_models": ("BOOLEAN", {"default": True}),
+                "model_profile_json": ("STRING", {"forceInput": True}),
+            },
         }
 
     RETURN_TYPES = ("STRING",)
@@ -47,13 +51,21 @@ class MiniMaxModelAutodownload:
     FUNCTION = "check"
     CATEGORY = "MiniMax Music Production Toolkit/utilities"
 
-    def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True):
+    def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True,
+              yue2_models=None, model_profile_json=""):
+        from .model_profiles import profile_from_payload
+        profile = profile_from_payload(model_profile_json)
+        # Old API/workflow calls omit the additive flag and must not download
+        # a new 7.8 GB engine. With a YuE2 profile, omission follows its default.
+        if yue2_models is None:
+            yue2_models = profile is not None and profile.is_yue2
         # Group notes and the FlashSR default target live in one place
         # (model_downloader.normalize_model_entries) so this node, the FlashSR
         # runtime and the diagnostics script resolve identical entries.
         entries = normalize_model_entries(
             load_models_config(),
-            minimax=bool(minimax_models),
+            minimax=bool(minimax_models) and (profile is None or not profile.is_yue2),
+            yue2=bool(yue2_models) and (profile is None or profile.is_yue2),
             flux2=bool(flux2_models),
             flashsr=bool(flashsr_models),
             llm=bool(llm_model),

@@ -1,4 +1,8 @@
-# MiniMax Music Production Toolkit 2.5 for ComfyUI
+# MiniMax Music Production Toolkit 2.6 for ComfyUI
+
+**New in 2.6:** [YuE2 production workflow](example_workflows/Yue2_MM3_Production_Toolkit.json)
+with MiniMax / YuE2 selection, matching prompt templates and native ABC planning.
+See [YuE2 setup and usage](YUE2.md). The classic MiniMax workflow remains available.
 
 <p align="center">
   <img src="assets/branding/banner.png" alt="MiniMax Music Production Toolkit" width="100%" />
@@ -7,7 +11,7 @@
 **From a song idea to music, mastering and cover artwork — in one connected workflow.**
 
 Describe the music you want to make. Choose a genre, a mood, a voice or a lyrical
-theme, and let the toolkit turn your idea into a production brief for MiniMax
+theme, and let the toolkit turn your idea into a production brief for YuE2 or MiniMax
 Music 3. Generate the song, refine its sound, shape the final master and save
 your audio, artwork and production record together.
 
@@ -16,6 +20,33 @@ recording without generating it again.
 
 Created by [Johannes Plenio](https://github.com/jplenio).
 [Listen to the demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/).
+
+## What's new in 2.6
+
+**Choose YuE2 or MiniMax Music 3 in one workflow.** The brand-new YuE2 model brings
+excellent musical quality to the toolkit: its developers report competitive
+results with leading song generators in their September 2026 evaluation.
+[Official YuE2 results](https://github.com/multimodal-art-projection/YuE#benchmarks).
+The default YuE2 production path is faster to finish because it skips the entire
+Restore/FlashSR section and proceeds straight to mastering. Actual generator
+speed depends on hardware, duration and settings; no MiniMax/YuE2 timing benchmark
+is claimed for this toolkit.
+
+- **Everything starts in CHOOSE.** YuE2 is the default. Cover and Mastering are
+  on; Refinement follows the model (MiniMax on, YuE2 off), with manual overrides.
+- **Prompts suited to each model.** Twelve YuE2 system prompts generate Style and
+  Lyrics with native ABC planning. Instrumental requests explicitly exclude sung
+  and spoken text; their Lyrics section contains only instrumental structure tags.
+  At most, explicitly requested background humming is described in Style.
+- **Ready-to-use YuE2 settings.** 40 steps, a separate 360-second ceiling and
+  `yue2_3b_bf16.safetensors`, with missing-model download enabled by default.
+- **More readable reports and mastering choices.** Lyrics preserve line breaks in
+  Markdown and Windows files. Twelve compressor presets plus Custom include
+  **Balanced - gentle glue**, which retains the previous settings.
+
+Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json)
+and read the [YuE2 guide](YUE2.md) or [release notes](RELEASE_NOTES_v2.6.0.md).
+The classic MiniMax and Audio Enhancement Lab workflows remain available.
 
 ## What's new in 2.5.2
 
@@ -71,7 +102,8 @@ The redesigned workflows now use the familiar filenames. There is no separate
 
 | Workflow | Start with | What it produces |
 |---|---|---|
-| [Music Production](example_workflows/MiniMax_Music3_Production_Toolkit.json) | A song idea or prompt template | Music, original and mastered audio, cover artwork, tags and a production record |
+| [YuE2 / MiniMax Production](example_workflows/Yue2_MM3_Production_Toolkit.json) | A song idea or prompt template | Model choice, optional cover/refinement/mastering, original and release audio, tags and production record |
+| [Classic MiniMax Production](example_workflows/MiniMax_Music3_Production_Toolkit.json) | A song idea or prompt template | MiniMax music, original and mastered audio, cover artwork, tags and a production record |
 | [Audio Enhancement Lab](example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json) | An existing audio file | Enhanced and mastered FLAC with your tags |
 
 Open the JSON in ComfyUI or drag it onto the canvas. The notes inside each
@@ -214,7 +246,7 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
-- [Release 2.5.2 notes](RELEASE_NOTES_v2.5.2.md)
+- [Release 2.6.0 notes](RELEASE_NOTES_v2.6.0.md)
 - [Release 2.5.1 notes](RELEASE_NOTES_v2.5.1.md)
 - [Release 2.5 notes](RELEASE_NOTES_v2.5.0.md)
 - [Installation and dependencies](INSTALLATION.md)

@@ -24,6 +24,11 @@ _INSTANCES = itertools.count()
 
 # Toolkit node identifier -> defining module (section 2 of REFACTOR-PLAN.md).
 NODE_OWNER = {
+    "MusicOptionalCoverPreview": "music_production_control",
+    "MusicProductionControl": "music_production_control",
+    "MusicOptionalStage": "music_production_control",
+    "MusicGeneration": "music_generation",
+    "MusicGenerationReceipt": "music_generation",
     "MiniMaxSafeAudioDecode": "audio_decode",
     "MiniMaxParametricEQ": "audio_eq",
     "MiniMaxAutoEQAnalyze": "audio_auto_eq",
@@ -44,6 +49,8 @@ NODE_OWNER = {
     "MiniMaxMetadataLoader": "minimax_metadata",
     "MiniMaxModelAutodownload": "minimax_autodownload",
     "MiniMaxMusic3GenerationSettings": "minimax_settings",
+    "MiniMaxMusicModelSettings": "minimax_settings",
+    "MiniMaxMusicModelProfile": "minimax_model_profile",
     "MiniMaxOutputPaths": "minimax_batch",
     "MiniMaxParseExternalLLMOutputV16": "minimax_prompt_source",
     "MiniMaxPromptBatchLoader": "minimax_batch",

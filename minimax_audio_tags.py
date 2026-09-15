@@ -18,7 +18,7 @@ class MiniMaxStandardAudioTags:
                 "year": ("STRING", {"default": "", "multiline": False}),
                 "track": ("STRING", {"default": "", "multiline": False}),
                 "genre": ("STRING", {"default": "", "multiline": False}),
-                "comment": ("STRING", {"default": "", "multiline": True}),
+                "comment": ("STRING", {"default": "Generated with jplenio Music Production Toolkit", "multiline": True}),
                 "album_artist": ("STRING", {"default": "", "multiline": False}),
                 "composer": ("STRING", {"default": "", "multiline": False}),
             }

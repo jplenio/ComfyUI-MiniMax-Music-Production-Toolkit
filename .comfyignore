@@ -4,6 +4,8 @@ scripts/
 *.log
 __pycache__/
 .pytest_cache/
+.scratch/
+dist/
 
 docs/
 

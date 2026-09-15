@@ -60,6 +60,10 @@ PARSER_NEW_INPUT_ORDER = (
     "llm_status",
     "max_prompt_tokens",
     "trim_long_prompt",
+    # 2.6.0: the parser reads the selected song model from this wire to name the
+    # expected section in errors/provenance and to enforce that model's own hard
+    # prompt limit.  Appended last so every stored link slot keeps its index.
+    "model_profile_json",
 )
 
 JSON_NEW_INPUT_ORDER = (

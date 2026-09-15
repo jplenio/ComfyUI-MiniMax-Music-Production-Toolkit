@@ -11,12 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = [
     ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json",
     ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
+    ROOT / "example_workflows" / "Yue2_MM3_Production_Toolkit.json",
 ]
 
 # Toolkit node type -> defining module, for every toolkit node in the bundled
 # workflow.  ComfyUI-core types (loaders, samplers, ...) and the embedded
 # MiniMax subgraph instance are covered separately or intentionally skipped.
 NODE_MODULE = {
+    "MusicOptionalCoverPreview": "music_production_control",
+    "MusicProductionControl": "music_production_control",
+    "MusicOptionalStage": "music_production_control",
+    "MusicGeneration": "music_generation",
+    "MusicGenerationReceipt": "music_generation",
     "SaveAudioSmartPrefix": "save_audio_smart_prefix",
     "FlashSRLowpassLab": "audio_lowpass",
     "MiniMaxSquareImageSize": "minimax_artwork",
@@ -24,6 +30,8 @@ NODE_MODULE = {
     "MiniMaxParseExternalLLMOutputV16": "minimax_prompt_source",
     "MiniMaxOutputPaths": "minimax_batch",
     "MiniMaxMusic3GenerationSettings": "minimax_settings",
+    "MiniMaxMusicModelSettings": "minimax_settings",
+    "MiniMaxMusicModelProfile": "minimax_model_profile",
     "FlashSRProcessingSettings": "minimax_settings",
     "MiniMaxSongMetadata": "minimax_metadata",
     "MiniMaxMetadataLoader": "minimax_metadata",
@@ -56,11 +64,18 @@ CORE_NODE_TYPES = {
     "CFGGuider", "RandomNoise", "KSamplerSelect", "Flux2Scheduler",
     "EmptyFlux2LatentImage", "SamplerCustomAdvanced", "VAEDecode", "MarkdownNote",
     "LoadAudio", "PrimitiveString", "PrimitiveInt", "PreviewImage", "PreviewAudio",
+    "ComfySwitchNode",
+    # YuE2 support (2.6.0): the YuE2_Production_Toolkit example drives the
+    # ComfyUI-core YuE2 nodes plus a checkpoint loader.
+    "CheckpointLoaderSimple", "YuE2GenerateMusic", "EmptyYuE2LatentAudio",
 }
 
 # Order dependencies: toolkit_logging first, then anything using it.
 MODULE_NAMES = (
+    "music_production_control",
+    "music_generation",
     "toolkit_logging",
+    "model_profiles",
     "filename_utils",
     "prompt_library",
     "prompt_metadata",
@@ -68,6 +83,7 @@ MODULE_NAMES = (
     "model_downloader",
     "minimax_prompt_source",
     "minimax_structured_prompt",
+    "minimax_model_profile",
     "comfy_resources",
     "llm_chat",
     "flashsr_audio",
