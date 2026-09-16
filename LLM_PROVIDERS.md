@@ -5,6 +5,11 @@ a model served by another app, or a cloud API. Select **Run language model**;
 the node shows the settings for that mode. Its three outputs and existing
 workflow connections remain unchanged.
 
+For **YuE2 Cover**, the LLM also receives the source filename and SheetSage2 ABC
+transcription. It uses the readable score to adapt the arrangement prompt.
+Cloud mode sends these text fields to the chosen provider; source audio is
+transcribed locally by SheetSage2 and is not attached to the LLM request.
+
 | Mode | Where the model runs | What you need |
 |---|---|---|
 | **In ComfyUI (GGUF)** | In the ComfyUI process | A GGUF and a compatible llama-cpp-python installation |
@@ -147,7 +152,10 @@ settings**; hiding them does not change their stored values.
 
 ## Optional FLUX.2 cover
 
-The full Music Production workflow includes **FLUX.2 cover · ON / OFF** in the
+The main YuE2/MM3 workflow controls artwork with **Cover** in CHOOSE, independently
+of the YuE2 Cover song mode. That central switch also gates the artwork preview.
+
+The classic MiniMax workflow includes **FLUX.2 cover · ON / OFF** in the
 **05 · ILLUSTRATE / Cover artwork** area, next to the cover nodes it controls.
 It defaults to **ON**. In the node search, enter **FLUX.2 Cover**.
 Personal workflows are not automatically replaced: reopen the updated bundled

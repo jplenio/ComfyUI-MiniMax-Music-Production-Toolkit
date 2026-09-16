@@ -532,6 +532,8 @@ class MiniMaxParseExternalLLMOutputV16:
                 # names the LLM output section in errors and provenance and
                 # enforces that model's own hard prompt limit.
                 "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
+                "cover_source_json": ("STRING", {"forceInput": True}),
+                "structured_summary_json": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -563,6 +565,8 @@ class MiniMaxParseExternalLLMOutputV16:
         max_prompt_tokens=DEFAULT_PROMPT_TOKEN_BUDGET,
         trim_long_prompt=True,
         model_profile_json="",
+        cover_source_json="",
+        structured_summary_json="",
     ):
         profile = profile_from_payload(model_profile_json)
         required_section = profile.conditioning_section if profile is not None else "Caption"
@@ -597,14 +601,37 @@ class MiniMaxParseExternalLLMOutputV16:
                 "Fill manual_caption and manual_lyrics, or re-enable the LLM chat node."
             )
 
+        length_request = None
+        duration_source = None
+        if profile is not None and profile.is_yue2:
+            from .song_duration import request_from_brief, request_from_style, duration_style
+            length_request = request_from_brief(structured_summary_json, user_prompt)
+            if length_request:
+                duration_source = "brief_length"
+            else:
+                length_request = request_from_style(caption)
+                if length_request:
+                    duration_source = "style_duration_plan"
+            caption = duration_style(caption, length_request, cover=profile.is_cover)
+
         effective_budget, budget_note = self._effective_token_budget(int(max_prompt_tokens), profile)
         caption, lyrics, budget_info = self._apply_prompt_budget(
             caption, lyrics, effective_budget, bool(trim_long_prompt), profile
         )
         if budget_note:
             budget_info["budget_note"] = budget_note
+        if length_request and budget_info.get("prompt_trimmed"):
+            raise ValueError(
+                "YuE2 prompt trimming would shorten the requested timed arrangement. "
+                "Shorten redundant Style wording or raise max_prompt_tokens; keep all sections and lyrics."
+            )
 
         title = (parsed.get("title") or "").strip() or (manual_title or "").strip() or fallback_title or "llm-song"
+        cover = None
+        if profile is not None and profile.is_cover:
+            from .music_cover import cover_record
+            cover = cover_record(cover_source_json)
+            title = cover["title"]
         image_prompt = (parsed.get("image_prompt") or "").strip() or (manual_image_prompt or "").strip()
         if not image_prompt:
             image_prompt = _fallback_image_prompt(title, caption, lyrics)
@@ -613,6 +640,8 @@ class MiniMaxParseExternalLLMOutputV16:
             LOGGER.info("Appended the text-free prohibition to the FLUX image prompt (the LLM omitted it).")
 
         source_name = _clean_source_name(source_name_override) if (source_name_override or "").strip() else _clean_source_name(title)
+        if cover:
+            source_name = _clean_source_name(title)
         used_manual = not raw
         provenance = {
             "source_mode": "external_comfyui_llm" if raw else "manual_override",
@@ -624,6 +653,11 @@ class MiniMaxParseExternalLLMOutputV16:
             "conditioning_section": required_section,
         }
         provenance.update(budget_info)
+        if length_request:
+            provenance["duration_request"] = length_request
+            provenance["duration_source"] = duration_source
+        if cover:
+            provenance.update(cover_source=cover, title_source="audio_filename")
         out = {k: [] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"]}
         for idx in range(int(song_count)):
             seed = _new_seed() if seed_mode == "random_each_song" else (int(base_seed) + idx) % (2**63 - 1)

@@ -74,7 +74,11 @@ class SongModelProfile:
 
     @property
     def is_yue2(self) -> bool:
-        return self.id == "yue2"
+        return self.id in {"yue2", "yue2_cover"}
+
+    @property
+    def is_cover(self) -> bool:
+        return self.id == "yue2_cover"
 
     @property
     def sections(self) -> Tuple[str, ...]:

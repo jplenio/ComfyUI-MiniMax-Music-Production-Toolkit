@@ -10,6 +10,10 @@ from copy import deepcopy
 
 # Tooltips shared by fields with the same semantics across nodes.
 GENERIC_INPUT_TOOLTIPS = {
+    "cover_source_json": "Source audio identity and shared transcription mode from Cover song / Source audio. Used only for YuE2 Cover; the filename owns the final title.",
+    "cover_abc": "Original SheetSage2 transcription. YuE2 Cover passes this score unchanged to music generation and uses it to guide the LLM arrangement.",
+    "sheetsage2_models": "Include SheetSage2 only when YuE2 Cover and yue2_models are selected. auto_download controls whether missing configured weights are downloaded. Enabled by default.",
+    "yue2_mode": "Full or melody score planning for new YuE2 songs. YuE2 Cover instead uses the single mode selected on Cover song / Source audio for both transcription and generation.",
     "audio": "ComfyUI AUDIO signal to process. The node preserves channel layout unless its processing explicitly states otherwise; check the node's Info/JSON output for sample-rate or level changes.",
     "title": "Song title used for metadata, filenames or the reproducibility JSON, depending on the node. This does not alter the audio signal itself.",
     "base_seed": "Base integer used when deterministic/incrementing seed generation is selected. With random_each_song it is not the source of the random values; with increment_from_base each variant is derived from this value.",
@@ -26,6 +30,7 @@ GENERIC_INPUT_TOOLTIPS = {
     "variant_count": "Total number of variants produced from the current source. Used for metadata and to decide whether a variant index should be appended.",
     "generation_seed": "Primary song seed. In this workflow it is the reproducibility anchor used to derive MiniMax text/sampler seeds and can also be reused for artwork generation.",
     "max_duration": "Maximum MiniMax Music generation duration in seconds. This is an upper bound; the model can still end earlier if the musical/Lyrics structure encourages a shorter track.",
+    "yue2_max_duration": "YuE2 maximum generation time in seconds. Length is an approximate musical target and never lowers this ceiling: phrases and decay may finish beyond the target. Leave headroom for a natural ending; the model and context can still end generation earlier.",
     "text_cfg_scale": "Classifier-free guidance strength for the MiniMax text/autoregressive stage. Higher values generally enforce the prompt more strongly but can reduce naturalness or introduce artifacts when pushed too far.",
     "text_top_k": "Top-k sampling limit for the MiniMax text/autoregressive stage. Lower values make sampling more conservative/repetitive; higher values allow more alternatives and variability.",
     "ksampler_steps": "Number of diffusion/sampling steps used by the MiniMax audio sampler. More steps cost more time and are not guaranteed to improve quality beyond the model's useful range.",
@@ -102,6 +107,11 @@ GENERIC_INPUT_TOOLTIPS = {
 
 # Node-specific help for fields whose names are ambiguous or whose behavior is unique.
 NODE_INPUT_TOOLTIPS = {
+    "MusicCoverSource": {
+        "audio": "Upload or select the source audio. Only read in YuE2 Cover mode. The filename without its last extension plus -cover becomes the song title.",
+        "mode": "Full (default) retains melody and harmony; melody keeps the tune with greater freedom for new accompaniment. Drives both SheetSage2 and YuE2.",
+        "sheetsage2_model": "Audio encoder filename in models/audio_encoders. Autoload provides sheetsage2_bf16.safetensors; custom filenames must already be installed or configured in the model catalog.",
+    },
     "MusicProductionControl": {
         "model": "Select the actual song generator and matching prompt family. YuE2 is the default in the dual-model workflow.",
         "cover_enabled": "On creates and previews cover artwork. Off skips the image branch and its FLUX.2 model check/download.",
@@ -274,7 +284,7 @@ NODE_INPUT_TOOLTIPS = {
         "language": "Lyrics language. The most important languages come first, then more languages in alphabetical order. Select 'custom' to leave this part out of the LLM prompt.",
         "voice": "Vocal description (gender, timbre, style). Select 'custom' to leave this part out of the LLM prompt.",
         "theme": "Lyrics theme / topic. Select 'custom' to leave this part out of the LLM prompt.",
-        "length": "Target song length (for example '4-5 minutes'). Select 'custom' to leave this part out of the LLM prompt.",
+        "length": "Approximate song length (for example '4-5 minutes'). Prompts plan the arrangement and natural ending near this target. YuE2 may finish phrases and decay beyond it; this does not lower yue2_max_duration. Select 'custom' to leave this part out of the LLM prompt.",
         "description_override": "Further description appended to the structured brief. Selecting a prompt file copies its body text into this field, and only this field's content is used afterwards - edit it freely, or clear it to remove the description.",
         "system_prompt": "Effective system prompt sent to the LLM. Selecting a system prompt file copies its text into this field, and only this field's content is used afterwards - edit it freely. In manual mode this field is the whole system prompt.",
         "system_prompt_source": "Where the system prompt comes from: the bundled library (default), manual text or an external directory.",

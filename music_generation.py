@@ -23,6 +23,9 @@ class MusicGeneration:
             "minimax_encoder": ("STRING", {"default": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors"}),
             "minimax_vae": ("STRING", {"default": "minimax_music3_dav.safetensors"}),
             "tiled_decode": ("BOOLEAN", {"default": True}),
+        }, "optional": {
+            "cover_source_json": ("STRING", {"forceInput": True}),
+            "cover_abc": ("STRING", {"forceInput": True}),
         }}
 
     RETURN_TYPES = ("AUDIO", "STRING", "STRING", "STRING")
@@ -32,10 +35,10 @@ class MusicGeneration:
 
     def generate(self, profile_json, settings_json, style, lyrics,
                  yue2_checkpoint, minimax_model, minimax_encoder, minimax_vae,
-                 tiled_decode=True):
+                 tiled_decode=True, cover_source_json="", cover_abc=""):
         profile = profile_from_payload(profile_json)
         settings = json.loads(settings_json)
-        if profile is None or profile.id not in {"yue2", "minimax_music3"}:
+        if profile is None or profile.id not in {"yue2", "yue2_cover", "minimax_music3"}:
             raise ValueError("Connect a supported song model profile.")
         if settings.get("song_model") != profile.id:
             raise ValueError("Song model and generation settings disagree; connect the same profile to both.")
@@ -46,10 +49,25 @@ class MusicGeneration:
         duration = settings["max_duration"]
         abc = ""
         if profile.is_yue2:
+            from .song_duration import duration_line, generation_duration
+            length_request = settings.get("duration_request")
+            if length_request:
+                duration = generation_duration(length_request, duration)
+                if not style.startswith(duration_line(length_request) + "\n"):
+                    raise ValueError("YuE2 Style and requested duration disagree; connect Style and settings from the same parsed prompt.")
             loader = graph.node("CheckpointLoaderSimple", ckpt_name=yue2_checkpoint)
             model, clip, vae = loader.out(0), loader.out(1), loader.out(2)
             text = settings["yue2"]
-            abc = graph.node("YuE2GenerateABC", clip=clip, style=style, lyrics=lyrics,
+            if profile.is_cover:
+                from .music_cover import cover_source
+                source = cover_source(cover_source_json)
+                if not isinstance(cover_abc, str) or not cover_abc.strip():
+                    raise ValueError("YuE2 Cover requires non-empty SheetSage2 ABC transcription.")
+                if text["mode"] != source["mode"]:
+                    raise ValueError("Cover transcription and generation modes disagree.")
+                abc = cover_abc
+            else:
+                abc = graph.node("YuE2GenerateABC", clip=clip, style=style, lyrics=lyrics,
                              seed=seed, mode=text["mode"], max_abc_tokens=8192,
                              temperature=0.7, top_p=0.9, top_k=30,
                              repetition_penalty=1.005, penalty_window=100).out(0)
@@ -59,6 +77,8 @@ class MusicGeneration:
             positive = negative = encoded.out(0)
             latent = graph.node("EmptyYuE2LatentAudio", seconds=encoded.out(1), batch_size=1)
             files = {"checkpoint": yue2_checkpoint}
+            if profile.is_cover:
+                files["audio_encoder"] = source["audio_encoder"]
         else:
             model = graph.node("UNETLoader", unet_name=minimax_model, weight_dtype="default").out(0)
             clip = graph.node("CLIPLoader", clip_name=minimax_encoder, type="minimax", device="default").out(0)
@@ -77,7 +97,8 @@ class MusicGeneration:
                            tiled=tiled_decode, tile_size=1920 if profile.is_yue2 else 1536,
                            overlap=128 if profile.is_yue2 else 64)
         receipt = graph.node("MusicGenerationReceipt", settings_json=settings_json,
-                             abc=abc, seconds=encoded.out(1), model_files_json=json.dumps(files))
+                             abc=abc, seconds=encoded.out(1), model_files_json=json.dumps(files),
+                             cover_source_json=cover_source_json if profile.is_cover else "")
         return {"result": (audio.out(0), sampler.out(1), sampler.out(2), receipt.out(0)),
                 "expand": graph.finalize()}
 
@@ -90,17 +111,29 @@ class MusicGenerationReceipt:
             "abc": ("STRING", {"forceInput": True}),
             "seconds": ("FLOAT", {"forceInput": True}),
             "model_files_json": ("STRING", {"forceInput": True}),
-        }}
+        }, "optional": {"cover_source_json": ("STRING", {"forceInput": True})}}
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("generation_json",)
     FUNCTION = "build"
     CATEGORY = "MiniMax Music Production Toolkit/generation"
 
-    def build(self, settings_json, abc, seconds, model_files_json):
+    def build(self, settings_json, abc, seconds, model_files_json, cover_source_json=""):
         data = json.loads(settings_json)
         data.update(model_files=json.loads(model_files_json), generated_seconds=float(seconds))
-        if data["song_model"] == "yue2":
+        request = data.get("duration_request")
+        if request:
+            actual = float(seconds)
+            data["duration_result"] = {
+                "target_seconds": request["target_seconds"],
+                "difference_from_target_seconds": actual - request["target_seconds"],
+                "within_requested_range": request["minimum_seconds"] <= actual <= request["maximum_seconds"],
+                "note": "Measured model output; the requested length is approximate. Finishing beyond the target is allowed within max_duration, which is a separate ceiling.",
+            }
+        if data["song_model"] == "yue2_cover":
+            from .music_cover import cover_record
+            data.update(abc=abc, abc_source="SheetSage2 audio transcription", cover_source=cover_record(cover_source_json))
+        elif data["song_model"] == "yue2":
             data["abc"] = abc
             data["abc_settings"] = dict(max_abc_tokens=8192, temperature=0.7, top_p=0.9,
                                         top_k=30, repetition_penalty=1.005, penalty_window=100)

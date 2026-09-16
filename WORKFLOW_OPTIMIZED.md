@@ -1,11 +1,13 @@
-# Production and mastering workflows — Release 2.5
+# Production and mastering workflows — Release 3.0
 
-Open either complete workflow in ComfyUI:
+Open one of the complete workflows in ComfyUI:
+
+- [YuE2 / YuE2 Cover / MiniMax Production](example_workflows/Yue2_MM3_Production_Toolkit.json)
 
 - [Production](example_workflows/MiniMax_Music3_Production_Toolkit.json)
 - [AudioEnhance](example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json)
 
-The redesigned examples are now the canonical workflows. Both use
+The examples share
 the same independently controlled mastering chain:
 
 `Restoration → POST → Auto-EQ application → Manual EQ → Output rate → Mastering → Export`
@@ -20,9 +22,15 @@ source setup.
 
 ## Independent controls
 
+In the main YuE2/MM3 workflow, CHOOSE selects YuE2, YuE2 Cover or MiniMax and
+centrally switches artwork, refinement and mastering. YuE2 and its Cover mode
+default to refinement off, mastering/artwork on. Central Mastering off skips
+the entire area, including sample-rate conversion; the compressor's own bypass
+only affects its dynamics/loudness processing. [Cover usage](YUE2.md#cover-an-audio-file).
+
 The production LLM offers **In ComfyUI / Local app / Cloud** modes and generates
 fresh text on each queued execution; the old session-ID helper has been removed.
-The **FLUX.2 cover · ON / OFF** control in **05 · ILLUSTRATE / Cover artwork**
+The classic MiniMax workflow's **FLUX.2 cover · ON / OFF** control in **05 · ILLUSTRATE / Cover artwork**
 defaults to ON. OFF skips
 FLUX preflight downloads and image computation and exports audio without a new
 cover. See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for setup and compatibility details.

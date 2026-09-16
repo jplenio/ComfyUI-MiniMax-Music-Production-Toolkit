@@ -1,6 +1,19 @@
 # Installation
 
-**Version 2.6:** Start with [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2 or MiniMax. Model, Cover, Refinement and Mastering are controlled centrally in CHOOSE. See [the dual-model guide](YUE2.md) for defaults and requirements. The classic MiniMax workflow below keeps its existing processing chain.
+For the **YuE2 Cover** option, use a ComfyUI build that also exposes
+`AudioEncoderLoader` and `SheetSage2AudioToABC`. The Selected song model check
+can download `sheetsage2_bf16.safetensors` into `models/audio_encoders` when
+YuE2 Cover is selected and `sheetsage2_models` / `auto_download` are on.
+Restart ComfyUI and reload the workflow after updating the toolkit.
+
+For a red Cover source node with `UNKNOWN` inputs, install the audio-preview
+frontend fix (`web/song_model.js` and `web/song_model_utils.js`), then reload
+the browser and reopen the workflow. The initial cover integration enabled
+native audio upload without creating its required preview widget. Clearing the
+cache alone cannot fix that version. A successful backend registration does
+not exclude an error while the browser constructs the node.
+
+**Version 3.0:** Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2, YuE2 Cover or MiniMax. CHOOSE controls the song mode, artwork, refinement and mastering; SOURCE AUDIO supplies a cover track. See [the song and cover guide](YUE2.md). The classic MiniMax workflow below retains its existing processing chain.
 
 This document separates **toolkit requirements** from the model files used by the full example workflow. Since v2.0.0 the example workflow no longer needs any external custom nodes: FlashSR and the LLM chat are integrated into this toolkit.
 

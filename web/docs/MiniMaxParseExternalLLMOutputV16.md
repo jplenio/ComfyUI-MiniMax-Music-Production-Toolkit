@@ -18,6 +18,7 @@ Parses the external LLM's structured [Caption]/[Lyrics]/[Title]/[Image_Prompt] r
 
 ### Optional
 
+- **`structured_summary_json`** (`STRING`, forceInput) — Connect Structured Song Prompt's summary. For YuE2, its resolved Length is authoritative: the parser ensures a numeric target in final Style and records it for Music settings. A labelled `Length:` in the user prompt supports older graphs. Without a specified Length, an explicit `Target duration: N seconds.` in Style supplies the plan. Timed YuE2 arrangements cannot be silently truncated by prompt-budget trimming; shorten redundant wording or increase the budget instead.
 - **`structured_llm_output`** (`STRING`, forceInput) — Complete assistant text returned by the LLM. The bundled production prompt requires the order [Caption], [Lyrics], [Title], [Image_Prompt]. The parser remains order-tolerant but malformed or empty required sections raise an error instead of silently generating with missing fields. When this input is missing (LLM bypassed/disabled), the manual fallback fields below are used.
 - **`manual_caption`** / **`manual_lyrics`** / **`manual_title`** / **`manual_image_prompt`** (`STRING`) — Manual fallbacks used when the LLM section is switched off.
 - **`model_check_report`** (`STRING`) — Optional report text from the Model Auto-Download / Check node; recorded in provenance only, never parsed as LLM output.
@@ -58,3 +59,5 @@ The MiniMax Music 3 text encoder rejects prompts with more than 5000 tokens (Com
 ## Usage notes
 
 Start with the defaults used by the bundled example workflow unless you have a specific reason to change this stage. Hover each input label in ComfyUI for parameter guidance.
+
+For YuE2 Cover, connect `cover_source_json`. The source filename stem plus `-cover` overrides LLM, manual and fallback titles and the source-name override. All downstream title consumers use this result. The source is retained in prompt provenance.

@@ -146,6 +146,10 @@ If the user supplies lyrics:
 
 Treat requested duration as an important compositional target.
 
+EXPLICIT TIME PLAN
+Approximate length, natural ending: the requested length and section timings are musical planning targets, never stop or crop commands. Aim to complete the form near the target, but let the current phrase, final cadence, release and natural decay finish even if they run beyond it. Do not truncate a phrase, force an abrupt fade or stop mid-song at the requested time or the upper end of a requested range. The separately configured maximum duration remains the technical ceiling; leave room for a resolved ending.
+State the requested duration in Caption's Global Metadata. For a range, select a target within it and retain the requested range. Allocate consecutive approximate start/end times and musical bar/phrase counts to the chronological arrangement in Caption; include the ending and verify that the complete form adds up approximately to the target within the five-minute ceiling. Use tempo and meter to check that the planned phrases can fill the time. Match every arrangement section occurrence to Lyrics in order. Keep timestamps and counts out of Lyrics; supply enough singable phrases or developing instrumental passages for each interval. Never bring the final cadence in early merely because the first theme is complete. This is a compositional target, not a guarantee of exact model duration.
+
 Hard rule: no song may exceed 5:00 minutes. 5:00 is the absolute maximum; never plan sections beyond it, and scale shorter requests (under 1 minute up to 4:30) down accordingly.
 
 MiniMax Music 3 may terminate early if the structural input is too short. Therefore NEVER create an overly minimal section map for a long-form song.

@@ -2,6 +2,11 @@
 
 The full example workflow uses FLUX.2 Klein to generate a square album cover from the LLM-created `[Image_Prompt]`.
 
+In the main 3.0 workflow, **Cover** in CHOOSE switches this artwork branch.
+**YuE2 Cover** is a separate song mode for audio cover versions. Artwork can
+be on or off in any song mode. For an audio cover, its enforced source-filename
+title (for example `My Song-cover`) also names the artwork and embedded tags.
+
 ## Flow
 
 ```text

@@ -30,7 +30,7 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("model_manager")
 
 PREFLIGHT_PATH = "/minimax_music_toolkit/model_preflight"
-GROUP_FLAGS = ("minimax", "yue2", "flux2", "flashsr", "llm")
+GROUP_FLAGS = ("minimax", "yue2", "flux2", "flashsr", "llm", "sheetsage2")
 _ROUTES_REGISTERED = False
 
 
@@ -40,6 +40,7 @@ def selected_entries(flags: dict):
         load_models_config(),
         minimax=bool(flags.get("minimax", True)),
         yue2=bool(flags.get("yue2", True)),
+        sheetsage2=bool(flags.get("sheetsage2", False)),
         flux2=bool(flags.get("flux2", True)),
         flashsr=bool(flags.get("flashsr", True)),
         llm=bool(flags.get("llm", True)),
@@ -54,7 +55,7 @@ def build_preflight(flags: dict, auto_download: bool) -> dict:
 def _parse_flags(source) -> dict:
     flags = {}
     for name in GROUP_FLAGS:
-        value = source.get(name, True)
+        value = source.get(name, name != "sheetsage2")
         if isinstance(value, str):
             flags[name] = value.strip().lower() not in ("0", "false", "no", "off", "")
         else:

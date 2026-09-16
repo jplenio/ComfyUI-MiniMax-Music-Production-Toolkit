@@ -1,5 +1,25 @@
 # Troubleshooting
 
+## Cover source is red and shows UNKNOWN inputs
+
+The first cover integration omitted the preview widget required by ComfyUI's
+native audio uploader. Version 3.0 includes the frontend fix. Update the full
+toolkit including `web/song_model.js` and `web/song_model_utils.js`, then reload
+the browser and reopen the workflow. A successful node registration in the
+backend alone does not establish that the browser can construct the node.
+
+## YuE2 Cover cannot transcribe the source
+
+Select an audio file in SOURCE AUDIO and confirm the host has native
+`AudioEncoderLoader` and `SheetSage2AudioToABC`. Enable `yue2_models`,
+`sheetsage2_models` and `auto_download` to obtain the default encoder if missing,
+or install it in `models/audio_encoders`. Custom filenames require matching
+installed files. An empty ABC transcript stops the run; try a different source
+or inspect the native SheetSage2 error. SheetSage2 extracts music, not lyric words.
+
+The source mode controls both transcription and generation. Editing `yue2_mode`
+in Music settings affects new songs; use SOURCE AUDIO for cover full/melody mode.
+
 ## Toolkit nodes do not appear
 
 Check the ComfyUI console for `IMPORT FAILED`. Install this package's `requirements.txt` into the same Python environment that runs ComfyUI, then restart completely.

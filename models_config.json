@@ -157,5 +157,20 @@
         "timeout": 7200
       }
     ]
+  },
+  "sheetsage2": {
+    "note": "YuE2 Cover audio-to-score encoder; only selected for audio covers. Public HF tree verified 2026-09-15.",
+    "files": [
+      {
+        "name": "sheetsage2_bf16.safetensors",
+        "filename": "audio_encoders/sheetsage2_bf16.safetensors",
+        "repo_id": "Comfy-Org/YuE2",
+        "repo_type": "model",
+        "revision": "8e6fcf0f23252ed188b634bd50d44f4b01fba890",
+        "target": "models/audio_encoders",
+        "bytes": 1386868122,
+        "timeout": 3600
+      }
+    ]
   }
 }

@@ -9,6 +9,13 @@ The node body is split into two visually separated sections: **User Prompt** (st
 
 ## Prompt file metadata (optional)
 
+For YuE2, **Length is an approximate musical target**. The assembled brief asks
+for a timed Style plan, matching Lyrics sections and a natural ending. The
+summary output passes the chosen length to the parser so final Style retains
+it even when the LLM omits its target line. Connect this summary to the parser
+as shown in the updated main workflow. Length never lowers the separate
+`yue2_max_duration`; final phrases and decay may finish beyond the target.
+
 Bundled or external prompt files may start with a metadata block. When such a file is selected, the structured fields are prefilled and the file's body text (the "further description") is copied into the `description_override` field; every field can still be overridden afterwards.
 
 Select **`custom`** (the first choice in the prompt-file dropdown) for the **free mode**: no prompt file is loaded, nothing is prefilled and nothing is cleared. You compose the structured fields and the description yourself, exactly as if you were in manual mode.
@@ -108,3 +115,5 @@ When every field is `custom` and no description exists, the node raises a clear 
 
 - The bundled example workflow uses this node instead of the legacy `LLM Prompt Library / Template` node for the user prompt; the legacy node remains available for backwards compatibility.
 - In `manual` mode, use the structured fields and `description_override` to compose the prompt directly; for the system prompt, type the text directly into `system_prompt`.
+
+For YuE2 Cover, connect source JSON and SheetSage2 `cover_abc`. A cover-specific system instruction is appended to the selected YuE2 template; the source score and fixed filename title accompany the brief. Arrange the score without regenerating it, and keep Style/Lyrics sections synchronized. This is music transcription, not lyric recognition.

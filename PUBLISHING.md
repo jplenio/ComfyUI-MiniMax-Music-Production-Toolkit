@@ -41,7 +41,7 @@ The release validator checks required files, Python syntax, version consistency,
 ## Build release assets
 
 ```bash
-python scripts/package_release.py --output-dir dist
+python scripts/package_release.py --output-dir dist/v3.0.0
 ```
 
 This runs validation/tests first and creates:
@@ -54,15 +54,16 @@ MiniMax_Music3_Production_Toolkit_AudioEnhance_vX.Y.Z.json
 SHA256SUMS.txt
 ```
 
-The ZIP excludes VCS state, Python caches and already-built ZIP files.
+The assets are written to `dist/v3.0.0/`; this keeps previous release checksums
+and archives intact. The ZIP excludes VCS state, Python caches and earlier builds.
 
-## Commit v2.6.0
+## Commit v3.0.0
 
 For an existing checkout:
 
 ```bash
 git add -A
-git commit -m "Release v2.6.0"
+git commit -m "Release v3.0.0"
 git push
 ```
 
@@ -73,13 +74,17 @@ Do not re-run `git init` for an already existing repository.
 Create a new GitHub Release with:
 
 ```text
-Tag:   v2.6.0
-Title: MiniMax Music Production Toolkit 2.6.0
+Tag:   v3.0.0
+Title: MiniMax Music Production Toolkit 3.0.0 — YuE2 Cover Versions
 ```
 
-Use `RELEASE_NOTES_v2.6.0.md` as the release description and upload the five generated release assets (ZIP, all three workflow JSON files, checksums).
+Use `RELEASE_NOTES_v3.0.0.md` as the release description and upload the five generated release assets (ZIP, all three workflow JSON files, checksums).
 
-The Git tag uses a leading `v`; the package/Registry version remains `2.6.0` without the leading `v`.
+`REDDIT_POST_v3.0.0.md` contains the announcement draft. Post it after the release
+and Registry publication have succeeded. Preparing local assets does not create
+a remote GitHub release or publish to the Registry.
+
+The Git tag uses a leading `v`; the package/Registry version remains `3.0.0` without the leading `v`.
 
 ## Comfy Registry
 

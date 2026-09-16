@@ -24,6 +24,8 @@ _INSTANCES = itertools.count()
 
 # Toolkit node identifier -> defining module (section 2 of REFACTOR-PLAN.md).
 NODE_OWNER = {
+    "MusicCoverSource": "music_cover",
+    "MusicCoverTranscription": "music_cover",
     "MusicOptionalCoverPreview": "music_production_control",
     "MusicProductionControl": "music_production_control",
     "MusicOptionalStage": "music_production_control",

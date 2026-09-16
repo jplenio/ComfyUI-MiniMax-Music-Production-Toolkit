@@ -306,7 +306,8 @@ class ModelManagerRouteTests(unittest.TestCase):
         response = self.call("POST", self.FakeRequest())
         flags, download = self.calls[-1]
         self.assertTrue(download)
-        self.assertTrue(all(flags.values()))
+        self.assertTrue(all(value for key, value in flags.items() if key != "sheetsage2"))
+        self.assertFalse(flags["sheetsage2"])  # New cover-only weight requires explicit selection.
         self.assertIn("ok", response.payload)
 
 

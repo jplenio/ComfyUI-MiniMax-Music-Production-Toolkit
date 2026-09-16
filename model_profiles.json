@@ -77,7 +77,7 @@
         "Caption"
       ],
       "conditioning_kind": "style",
-      "conditioning_description": "Concise musical description: language, genre, vocals, instruments, mood, tempo and meter. Comma-separated descriptors are a toolkit writing preference, not a model grammar.",
+      "conditioning_description": "Detailed global musical identity and chronological arrangement, synchronized section by section with Lyrics. Roughly 250-450 words for a full song.",
       "lyrics_kind": "sectioned",
       "lyrics_description": "Singable text with section tags such as [Verse] and [Chorus]. No engineering directions or ABC notation.",
       "prompt_token_budget": 4500,
@@ -121,6 +121,71 @@
         "max_duration is a ceiling. Neither repeated section tags nor a requested duration guarantee an exact song length.",
         "Full and melody modes explicitly generate ABC before music. SheetSage2 is only needed for audio-to-score covers, not new songs.",
         "Native output is 48000 Hz. Release sample rate is selected independently."
+      ]
+    },
+    {
+      "id": "yue2_cover",
+      "display_name": "YuE2 Cover",
+      "short_name": "YuE2 Cover",
+      "engine": "YuE2-3B auto-regressive score + semantic planner with an acoustic flow-matching stage",
+      "system_prompt_file": "yue2/production.txt",
+      "system_prompt_folder": "prompts/system",
+      "conditioning_section": "Style",
+      "conditioning_section_aliases": [
+        "Style",
+        "Styles",
+        "Tags",
+        "Genre",
+        "Caption"
+      ],
+      "conditioning_kind": "style",
+      "conditioning_description": "Detailed global musical identity and chronological arrangement, synchronized section by section with Lyrics. Roughly 250-450 words for a full song.",
+      "lyrics_kind": "sectioned",
+      "lyrics_description": "Singable text with section tags such as [Verse] and [Chorus]. No engineering directions or ABC notation.",
+      "prompt_token_budget": 4500,
+      "prompt_token_hard_limit": 24576,
+      "prompt_token_counter": "estimate",
+      "context_tokens": 24576,
+      "frames_per_second": 25,
+      "default_duration_seconds": 360,
+      "max_duration_seconds": 900.0,
+      "practical_max_duration_seconds": 900.0,
+      "sampler_defaults": {
+        "steps": 32,
+        "cfg": 1.0,
+        "sampler_name": "dpm_2",
+        "scheduler": "sgm_uniform",
+        "denoise": 1.0
+      },
+      "text_defaults": {
+        "mode": "full",
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 100,
+        "repetition_penalty": 1.2
+      },
+      "output_sample_rate": 48000,
+      "generation_nodes": [
+        "LoadAudio",
+        "AudioEncoderLoader",
+        "SheetSage2AudioToABC",
+        "CheckpointLoaderSimple",
+        "YuE2GenerateMusic",
+        "EmptyYuE2LatentAudio",
+        "KSamplerWithConfig",
+        "MiniMaxSafeAudioDecode"
+      ],
+      "model_files": {
+        "checkpoint": "yue2_3b_bf16.safetensors",
+        "audio_encoder": "sheetsage2_bf16.safetensors"
+      },
+      "documentation": "YUE2.md",
+      "notes": [
+        "The native ComfyUI implementation shares 24576 context tokens with generated music at 25 frames per second. The context must also accommodate ABC and instruction tokens; the text budget is not a guaranteed maximum duration.",
+        "The 4500-token parser budget is a toolkit estimate, not a YuE2 tokenizer measurement or a model-specific text limit.",
+        "max_duration is a ceiling. Neither repeated section tags nor a requested duration guarantee an exact song length.",
+        "Native output is 48000 Hz. Release sample rate is selected independently.",
+        "SheetSage2 transcribes the source music, not lyric words. Full mode preserves melody and harmony; melody mode allows new accompaniment. The source filename stem plus -cover owns the title."
       ]
     }
   ]

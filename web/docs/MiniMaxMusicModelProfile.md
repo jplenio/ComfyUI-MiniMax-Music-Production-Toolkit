@@ -1,6 +1,6 @@
 # Song model
 
-Select MiniMax Music 3 or YuE2 before creating the song request. Connect
+Select MiniMax Music 3, YuE2 or YuE2 Cover before creating the song request. Connect
 `profile_json` to Structured Song Prompt, the parser, Music settings, Generate
 song and Prompt Report. The supplied Yue2 workflow contains these connections.
 

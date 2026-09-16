@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { modelTemplate, connectedModel } from "./song_model_utils.js";
+import { modelTemplate, connectedModel, prepareCoverAudioWidgets } from "./song_model_utils.js";
 
 const widget = (node, name) => node.widgets?.find(w => w.name === name);
 
@@ -35,6 +35,9 @@ async function syncPrompt(node) {
 
 app.registerExtension({
     name: "music_toolkit.song_model",
+    beforeRegisterNodeDef(_nodeType, nodeData) {
+        prepareCoverAudioWidgets(nodeData);
+    },
     nodeCreated(node) {
         if (!["MiniMaxMusicModelProfile", "MusicProductionControl"].includes(node.comfyClass ?? node.type)) return;
         const w = widget(node, "model");

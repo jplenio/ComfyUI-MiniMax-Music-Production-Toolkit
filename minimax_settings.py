@@ -173,6 +173,8 @@ class MiniMaxMusicModelSettings:
                 # profile wire is what makes the values model-aware.
                 "profile_json": ("STRING", {"forceInput": True, "multiline": True}),
                 "yue2_max_duration": ("FLOAT", {"default": 360.0, "min": 1.0, "max": 900.0, "step": 1.0}),
+                "cover_source_json": ("STRING", {"forceInput": True}),
+                "prompt_provenance_json": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -226,14 +228,34 @@ class MiniMaxMusicModelSettings:
         yue2_repetition_penalty,
         profile_json="",
         yue2_max_duration=None,
+        cover_source_json="",
+        prompt_provenance_json="",
     ):
         profile = profile_from_payload(profile_json) or default_profile()
         notes = []
+        if profile.is_cover:
+            from .music_cover import cover_source
+            yue2_mode = cover_source(cover_source_json)["mode"]
+            notes.append("Cover mode follows the source audio transcription mode.")
 
         requested_duration = yue2_max_duration if profile.is_yue2 and yue2_max_duration is not None else max_duration
         duration, note = profile.clamp_duration(requested_duration)
         if note:
             notes.append(note)
+
+        length_request = None
+        if profile.is_yue2 and prompt_provenance_json:
+            from .song_duration import duration_request, generation_duration
+            provenance = json.loads(prompt_provenance_json)
+            if provenance.get("song_model") != profile.id:
+                raise ValueError("Song model and prompt provenance disagree; connect the same profile to both.")
+            recorded = provenance.get("duration_request") or {}
+            length_request = duration_request(recorded.get("requested_length"))
+            duration = generation_duration(length_request, duration)
+            if length_request:
+                notes.append("Length is an approximate musical target, not a cutoff; the full configured YuE2 ceiling remains available for a natural ending.")
+                if profile.is_cover:
+                    notes.append("Cover ABC stays unchanged; source phrases may run beyond the target, and a longer target cannot extend the score.")
 
         text_seed = int(generation_seed) % (MAX_SEED + 1)
         ksampler_seed = (text_seed + int(ksampler_seed_offset)) % (MAX_SEED + 1)
@@ -297,6 +319,10 @@ class MiniMaxMusicModelSettings:
             "notes": notes,
         }
         # Retain the effective central switches in the generation receipt.
+        if length_request:
+            report["duration_request"] = length_request
+            report["duration_source"] = provenance.get("duration_source", "brief_length")
+            report["duration_policy"] = "approximate_target_natural_ending"
         try:
             source_profile = json.loads(profile_json) if isinstance(profile_json, str) else profile_json
         except (ValueError, TypeError):

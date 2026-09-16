@@ -1,6 +1,7 @@
 """Model switching, native graph wiring and request preservation without weights."""
 import importlib
 import json
+import re
 from pathlib import Path
 import sys
 import types
@@ -36,12 +37,12 @@ class Yue2Tests(unittest.TestCase):
         args.update(generation_seed=51, profile_json=json.dumps(profile))
         return json.dumps(profile), node.build(**args)[-1]
 
-    def expand(self, model):
+    def expand(self, model, style='English, folk, piano', lyrics='[Verse]\nA lantern in the rain'):
         profile, settings = self.settings(model)
         fake = types.ModuleType('comfy_execution.graph_utils'); fake.GraphBuilder = Graph
         with patch.dict(sys.modules, {'comfy_execution.graph_utils': fake}):
             return self.package.NODE_CLASS_MAPPINGS['MusicGeneration']().generate(
-                profile, settings, 'English, folk, piano', '[Verse]\nA lantern in the rain',
+                profile, settings, style, lyrics,
                 'yue2.safetensors', 'minimax.safetensors', 'encoder.safetensors', 'vae.safetensors')
 
     def test_only_selected_models_are_loaded(self):
@@ -83,6 +84,59 @@ class Yue2Tests(unittest.TestCase):
         result=self.prompts._parse_sections('[Style]\nEnglish, folk\n[Lyrics]\n[Verse]\nLight in rain\n[Title]\nLight\n[Image_Prompt]\nA lantern','Style')
         self.assertEqual(result['caption'],'English, folk')
         self.assertEqual(result['lyrics'],'[Verse]\nLight in rain')
+
+    def test_developed_instrumental_reaches_both_native_stages_without_losing_structure(self):
+        text = (ROOT/'prompts/examples/yue2-instrumental-arrangement.txt').read_text(encoding='utf-8')
+        sections = self.prompts._parse_sections(text, 'Style')
+        style, lyrics = sections['caption'], sections['lyrics']
+        style_tags = re.findall(r'^\d{2} (\[[^\]]+\]):', style, re.M)
+        lyric_tags = [line for line in lyrics.splitlines() if line.strip()]
+        self.assertEqual(style_tags, lyric_tags)
+        self.assertEqual(len(style_tags), 8)
+        self.assertEqual(lyric_tags.count('[Instrumental]'), 5)
+        self.assertGreater(len(style.split()), 250)
+        profile = self.profiles.get_profile('YuE2')
+        kept_style, kept_lyrics, budget = self.prompts.MiniMaxParseExternalLLMOutputV16._apply_prompt_budget(
+            style, lyrics, profile.prompt_token_budget, False, profile)
+        self.assertEqual((kept_style, kept_lyrics), (style, lyrics))
+        graph = self.expand('YuE2', kept_style, kept_lyrics)['expand']
+        for kind in ('YuE2GenerateABC', 'YuE2GenerateMusic'):
+            inputs = next(item['inputs'] for item in graph.values() if item['class_type'] == kind)
+            self.assertEqual(inputs['style'], style)
+            self.assertEqual(inputs['lyrics'], lyrics)
+        report = self.package.NODE_CLASS_MAPPINGS['MiniMaxPromptReport']().report(
+            style, lyrics, sections['title'], sections['image_prompt'], json.dumps(profile.as_payload()))['result'][0]
+        self.assertIn(style, report)
+        self.assertIn(lyrics, report)
+
+    def test_numbered_style_sections_do_not_become_sung_text(self):
+        style = ('English, piano-led folk, a quiet verse and an expanding refrain.\n'
+                 'Arrangement (section order):\n'
+                 '01 [Verse]: Expose the melody over unaccompanied piano.\n'
+                 '02 [Chorus]: Bass enters beneath a longer vocal phrase.\n'
+                 '03 [Verse]: Piano moves to a lower register as the singer softens.\n'
+                 '04 [Chorus]: Return the refrain with a higher piano answer.\n'
+                 '05 [Outro]: The singer finishes before a resolved piano chord.')
+        lyrics = '[Verse]\nA light beside the door\n\n[Chorus]\nBring me home\n\n[Verse]\nThe rain has found the shore\n\n[Chorus]\nBring me home\n\n[Outro]'
+        parsed = self.prompts._parse_sections(f'[Style]\n{style}\n\n[Lyrics]\n{lyrics}\n\n[Title]\nHome\n\n[Image_Prompt]\nA light', 'Style')
+        self.assertEqual(parsed['caption'], style)
+        self.assertEqual(parsed['lyrics'], lyrics)
+        self.assertEqual(re.findall(r'^\d{2} (\[[^\]]+\]):', parsed['caption'], re.M),
+                         re.findall(r'^\[[^\]]+\]$', parsed['lyrics'], re.M))
+
+    def test_workflow_uses_revised_prompt_and_archive_is_outside_active_library(self):
+        workflow = json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        node = next(n for n in workflow['nodes'] if n['type'] == 'MiniMaxStructuredPromptV20')
+        named = node['widgets_values_named']
+        bundled = (ROOT/'prompts/system'/named['system_prompt_file']).read_text(encoding='utf-8')
+        self.assertEqual(named['system_prompt'], bundled)
+        self.assertIn(bundled, node['widgets_values'])
+        library = importlib.import_module(self.package.__name__ + '.prompt_library')
+        listed = library.list_prompt_files('system', 'bundled_library')
+        self.assertEqual(sum(name.startswith('yue2/') for name in listed), 12)
+        self.assertFalse(any('yue2-old' in name.casefold() for name in listed))
+        self.assertEqual({p.name for p in (ROOT/'prompts/YuE2-old').glob('*.txt')},
+                         {p.name for p in (ROOT/'prompts/system/yue2').glob('*.txt')})
 
     def test_all_minimax_templates_have_yue_versions(self):
         for p in (ROOT/'prompts/system').glob('minimax-music3-*.txt'):

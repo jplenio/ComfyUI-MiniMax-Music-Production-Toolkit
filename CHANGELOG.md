@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [Unreleased]
+
+## [3.0.0] - 2026-09-16
+
+- Requested song length now guides a timed arrangement in all active system
+  prompts. YuE2 sends the same target and synchronized Style/Lyrics to ABC and
+  music generation. Length is approximate, never a cutoff: phrases and natural
+  decay may finish beyond it, with the full configured maximum still available.
+  Receipts record requested and actual duration without cropping the result.
+
+- Fixed the red/UNKNOWN Cover source node: create the audio preview required by
+  ComfyUI's native uploader before the upload widget is constructed. Backend
+  registration alone did not detect this frontend error.
+
+- Added **YuE2 Cover** to the main workflow: upload source audio, transcribe its
+  score with native SheetSage2, then generate a cover through the existing audio,
+  artwork and export pipeline. Same stage/sampler defaults as YuE2.
+- Added selective SheetSage2 BF16 checking/autoload, a shared source full/melody
+  mode, score-aware LLM instructions and cover provenance. Source filename plus
+  `-cover` owns titles throughout tags, filenames, artwork and reports.
+
+- Reworked all twelve YuE2 system prompts around a developed chronological
+  arrangement: motif evolution, instrumental roles, harmonic/rhythmic contrast,
+  transitions, purposeful returns and an ending. Style and Lyrics must share
+  identical section tags, order and occurrence counts, including instrumentals.
+- Removed the conflicting short-Style/short-instrumental-map instructions,
+  including the structured brief override. Compact and sparse variants retain
+  the complete arrangement while economizing wording or instrumentation.
+- Archived the previous prompts unchanged in `prompts/YuE2-old/`; refreshed the
+  bundled system-prompt text in the dual-model workflow. Reload the workflow or
+  reselect the active system-prompt file to replace text saved in existing nodes.
+
 ## [2.6.0] - 2026-09-15
 
 - Main feature: choose YuE2 or MiniMax Music 3 in the renamed

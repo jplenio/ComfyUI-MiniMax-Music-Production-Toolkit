@@ -1,5 +1,10 @@
 # MiniMax Model Auto-Download / Check
 
+For **YuE2 Cover**, `sheetsage2_models` (on by default) adds the SheetSage2 BF16
+audio encoder to the selected song check. It requires the YuE2 engine switch
+as well. Other song selections do not check/download it. `auto_download` controls
+whether missing files are fetched; the default target is `models/audio_encoders`.
+
 Checks the model files referenced by the bundled workflow and downloads missing ones on first use when a URL is configured in `models_config.json`.
 
 **Node ID:** `MiniMaxModelAutodownload`  

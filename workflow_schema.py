@@ -64,6 +64,8 @@ PARSER_NEW_INPUT_ORDER = (
     # expected section in errors/provenance and to enforce that model's own hard
     # prompt limit.  Appended last so every stored link slot keeps its index.
     "model_profile_json",
+    "cover_source_json",
+    "structured_summary_json",
 )
 
 JSON_NEW_INPUT_ORDER = (

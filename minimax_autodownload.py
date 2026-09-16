@@ -43,6 +43,7 @@ class MiniMaxModelAutodownload:
             "optional": {
                 "yue2_models": ("BOOLEAN", {"default": True}),
                 "model_profile_json": ("STRING", {"forceInput": True}),
+                "sheetsage2_models": ("BOOLEAN", {"default": True}),
             },
         }
 
@@ -52,7 +53,7 @@ class MiniMaxModelAutodownload:
     CATEGORY = "MiniMax Music Production Toolkit/utilities"
 
     def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True,
-              yue2_models=None, model_profile_json=""):
+              yue2_models=None, model_profile_json="", sheetsage2_models=True):
         from .model_profiles import profile_from_payload
         profile = profile_from_payload(model_profile_json)
         # Old API/workflow calls omit the additive flag and must not download
@@ -66,6 +67,7 @@ class MiniMaxModelAutodownload:
             load_models_config(),
             minimax=bool(minimax_models) and (profile is None or not profile.is_yue2),
             yue2=bool(yue2_models) and (profile is None or profile.is_yue2),
+            sheetsage2=bool(sheetsage2_models) and bool(yue2_models) and profile is not None and profile.is_cover,
             flux2=bool(flux2_models),
             flashsr=bool(flashsr_models),
             llm=bool(llm_model),

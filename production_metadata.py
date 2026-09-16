@@ -258,7 +258,7 @@ def build_generation_metadata(
         if model_identity.get("schema") == "minimax_music_model_settings_v1":
             payload["generation"] = model_identity
             payload["song_model"] = model_identity["song_model"]
-            if model_identity["song_model"] == "yue2":
+            if model_identity["song_model"] in {"yue2", "yue2_cover"}:
                 payload.pop("minimax_music3", None)
                 payload["style"] = caption
 

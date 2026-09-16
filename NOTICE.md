@@ -7,6 +7,8 @@ The repository does **not** redistribute third-party model weights. Users must o
 The included example workflow can reference these external components:
 
 - ComfyUI core MiniMax Music 3 nodes and model files.
+- ComfyUI core YuE2 generation and SheetSage2 audio-to-ABC nodes, with externally
+  downloaded YuE2 and SheetSage2 model files from the Comfy-Org/YuE2 distribution.
 - FLUX.2 Klein model files.
 - FlashSR inference code, **bundled** in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; attribution and per-component licenses are recorded in `flashsr_inference/NOTICE.md`). The FlashSR model **weights** are fetched on first use from the `jakeoneijk/FlashSR_weights` dataset (not redistributed).
 - A llama.cpp-compatible GGUF for the integrated `MiniMaxLLMChat` node (not redistributed).

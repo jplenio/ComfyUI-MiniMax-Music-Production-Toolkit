@@ -1,6 +1,6 @@
-# Release 2.5 workflow update
+# Release 3.0 workflow overview
 
-**Version 2.6:** Start with [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2 or MiniMax. Model, Cover, Refinement and Mastering are controlled centrally in CHOOSE. See [the dual-model guide](YUE2.md) for defaults and requirements. The classic MiniMax workflow below keeps its existing processing chain.
+**Version 3.0:** Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2, YuE2 Cover or MiniMax. CHOOSE controls the song mode, artwork, refinement and mastering; SOURCE AUDIO supplies a cover track. See [the song and cover guide](YUE2.md). The classic MiniMax workflow below retains its existing processing chain.
 
 The canonical examples now include Auto-EQ (enabled by default), a separate manual
 8-band EQ, resample-only Release Prep, and final compressor/LUFS/true-peak mastering.

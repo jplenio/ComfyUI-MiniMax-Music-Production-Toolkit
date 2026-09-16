@@ -1,8 +1,15 @@
-# MiniMax Music Production Toolkit 2.6 for ComfyUI
+# MiniMax Music Production Toolkit 3.0 for ComfyUI
 
-**New in 2.6:** [YuE2 production workflow](example_workflows/Yue2_MM3_Production_Toolkit.json)
-with MiniMax / YuE2 selection, matching prompt templates and native ABC planning.
-See [YuE2 setup and usage](YUE2.md). The classic MiniMax workflow remains available.
+**New in 3.0: Turn an audio file into a YuE2 cover version.** Upload your track,
+describe a new musical direction and take it through generation, mastering,
+artwork and export in one [connected workflow](example_workflows/Yue2_MM3_Production_Toolkit.json).
+
+**The prompt follows the music.** SheetSage2 extracts a musical score as readable
+ABC notation. Your LLM uses that score to adapt the cover's Style and Lyrics
+plan, while YuE2 receives the original transcription for generation. This is
+the first cover implementation in the toolkit—and a first step toward doing
+more with an open, readable musical description.
+[Try YuE2 Cover](YUE2.md#cover-an-audio-file) · [What's new in 3.0.0](RELEASE_NOTES_v3.0.0.md)
 
 <p align="center">
   <img src="assets/branding/banner.png" alt="MiniMax Music Production Toolkit" width="100%" />
@@ -15,11 +22,47 @@ theme, and let the toolkit turn your idea into a production brief for YuE2 or Mi
 Music 3. Generate the song, refine its sound, shape the final master and save
 your audio, artwork and production record together.
 
-Already have a song? Open the **Audio Enhancement Lab** to work on an existing
-recording without generating it again.
+Already have a song? Choose **YuE2 Cover** to create a new arrangement, or open
+the **Audio Enhancement Lab** to enhance and master the existing recording.
 
 Created by [Johannes Plenio](https://github.com/jplenio).
 [Listen to the demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/).
+
+## What's new in 3.0
+
+**YuE2 cover versions are here.** Choose **YuE2 Cover** in CHOOSE and select an
+audio file in SOURCE AUDIO. SheetSage2 extracts its score, the LLM prepares a
+source-aware arrangement, and YuE2 generates the cover through the existing
+production chain. New songs with **YuE2** and **MiniMax Music 3** remain available.
+
+- **A prompt informed by the source.** The ABC transcription goes into the LLM
+  brief, so the proposed style, instrumentation and development can follow the
+  source's musical phrases. The original ABC passes unchanged to YuE2.
+- **Two ways to reinterpret a track.** `full` conditions on melody and harmony;
+  `melody` gives a new accompaniment more freedom. One source setting controls
+  both transcription and generation.
+- **Ready for the complete workflow.** SheetSage2 BF16 check/autoload is enabled
+  for the selected cover mode. YuE2 defaults stay at 40 steps and a 360-second
+  ceiling, with Refinement off and Mastering/artwork on. The source filename
+  plus `-cover` becomes the title across tags, exports and reports.
+- **More developed YuE2 arrangements.** All twelve system prompts now request
+  a detailed chronological Style plan with corresponding Lyrics sections,
+  including instrumental tracks. Motifs, transitions and instrumental roles
+  develop over the track. The previous prompts are archived for comparison.
+- **Working audio selection and preview.** The release includes the frontend
+  fix for the red/UNKNOWN Cover source node in the first cover build.
+- **Song length reaches the generator.** YuE2 prompts now plan timed sections
+  with matching Lyrics and a natural ending near the requested Length. This is
+  an approximate target: phrases and decay can finish beyond it, up to the
+  separately configured maximum. The production record compares target and
+  actual duration. The model can still finish early.
+
+SheetSage2 extracts musical notation, **not the original lyric words**. Supply
+the lyrics you want, request new lyrics, or select instrumental. This first
+version is a starting point for experimentation; more ABC-based ideas are in preparation.
+
+Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json)
+and follow the [cover guide](YUE2.md#cover-an-audio-file).
 
 ## What's new in 2.6
 
@@ -102,7 +145,7 @@ The redesigned workflows now use the familiar filenames. There is no separate
 
 | Workflow | Start with | What it produces |
 |---|---|---|
-| [YuE2 / MiniMax Production](example_workflows/Yue2_MM3_Production_Toolkit.json) | A song idea or prompt template | Model choice, optional cover/refinement/mastering, original and release audio, tags and production record |
+| [YuE2 / MiniMax Production + YuE2 Cover](example_workflows/Yue2_MM3_Production_Toolkit.json) | A song idea, prompt template or source audio | New songs or cover versions, optional artwork/refinement/mastering, original and release audio, tags and production record |
 | [Classic MiniMax Production](example_workflows/MiniMax_Music3_Production_Toolkit.json) | A song idea or prompt template | MiniMax music, original and mastered audio, cover artwork, tags and a production record |
 | [Audio Enhancement Lab](example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json) | An existing audio file | Enhanced and mastered FLAC with your tags |
 
@@ -111,7 +154,7 @@ workflow explain where to start and which controls matter.
 
 ### Create a new song
 
-1. Set your output folder, artist and album.
+1. Choose YuE2 or MiniMax Music 3 in CHOOSE. Set your output folder, artist and album.
 2. Choose a prompt template or describe your own idea. Adjust genre, tempo,
    language, voice and length as needed.
 3. Check the model settings for your computer, then queue the workflow.
@@ -119,7 +162,7 @@ workflow explain where to start and which controls matter.
 
 Your chosen LLM prepares the caption, lyrics, title and cover idea: use a GGUF
 inside ComfyUI, a model in another local app, or a cloud provider.
-MiniMax Music 3 generates the music. Audio restoration and mastering prepare the
+The selected YuE2 or MiniMax Music 3 model generates the music. Audio restoration and mastering prepare the
 release sound, while the optional FLUX.2 branch creates matching artwork.
 
 The production workflow saves source FLAC, mastered FLAC and MP3, cover JPG,
@@ -129,6 +172,20 @@ the `Album - Title` naming convention.
 Audio decoding checks for invalid model output and can retry once with smaller
 tiles without generating the music again. Audio savers reject invalid samples
 instead of writing a broken file. See [audio error help](TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
+
+### Create a cover version
+
+1. Select **YuE2 Cover** in CHOOSE.
+2. Upload or select a track in **SOURCE AUDIO**. Use `full` for melody and
+   harmony, or `melody` for greater freedom in the accompaniment.
+3. Describe the new arrangement in WRITE. The workflow supplies the source ABC
+   to your LLM automatically; you do not need to write notation yourself.
+4. Queue the workflow. For example, `My Song.wav` becomes **My Song-cover**,
+   with the same title used throughout the export pipeline.
+
+The model check can download SheetSage2 when this mode is selected. The normal
+YuE2 and MiniMax paths ignore the source audio input. See [requirements and
+cover controls](YUE2.md#cover-an-audio-file).
 
 ### Choose your language model and artwork
 
@@ -141,12 +198,13 @@ your workflow; **Find models** helps select a model from your server.
 The LLM generates fresh text on each queued execution, without a separate
 session-ID node. In cloud mode, each new request may incur API charges.
 
-The **FLUX.2 cover · ON / OFF** switch sits in **05 · ILLUSTRATE / Cover artwork**,
-with the cover nodes it controls, and defaults to **ON**. Turn it off to skip
-cover computation and FLUX downloads in the workflow, and export audio without
-generated artwork. EQ, mastering and the audio output remain available.
+In the main workflow, **Cover** in **CHOOSE** controls artwork and defaults to
+**ON**. It is independent of the **YuE2 Cover** song mode. Turn it off to skip
+artwork generation and FLUX downloads. The classic MiniMax workflow retains
+its **FLUX.2 cover · ON / OFF** switch in the artwork area.
 
 Cloud mode sends your prompts to the selected provider and may incur API charges.
+For YuE2 Cover, the prompt also contains the source filename and ABC transcription.
 Local apps manage their own model memory; ComfyUI's LLM unload node cannot unload
 another app's model. See the [step-by-step connection and cover guide](LLM_PROVIDERS.md).
 
@@ -161,7 +219,7 @@ versions at similar listening loudness and keep the processing that helps.
 
 ## Mastering, with as much control as you want
 
-**Auto-EQ is enabled by default in both workflows.** The starting preset is a
+**Auto-EQ is enabled by default when Mastering runs.** The starting preset is a
 gentle Warm tilt at 35% strength with a maximum 2 dB correction. Switch
 `enabled` off to leave automatic tonal shaping out, or connect a reference
 track and choose Reference track mode for a guided tonal comparison.
@@ -178,6 +236,10 @@ disables all dynamics and loudness processing.
 The final sample rate defaults to **44.1 kHz**. Choose **48 kHz** in the
 Output rate node when needed, and leave the master's rate set to `keep`.
 Conversion happens before the final limiter, including when mastering is bypassed.
+
+In the main workflow, switching **Mastering** off centrally skips the whole
+mastering area, including sample-rate conversion. The compressor's own bypass
+is a separate control inside that area.
 
 Peak and gain-reduction limits take priority when the requested loudness cannot
 be reached safely. The report explains the result. These presets are useful
@@ -216,7 +278,8 @@ else: atmosphere, instrumentation, story, arrangement or production style.
 Templates can prefill the controls, and you can edit and save your own versions.
 Separate system prompts let you guide how the LLM develops the musical brief.
 You can also disable the LLM and enter caption, lyrics, title and cover prompt
-manually in the parser.
+manually in the parser. For YuE2 Cover, the title always comes from the source
+filename; manual and LLM title suggestions do not replace it.
 
 [Explore the prompt library](PROMPT_LIBRARY.md).
 
@@ -235,8 +298,9 @@ installation; local-server and cloud modes do not. Backend builds and GPU suppor
 installation enables GPU acceleration.
 
 Restart ComfyUI and refresh the browser after installation or update.
-For 2.5, reopen the bundled workflow to get the new layout, mastering chain and
-Auto-EQ defaults. Existing saved personal workflows are not automatically
+For 3.0, reopen the bundled main workflow to get the Cover source/transcription
+nodes, connections and updated system prompts. Update the frontend files too:
+they include the audio-upload preview fix. Existing saved personal workflows are not automatically
 replaced; keep your own copies when updating.
 
 Model weights are downloaded or supplied separately. The model checker helps
@@ -246,6 +310,8 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
+- [Release 3.0.0 notes](RELEASE_NOTES_v3.0.0.md)
+- [YuE2 new songs and audio cover guide](YUE2.md)
 - [Release 2.6.0 notes](RELEASE_NOTES_v2.6.0.md)
 - [Release 2.5.1 notes](RELEASE_NOTES_v2.5.1.md)
 - [Release 2.5 notes](RELEASE_NOTES_v2.5.0.md)
@@ -267,7 +333,7 @@ can generate high-frequency content that needs further adjustment. EQ and
 mastering cannot fix every issue in an arrangement or stereo mix. Listen before
 publishing, and check encoded files when their final loudness or peaks matter.
 
-This is an independent community project. MiniMax, FLUX, LLM and FlashSR model
+This is an independent community project. YuE2, SheetSage2, MiniMax, FLUX, LLM and FlashSR model
 weights are not included, and their licenses apply separately.
 
 ## License

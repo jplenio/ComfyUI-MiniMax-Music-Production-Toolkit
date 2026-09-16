@@ -1,7 +1,10 @@
 # Production choices · YuE2 / MiniMax
 
-Start here: choose **YuE2** (default) or **MiniMax Music 3**, then decide which
+Start here: choose **YuE2** (default), **YuE2 Cover** or **MiniMax Music 3**, then decide which
 production stages to run.
+
+YuE2 Cover uses the source audio group and the same stage defaults as YuE2.
+The Cover switch below controls artwork; selecting YuE2 Cover controls audio covers.
 
 | Choice | Default | Effect |
 | --- | --- | --- |

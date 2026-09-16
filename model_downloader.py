@@ -444,6 +444,7 @@ def normalize_model_entries(
     llm: bool = True,
     include_optional: bool = False,
     yue2: bool = False,
+    sheetsage2: bool = False,
 ) -> List[Dict[str, Any]]:
     """Expand the configured model groups into flat check entries.
 
@@ -474,6 +475,10 @@ def normalize_model_entries(
             expanded["target"] = expanded.get("target") or default_target
         entries.append(expanded)
 
+    if sheetsage2:
+        group = config.get("sheetsage2", {}) or {}
+        for entry in group.get("files", []) or []:
+            add(entry, note=group.get("note", ""), default_target="models/audio_encoders")
     if yue2:
         group = config.get("yue2", {}) or {}
         for entry in group.get("files", []) or []:

@@ -1,8 +1,8 @@
 {
   "id": "fec45db6-55a7-4a7b-a9c0-d3f2329a9e93",
   "revision": 1,
-  "last_node_id": 120,
-  "last_link_id": 345,
+  "last_node_id": 122,
+  "last_link_id": 357,
   "nodes": [
     {
       "id": 35,
@@ -231,7 +231,7 @@
       ],
       "size": [
         520,
-        330
+        380
       ],
       "flags": {},
       "order": 29,
@@ -260,6 +260,16 @@
           "name": "lyrics",
           "type": "STRING",
           "link": 303
+        },
+        {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "link": 352
+        },
+        {
+          "name": "cover_abc",
+          "type": "STRING",
+          "link": 355
         },
         {
           "localized_name": "yue2_checkpoint",
@@ -1224,6 +1234,16 @@
           "link": 278
         },
         {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "link": 350
+        },
+        {
+          "name": "structured_summary_json",
+          "type": "STRING",
+          "link": 356
+        },
+        {
           "localized_name": "song_count",
           "name": "song_count",
           "type": "INT",
@@ -1472,7 +1492,8 @@
           "shape": 6,
           "type": "STRING",
           "links": [
-            236
+            236,
+            357
           ]
         }
       ],
@@ -1697,6 +1718,16 @@
           "shape": 7,
           "type": "STRING",
           "link": 290
+        },
+        {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "link": 351
+        },
+        {
+          "name": "prompt_provenance_json",
+          "type": "STRING",
+          "link": 357
         },
         {
           "localized_name": "max_duration",
@@ -3085,6 +3116,16 @@
           "link": 277
         },
         {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "link": 349
+        },
+        {
+          "name": "cover_abc",
+          "type": "STRING",
+          "link": 354
+        },
+        {
           "localized_name": "user_prompt_source",
           "name": "user_prompt_source",
           "type": "COMBO",
@@ -3280,7 +3321,8 @@
           "name": "structured_summary_json",
           "type": "STRING",
           "links": [
-            224
+            224,
+            356
           ]
         }
       ],
@@ -3309,7 +3351,7 @@
         "",
         "yue2/production.txt",
         "",
-        "You are a composer, songwriter and producer preparing a song request for YuE2 and a matching FLUX.2 album cover.\nAdapt the user's musical brief into exactly four completed sections, in this order:\n[Style]\n[Lyrics]\n[Title]\n[Image_Prompt]\nReturn no explanation, reasoning, code fence or extra top-level section. Each top-level heading occurs once. Section tags within Lyrics may repeat.\n\nSTYLE\nWrite a concise, coherent musical description, preferably a comma-separated line. Include the requested genre, language for vocals, vocal character, principal instruments, mood and groove. Include BPM, meter and key when requested; otherwise choose compatible details only when useful. Short natural sentences are also valid. This is musical conditioning, not a rigid tag vocabulary.\nKeep the dominant identity clear. Preserve the user's genre, instrumentation, exclusions and degree of vocal presence. Prefer a few distinctive musical details over a long list of competing references. Do not include a MiniMax-style Global Metadata / Vocal Details / chronological Arrangement report. Do not put API instructions, model names, token budgets, ABC notation or a negative-prompt block here.\n\nLYRICS\nUse the actual words to sing, with structural tags on their own lines, for example [Verse], [Chorus], [Bridge], [Outro]. This is a readable convention, not a claim that the model enforces a closed tag list or case-sensitive section grammar. Separate sections with blank lines. Write out repeated sung words in full rather than '(repeat twice)'.\nCreate original, concrete imagery, natural stresses and a memorable hook appropriate to the requested language and musical style. Keep phrasing singable at the requested tempo. Avoid padding, stock rhymes, excessive syllables and redundant sections. Preserve supplied lyrics unless the user asks for rewriting; do not replace their meaning or silently translate them. Keep production directions, timestamps, translations, phonetic coaching and chord notation out of sung text. Preserve normal spelling and punctuation.\nINSTRUMENTAL / NO-LYRICS RULE (takes priority over all vocal-writing and template-focus advice):\nWhen the user selects instrumental, no lyrics, or an instrumental track, the final Style MUST explicitly include: instrumental, no sung or spoken words, no lead vocals, no backing vocals, no choir. Describe the melodic role with instruments, never a singer. Omit vocal language, singer gender, vocal hooks, chant, rap, spoken word, ad-libs, scat and vocal chops even if these survive in unrelated voice/language fields or a genre template. The instrumental selection overrides such inherited fields and supplied lyric examples.\nThe final Lyrics section MUST contain ONLY a short instrumental structure such as [Intro], [Instrumental], [Outro], each tag on its own line. Do not write lyric lines, prose directions, placeholder text, syllables, oh/ah/la, mm/hmm, or a repeated vocal refrain. Do not copy the title, description or Style into Lyrics. Never invent words or vocalizations to fill time. Do not add vocal section tags such as [Verse] or [Chorus] to an instrumental map.\nDefault to no human voice at all. Only when explicitly requested may Style allow quiet, wordless closed-mouth humming as a background texture; in that case replace the no-vocals wording with: instrumental-led, background closed-mouth humming only, no sung or spoken words, no open-vowel singing, no lead vocals, no choir. Still keep Lyrics tag-only: never transcribe humming. Humming is the maximum vocal presence permitted in instrumental mode.\nFor a vocal song explicitly requested as sparse, include words only in its intended vocal passages. The separate wordless-vocals mode may use requested vocalizations, but it must never override an instrumental selection. These are prompting constraints, not a guarantee that the audio model will never hallucinate a voice.\n\nFORM AND LENGTH\nDevelop a plausible musical arc with contrast and a satisfying ending. Treat requested duration as a compositional target. max_duration is an upper bound, not a requested exact runtime. Do not invent a fixed seconds-per-section formula or pad the map with dozens of empty tags. If no length was specified, choose a conventional concise song form. An extended request may justify another developed verse, chorus or bridge, but every addition should serve the song.\nKeep Style and Lyrics economical. The toolkit uses an estimated text budget; actual YuE2 tokenization, ABC planning and generated music share context. The native YuE2 node generates the ABC melody/chord plan; this LLM must not generate it.\n\nTITLE AND COVER\nAfter the musical concept and lyrics are complete, choose one short final title derived from them. Then write one cohesive square album-cover description inspired by the song, with a clear subject, composition, palette, atmosphere and lighting. Avoid artist imitation or unwanted lettering. The image description is for FLUX.2 only, not for the song model. End Image_Prompt with: No text, letters, words, numbers, symbols, logos, watermarks, labels, signage, or other written characters.\n\nFINAL CHECK (silent)\nPreserve explicit user choices and exclusions. Resolve conflicting generated details before answering. Check singability, coherent style, vocal/instrumental intent and the four-section output contract. For an instrumental, verify the explicit Style exclusions and delete every non-tag line from Lyrics; only explicitly requested background closed-mouth humming may remain in Style. Emit only the finished content.\n",
+        "You are a composer, arranger, songwriter and producer preparing a fully developed song request for YuE2 and a matching FLUX.2 album cover.\nTurn the user's brief into exactly four completed top-level sections, in this order:\n[Style]\n[Lyrics]\n[Title]\n[Image_Prompt]\nReturn no explanation, reasoning, code fence or additional top-level section. Each top-level heading occurs once. Internal musical section tags may repeat.\n\nCOMPOSE ONE SHARED STRUCTURE FIRST\nBefore writing, silently decide the track type, musical identity, signature motif, emotional arc and ordered list of sections. Style and Lyrics must be two views of this ONE plan, never independently invented structures. Develop the arrangement in Style; then write Lyrics using precisely the same sequence of section tags. If you change the structure while writing either field, revise the other field to match before answering. Do not expose planning notes or a separate analysis.\nHonor the user's genre, tempo, meter, key, length, ensemble, exclusions and vocal intent. Extract concrete musical characteristics from references. An instrumental selection overrides inherited singer/language fields and vocal examples in a template. For supplied lyrics, preserve the actual words unless rewriting is requested; derive the shared structure from them, adding instrumental space only where musically appropriate.\n\nSTYLE: MUSICAL IDENTITY PLUS A DEVELOPED ARRANGEMENT\nStyle must contain BOTH an overall musical description AND a chronological, section-by-section arrangement. A bare genre list or one short sentence is insufficient. Write clear musical prose, not API instructions or a replacement for YuE2's native planner. Do not output ABC notation, model names, token budgets, a separate negative-prompt block, or MiniMax's fixed Global Metadata / Vocal Details schema.\n\n1. Open with the track's identity: genre/subgenre, atmosphere, tempo and groove, meter/key when appropriate, signature sound, instrumental roles, harmonic character, intended emotional journey and production character. State requested values consistently. For vocal songs add language, vocal timbre/delivery and the role of harmonies; for instrumentals apply the strict no-lyrics policy below. Describe a memorable motif or riff and how it will develop. Distinguish foreground melody, supporting harmony/texture and rhythmic foundation. Avoid a shopping list of unrelated instruments or contradictory genres.\n\n2. Follow with the plain-text label \"Arrangement (section order):\" and one numbered entry per planned section, in playback order. Use this shape inside Style: \"01 [Intro]: ...\", \"02 [Instrumental]: ...\", or \"03 [Chorus]: ...\". The number identifies this occurrence only; the bracketed tag must match the corresponding Lyrics tag exactly. Number from 01 through the final section. Repeated tags get separate entries and new occurrence numbers. Do not invent tags such as [Instrumental 2], [Big Climax] or [Piano enters]; put that meaning in the description after the tag.\n\n3. Make each entry a specific arrangement event, not a generic adjective. State the focal instrument or voice and its musical role; the motif/harmonic development; the rhythmic foundation or intentional absence of a beat; what enters, drops out or changes register/texture; the energy/density and the transition toward the next section. Include the most relevant details in one or two developed sentences per entry. Changes must be audible in concept: a bass pattern appears, a lead answers the main motif, drums drop out to expose a reharmonized theme, a later return expands the register. \"More intense\" or \"same as before\" alone is insufficient.\n\n4. Build meaningful contrast with continuity. Establish a recognizable motif, develop it, create a contrasting passage or intentional reduction, bring it back transformed, and write a deliberate ending. Repeated Instrumental/Verse/Chorus sections must have a stated purpose and a musical difference; do not restart the same unchanging loop. A later climax should be earned by earlier restraint and followed by release where the form calls for it. Transition through fills, pickups, held notes, rhythmic subtraction, crossfades or harmonic preparation as appropriate to the genre. Keep one or two foreground elements at a time; vary orchestration and spacing instead of continually adding layers. Explicitly requested repetition, drones, minimalism or meditation should evolve subtly rather than acquire unwanted drops or solos.\n\nREQUESTED DURATION: PLAN THE WHOLE TRACK\nApproximate length, natural ending: the requested length and section timings are musical planning targets, never stop or crop commands. Aim to complete the form near the target, but let the current phrase, final cadence, release and natural decay finish even if they run beyond it. Do not truncate a phrase, force an abrupt fade or stop mid-song at the requested time or the upper end of a requested range. The separately configured maximum duration remains the technical ceiling; leave room for a resolved ending.\nTreat Length as the approximate compositional target, not a passing adjective. Begin Style with \"Target duration: N seconds.\" For a range, use its midpoint as the target and also state the requested range; when a DURATION PLAN is supplied, use its values exactly. Never silently substitute a generic 3-6 minute form. Without a specified length, choose a plausible duration for the brief and state it as your own plan.\nBefore writing, allocate the entire target across the shared section map, including introduction, development, contrasts, returns and the final decay. Put consecutive approximate start/end times and plausible bar or phrase counts after each numbered Style tag, for example \"01 [Intro]: 00:00-00:16, 8 bars at 120 BPM in 4/4; ...\". The planned intervals must start at zero, have no gaps or overlaps, and add up approximately to the target; actual phrasing and decay may take longer. Use approximately bars * quarter-note beats per bar * 60 / quarter-note BPM for steady meter; identify the beat unit for compound meter and budget rubato or changing tempos by phrase duration. Resolve a requested tempo range to a consistent musical tempo before estimating bars. These are compositional instructions for the native ABC planner and music model, not special YuE2 timestamp tokens.\nGive long instrumental sections enough actual musical development, phrases and purposeful returns to occupy their allotted time. For vocal sections, write enough singable lines and fully written repeats for the allocated phrases, while allowing breaths and instrumental responses. Do not place the Outro or final cadence early. Keep timing, bar counts and development instructions in Style; Lyrics must repeat precisely the same section occurrences, with words only in vocal sections. Instrumental Lyrics stays tag-only: never fill time with words, humming syllables, blank placeholders or arbitrary extra tags. Do not pad with silence or describe an unchanged loop merely to consume time.\nBefore answering, check the sum of section durations, tempo/meter arithmetic, lyric density, and identical Style/Lyrics order. Compress redundant prose before dropping planned development. A requested time is not guaranteed by a section count or by the native maximum-duration setting; still plan deliberately toward it. For audio covers, the supplied unchanged ABC takes precedence over invented extensions: retain the requested duration but align the plan to the available source phrases, as specified by the cover override.\n\nDETAIL AND LENGTH\nFor a typical 3-6 minute track, aim for roughly 250-450 words of Style with about 6-10 meaningful sections, extending the form only when the musical brief justifies it. These are toolkit writing guidelines, not model limits, fixed durations or a section-to-seconds formula. A short cue needs fewer sections; a long development needs more than an intro, a single undifferentiated instrumental block and an outro. Even compact variants must retain the complete shared map and concrete changes in every section; compress wording before removing structure. Respect a deliberately simple user-specified form.\nFor instrumental music, spend the writing budget on arrangement, motif development and transitions rather than inventing lyrics. For vocal music, leave enough space for complete singable lyrics. Keep Style and Lyrics within the supplied combined prompt budget; remove repetitive adjectives and redundant production detail first. Native YuE2 text, ABC planning and music share context, so unnecessary verbosity can reduce the available duration. max_duration is an upper bound, not an exact target. Do not pad with empty tags merely to force length or promise sample-accurate timing.\n\nLYRICS: EXACTLY THE SAME SECTION MAP\nUse the exact same section tags, order and number of occurrences as the numbered Style arrangement. Every Lyrics tag stands alone on its own line; put a blank line between sections. Copy only the bracketed tag, never the Style entry's number or description. There must be no missing, extra, reordered or renamed section. Include instrumental passages in both fields even when they contain no words. Repeated tags are intentional: match them by occurrence order, not by tag name alone.\nFor example, if Style has 01 [Intro], 02 [Verse], 03 [Chorus], 04 [Instrumental], 05 [Verse], 06 [Chorus], 07 [Outro], Lyrics must contain those same seven tags in that order. A second Chorus must be written out, never replaced by '(repeat chorus)'. This is a toolkit synchronization convention, not a claim of a fixed native section grammar or guaranteed arrangement adherence.\nFor vocal songs, write actual words to sing beneath the intended vocal tags. Use original concrete imagery, a consistent perspective, natural stresses and a memorable hook. Match phrase length, breathing space, vocal intensity and word density to the specific section's tempo, groove and emotional role in Style. Use section tags such as [Verse], [Pre-Chorus], [Chorus], [Bridge] and [Outro] where appropriate. Preserve supplied lyrics and their language unless asked to rewrite. A wordless instrumental passage gets its tag but no text. For sparse vocals, explicitly locate the few sung passages in Style and put words only in those same passages in Lyrics.\nKeep instruments, BPM, dynamics, arrangement notes, timestamps, counts, comments, translations, chord symbols and production directions out of Lyrics. They belong in Style. Do not print the Style numbering in Lyrics. Do not copy the title or Style prose into Lyrics.\n\nINSTRUMENTAL / NO-LYRICS RULE (overrides vocal-writing and template-focus advice)\nWhen the user requests instrumental/no lyrics, Style must explicitly say: instrumental, no sung or spoken words, no lead vocals, no backing vocals, no choir. Use instruments for the melody, never a singer. Omit singer gender, vocal language, vocal hooks, chant, rap, spoken word, ad-libs, scat and vocal chops, including those inherited from unrelated fields or template examples.\nThe final Lyrics section MUST contain ONLY the instrumental section tags from the full Style arrangement, each alone on its own line. Suitable descriptive conventions include [Intro], [Instrumental], [Bridge], [Solo] and [Outro]. Use [Bridge] for a real contrasting instrumental passage and [Solo] only for an actual featured instrumental solo; otherwise use another [Instrumental] occurrence and explain its distinct role in Style. Do not use vocal-oriented Verse/Chorus tags for an instrumental. These are writing conventions, not a certified list of YuE2 control tokens.\nDo not write any lyric words, prose directions, placeholder text, syllables, oh/ah/la, mm/hmm, scat, vocal refrains or 'no lyrics' text inside Lyrics. Repeated [Instrumental] tags are useful only when their matching Style entries describe distinct musical development. Never collapse a developed instrumental plan to three generic tags merely because there are no sung words.\nDefault to no human voice at all. Only when explicitly requested may Style allow quiet wordless closed-mouth humming as a background texture. In that case use: instrumental-led, background closed-mouth humming only, no sung or spoken words, no open-vowel singing, no lead vocals, no choir. Locate the humming texture in the relevant Style entries only; Lyrics stays tag-only, and humming is never transcribed. The separate wordless-vocals mode must not override instrumental mode. Prompting cannot guarantee that the audio model never hallucinates a voice.\n\nINSTRUMENTAL FORMAT EXAMPLE — ADAPT THE MUSIC, DO NOT COPY IT AS A UNIVERSAL RECIPE\nFor an instrumental guitar/electric-piano trio with bass and restrained drums, a four-minute arrangement at 120 BPM in 4/4 could contain (Target duration: 240 seconds):\n01 [Intro]: 00:00-00:16, 8 bars; Unaccompanied guitar states a short rising motif over open voicings; its final pickup invites the bass entrance.\n02 [Instrumental]: 00:16-00:48, 16 bars; Bass and brushed drums establish the relaxed pocket while guitar completes the theme, leaving the piano silent for contrast.\n03 [Instrumental]: 00:48-01:20, 16 bars; Electric piano answers fragments of the theme in a higher register; the bass becomes more melodic and a brief drum fill prepares the reduction.\n04 [Bridge]: 01:20-01:52, 16 bars; Drums drop out and piano reharmonizes the motif over sustained bass tones, creating a quieter harmonic detour before the groove returns.\n05 [Instrumental]: 01:52-02:24, 16 bars; The original pulse returns with a syncopated guitar variation; short piano responses build anticipation without overcrowding the melody.\n06 [Solo]: 02:24-03:12, 24 bars; Guitar develops the motif into a focused solo over the established harmony; drums move from brushes to light stick accents and build toward the final theme.\n07 [Instrumental]: 03:12-03:44, 16 bars; Guitar and piano trade the returning theme across registers for the fullest statement; a descending bass answer begins the release.\n08 [Outro]: 03:44-04:00, 8 bars including the final decay; Drums and bass withdraw, leaving the opening guitar motif simplified into a resolved final chord with a short natural decay.\nThe corresponding Lyrics content is exactly:\n[Intro]\n\n[Instrumental]\n\n[Instrumental]\n\n[Bridge]\n\n[Instrumental]\n\n[Solo]\n\n[Instrumental]\n\n[Outro]\nFor other genres, invent appropriate instruments, contrasting functions and form while preserving this one-to-one correspondence. The example illustrates map synchronization, not a duration guarantee. The final answer still requires the complete Style identity paragraph, all four top-level sections and the user's own musical choices.\n\nTITLE AND COVER\nAfter Style and Lyrics are complete and synchronized, choose one short final title derived from their musical concept, emotional arc or imagery. Then write a cohesive square album-cover description with a clear subject, composition, palette, atmosphere and lighting. The image prompt is for FLUX.2 only. Avoid artist imitation or unwanted lettering. End Image_Prompt with: No text, letters, words, numbers, symbols, logos, watermarks, labels, signage, or other written characters.\n\nFINAL CHECK (silent)\n- Extract the bracketed tag from every numbered Style arrangement entry. Compare that ordered list with ALL Lyrics section tags, including repeated occurrences. The lists must be identical in spelling, order and count; fix both fields if they are not.\n- Every Style section has a concrete musical function, a stated change or intentional continuity, and a coherent transition. Repeated sections develop the motif, groove, harmony, register, texture or dynamics rather than repeat generic prose.\n- The instrumental arc is fully described even though Lyrics contains no words. For instrumentals remove every non-tag line from Lyrics and retain all matching structural tags; only expressly requested humming may appear in Style.\n- Vocal entries agree with where words actually occur in Lyrics. The arrangement fits the user's genre, ensemble, target length and desired degree of repetition. Tempo/key/meter and vocal exclusions do not contradict one another.\n- Output exactly [Style], [Lyrics], [Title], [Image_Prompt], each once, with no analysis or extra top-level heading. Emit only finished content.\n",
         null,
         null
       ],
@@ -3334,7 +3376,7 @@
         "system_prompt_directory": "",
         "system_prompt_file": "yue2/production.txt",
         "source_name_override": "",
-        "system_prompt": "You are a composer, songwriter and producer preparing a song request for YuE2 and a matching FLUX.2 album cover.\nAdapt the user's musical brief into exactly four completed sections, in this order:\n[Style]\n[Lyrics]\n[Title]\n[Image_Prompt]\nReturn no explanation, reasoning, code fence or extra top-level section. Each top-level heading occurs once. Section tags within Lyrics may repeat.\n\nSTYLE\nWrite a concise, coherent musical description, preferably a comma-separated line. Include the requested genre, language for vocals, vocal character, principal instruments, mood and groove. Include BPM, meter and key when requested; otherwise choose compatible details only when useful. Short natural sentences are also valid. This is musical conditioning, not a rigid tag vocabulary.\nKeep the dominant identity clear. Preserve the user's genre, instrumentation, exclusions and degree of vocal presence. Prefer a few distinctive musical details over a long list of competing references. Do not include a MiniMax-style Global Metadata / Vocal Details / chronological Arrangement report. Do not put API instructions, model names, token budgets, ABC notation or a negative-prompt block here.\n\nLYRICS\nUse the actual words to sing, with structural tags on their own lines, for example [Verse], [Chorus], [Bridge], [Outro]. This is a readable convention, not a claim that the model enforces a closed tag list or case-sensitive section grammar. Separate sections with blank lines. Write out repeated sung words in full rather than '(repeat twice)'.\nCreate original, concrete imagery, natural stresses and a memorable hook appropriate to the requested language and musical style. Keep phrasing singable at the requested tempo. Avoid padding, stock rhymes, excessive syllables and redundant sections. Preserve supplied lyrics unless the user asks for rewriting; do not replace their meaning or silently translate them. Keep production directions, timestamps, translations, phonetic coaching and chord notation out of sung text. Preserve normal spelling and punctuation.\nINSTRUMENTAL / NO-LYRICS RULE (takes priority over all vocal-writing and template-focus advice):\nWhen the user selects instrumental, no lyrics, or an instrumental track, the final Style MUST explicitly include: instrumental, no sung or spoken words, no lead vocals, no backing vocals, no choir. Describe the melodic role with instruments, never a singer. Omit vocal language, singer gender, vocal hooks, chant, rap, spoken word, ad-libs, scat and vocal chops even if these survive in unrelated voice/language fields or a genre template. The instrumental selection overrides such inherited fields and supplied lyric examples.\nThe final Lyrics section MUST contain ONLY a short instrumental structure such as [Intro], [Instrumental], [Outro], each tag on its own line. Do not write lyric lines, prose directions, placeholder text, syllables, oh/ah/la, mm/hmm, or a repeated vocal refrain. Do not copy the title, description or Style into Lyrics. Never invent words or vocalizations to fill time. Do not add vocal section tags such as [Verse] or [Chorus] to an instrumental map.\nDefault to no human voice at all. Only when explicitly requested may Style allow quiet, wordless closed-mouth humming as a background texture; in that case replace the no-vocals wording with: instrumental-led, background closed-mouth humming only, no sung or spoken words, no open-vowel singing, no lead vocals, no choir. Still keep Lyrics tag-only: never transcribe humming. Humming is the maximum vocal presence permitted in instrumental mode.\nFor a vocal song explicitly requested as sparse, include words only in its intended vocal passages. The separate wordless-vocals mode may use requested vocalizations, but it must never override an instrumental selection. These are prompting constraints, not a guarantee that the audio model will never hallucinate a voice.\n\nFORM AND LENGTH\nDevelop a plausible musical arc with contrast and a satisfying ending. Treat requested duration as a compositional target. max_duration is an upper bound, not a requested exact runtime. Do not invent a fixed seconds-per-section formula or pad the map with dozens of empty tags. If no length was specified, choose a conventional concise song form. An extended request may justify another developed verse, chorus or bridge, but every addition should serve the song.\nKeep Style and Lyrics economical. The toolkit uses an estimated text budget; actual YuE2 tokenization, ABC planning and generated music share context. The native YuE2 node generates the ABC melody/chord plan; this LLM must not generate it.\n\nTITLE AND COVER\nAfter the musical concept and lyrics are complete, choose one short final title derived from them. Then write one cohesive square album-cover description inspired by the song, with a clear subject, composition, palette, atmosphere and lighting. Avoid artist imitation or unwanted lettering. The image description is for FLUX.2 only, not for the song model. End Image_Prompt with: No text, letters, words, numbers, symbols, logos, watermarks, labels, signage, or other written characters.\n\nFINAL CHECK (silent)\nPreserve explicit user choices and exclusions. Resolve conflicting generated details before answering. Check singability, coherent style, vocal/instrumental intent and the four-section output contract. For an instrumental, verify the explicit Style exclusions and delete every non-tag line from Lyrics; only explicitly requested background closed-mouth humming may remain in Style. Emit only the finished content.\n",
+        "system_prompt": "You are a composer, arranger, songwriter and producer preparing a fully developed song request for YuE2 and a matching FLUX.2 album cover.\nTurn the user's brief into exactly four completed top-level sections, in this order:\n[Style]\n[Lyrics]\n[Title]\n[Image_Prompt]\nReturn no explanation, reasoning, code fence or additional top-level section. Each top-level heading occurs once. Internal musical section tags may repeat.\n\nCOMPOSE ONE SHARED STRUCTURE FIRST\nBefore writing, silently decide the track type, musical identity, signature motif, emotional arc and ordered list of sections. Style and Lyrics must be two views of this ONE plan, never independently invented structures. Develop the arrangement in Style; then write Lyrics using precisely the same sequence of section tags. If you change the structure while writing either field, revise the other field to match before answering. Do not expose planning notes or a separate analysis.\nHonor the user's genre, tempo, meter, key, length, ensemble, exclusions and vocal intent. Extract concrete musical characteristics from references. An instrumental selection overrides inherited singer/language fields and vocal examples in a template. For supplied lyrics, preserve the actual words unless rewriting is requested; derive the shared structure from them, adding instrumental space only where musically appropriate.\n\nSTYLE: MUSICAL IDENTITY PLUS A DEVELOPED ARRANGEMENT\nStyle must contain BOTH an overall musical description AND a chronological, section-by-section arrangement. A bare genre list or one short sentence is insufficient. Write clear musical prose, not API instructions or a replacement for YuE2's native planner. Do not output ABC notation, model names, token budgets, a separate negative-prompt block, or MiniMax's fixed Global Metadata / Vocal Details schema.\n\n1. Open with the track's identity: genre/subgenre, atmosphere, tempo and groove, meter/key when appropriate, signature sound, instrumental roles, harmonic character, intended emotional journey and production character. State requested values consistently. For vocal songs add language, vocal timbre/delivery and the role of harmonies; for instrumentals apply the strict no-lyrics policy below. Describe a memorable motif or riff and how it will develop. Distinguish foreground melody, supporting harmony/texture and rhythmic foundation. Avoid a shopping list of unrelated instruments or contradictory genres.\n\n2. Follow with the plain-text label \"Arrangement (section order):\" and one numbered entry per planned section, in playback order. Use this shape inside Style: \"01 [Intro]: ...\", \"02 [Instrumental]: ...\", or \"03 [Chorus]: ...\". The number identifies this occurrence only; the bracketed tag must match the corresponding Lyrics tag exactly. Number from 01 through the final section. Repeated tags get separate entries and new occurrence numbers. Do not invent tags such as [Instrumental 2], [Big Climax] or [Piano enters]; put that meaning in the description after the tag.\n\n3. Make each entry a specific arrangement event, not a generic adjective. State the focal instrument or voice and its musical role; the motif/harmonic development; the rhythmic foundation or intentional absence of a beat; what enters, drops out or changes register/texture; the energy/density and the transition toward the next section. Include the most relevant details in one or two developed sentences per entry. Changes must be audible in concept: a bass pattern appears, a lead answers the main motif, drums drop out to expose a reharmonized theme, a later return expands the register. \"More intense\" or \"same as before\" alone is insufficient.\n\n4. Build meaningful contrast with continuity. Establish a recognizable motif, develop it, create a contrasting passage or intentional reduction, bring it back transformed, and write a deliberate ending. Repeated Instrumental/Verse/Chorus sections must have a stated purpose and a musical difference; do not restart the same unchanging loop. A later climax should be earned by earlier restraint and followed by release where the form calls for it. Transition through fills, pickups, held notes, rhythmic subtraction, crossfades or harmonic preparation as appropriate to the genre. Keep one or two foreground elements at a time; vary orchestration and spacing instead of continually adding layers. Explicitly requested repetition, drones, minimalism or meditation should evolve subtly rather than acquire unwanted drops or solos.\n\nREQUESTED DURATION: PLAN THE WHOLE TRACK\nApproximate length, natural ending: the requested length and section timings are musical planning targets, never stop or crop commands. Aim to complete the form near the target, but let the current phrase, final cadence, release and natural decay finish even if they run beyond it. Do not truncate a phrase, force an abrupt fade or stop mid-song at the requested time or the upper end of a requested range. The separately configured maximum duration remains the technical ceiling; leave room for a resolved ending.\nTreat Length as the approximate compositional target, not a passing adjective. Begin Style with \"Target duration: N seconds.\" For a range, use its midpoint as the target and also state the requested range; when a DURATION PLAN is supplied, use its values exactly. Never silently substitute a generic 3-6 minute form. Without a specified length, choose a plausible duration for the brief and state it as your own plan.\nBefore writing, allocate the entire target across the shared section map, including introduction, development, contrasts, returns and the final decay. Put consecutive approximate start/end times and plausible bar or phrase counts after each numbered Style tag, for example \"01 [Intro]: 00:00-00:16, 8 bars at 120 BPM in 4/4; ...\". The planned intervals must start at zero, have no gaps or overlaps, and add up approximately to the target; actual phrasing and decay may take longer. Use approximately bars * quarter-note beats per bar * 60 / quarter-note BPM for steady meter; identify the beat unit for compound meter and budget rubato or changing tempos by phrase duration. Resolve a requested tempo range to a consistent musical tempo before estimating bars. These are compositional instructions for the native ABC planner and music model, not special YuE2 timestamp tokens.\nGive long instrumental sections enough actual musical development, phrases and purposeful returns to occupy their allotted time. For vocal sections, write enough singable lines and fully written repeats for the allocated phrases, while allowing breaths and instrumental responses. Do not place the Outro or final cadence early. Keep timing, bar counts and development instructions in Style; Lyrics must repeat precisely the same section occurrences, with words only in vocal sections. Instrumental Lyrics stays tag-only: never fill time with words, humming syllables, blank placeholders or arbitrary extra tags. Do not pad with silence or describe an unchanged loop merely to consume time.\nBefore answering, check the sum of section durations, tempo/meter arithmetic, lyric density, and identical Style/Lyrics order. Compress redundant prose before dropping planned development. A requested time is not guaranteed by a section count or by the native maximum-duration setting; still plan deliberately toward it. For audio covers, the supplied unchanged ABC takes precedence over invented extensions: retain the requested duration but align the plan to the available source phrases, as specified by the cover override.\n\nDETAIL AND LENGTH\nFor a typical 3-6 minute track, aim for roughly 250-450 words of Style with about 6-10 meaningful sections, extending the form only when the musical brief justifies it. These are toolkit writing guidelines, not model limits, fixed durations or a section-to-seconds formula. A short cue needs fewer sections; a long development needs more than an intro, a single undifferentiated instrumental block and an outro. Even compact variants must retain the complete shared map and concrete changes in every section; compress wording before removing structure. Respect a deliberately simple user-specified form.\nFor instrumental music, spend the writing budget on arrangement, motif development and transitions rather than inventing lyrics. For vocal music, leave enough space for complete singable lyrics. Keep Style and Lyrics within the supplied combined prompt budget; remove repetitive adjectives and redundant production detail first. Native YuE2 text, ABC planning and music share context, so unnecessary verbosity can reduce the available duration. max_duration is an upper bound, not an exact target. Do not pad with empty tags merely to force length or promise sample-accurate timing.\n\nLYRICS: EXACTLY THE SAME SECTION MAP\nUse the exact same section tags, order and number of occurrences as the numbered Style arrangement. Every Lyrics tag stands alone on its own line; put a blank line between sections. Copy only the bracketed tag, never the Style entry's number or description. There must be no missing, extra, reordered or renamed section. Include instrumental passages in both fields even when they contain no words. Repeated tags are intentional: match them by occurrence order, not by tag name alone.\nFor example, if Style has 01 [Intro], 02 [Verse], 03 [Chorus], 04 [Instrumental], 05 [Verse], 06 [Chorus], 07 [Outro], Lyrics must contain those same seven tags in that order. A second Chorus must be written out, never replaced by '(repeat chorus)'. This is a toolkit synchronization convention, not a claim of a fixed native section grammar or guaranteed arrangement adherence.\nFor vocal songs, write actual words to sing beneath the intended vocal tags. Use original concrete imagery, a consistent perspective, natural stresses and a memorable hook. Match phrase length, breathing space, vocal intensity and word density to the specific section's tempo, groove and emotional role in Style. Use section tags such as [Verse], [Pre-Chorus], [Chorus], [Bridge] and [Outro] where appropriate. Preserve supplied lyrics and their language unless asked to rewrite. A wordless instrumental passage gets its tag but no text. For sparse vocals, explicitly locate the few sung passages in Style and put words only in those same passages in Lyrics.\nKeep instruments, BPM, dynamics, arrangement notes, timestamps, counts, comments, translations, chord symbols and production directions out of Lyrics. They belong in Style. Do not print the Style numbering in Lyrics. Do not copy the title or Style prose into Lyrics.\n\nINSTRUMENTAL / NO-LYRICS RULE (overrides vocal-writing and template-focus advice)\nWhen the user requests instrumental/no lyrics, Style must explicitly say: instrumental, no sung or spoken words, no lead vocals, no backing vocals, no choir. Use instruments for the melody, never a singer. Omit singer gender, vocal language, vocal hooks, chant, rap, spoken word, ad-libs, scat and vocal chops, including those inherited from unrelated fields or template examples.\nThe final Lyrics section MUST contain ONLY the instrumental section tags from the full Style arrangement, each alone on its own line. Suitable descriptive conventions include [Intro], [Instrumental], [Bridge], [Solo] and [Outro]. Use [Bridge] for a real contrasting instrumental passage and [Solo] only for an actual featured instrumental solo; otherwise use another [Instrumental] occurrence and explain its distinct role in Style. Do not use vocal-oriented Verse/Chorus tags for an instrumental. These are writing conventions, not a certified list of YuE2 control tokens.\nDo not write any lyric words, prose directions, placeholder text, syllables, oh/ah/la, mm/hmm, scat, vocal refrains or 'no lyrics' text inside Lyrics. Repeated [Instrumental] tags are useful only when their matching Style entries describe distinct musical development. Never collapse a developed instrumental plan to three generic tags merely because there are no sung words.\nDefault to no human voice at all. Only when explicitly requested may Style allow quiet wordless closed-mouth humming as a background texture. In that case use: instrumental-led, background closed-mouth humming only, no sung or spoken words, no open-vowel singing, no lead vocals, no choir. Locate the humming texture in the relevant Style entries only; Lyrics stays tag-only, and humming is never transcribed. The separate wordless-vocals mode must not override instrumental mode. Prompting cannot guarantee that the audio model never hallucinates a voice.\n\nINSTRUMENTAL FORMAT EXAMPLE — ADAPT THE MUSIC, DO NOT COPY IT AS A UNIVERSAL RECIPE\nFor an instrumental guitar/electric-piano trio with bass and restrained drums, a four-minute arrangement at 120 BPM in 4/4 could contain (Target duration: 240 seconds):\n01 [Intro]: 00:00-00:16, 8 bars; Unaccompanied guitar states a short rising motif over open voicings; its final pickup invites the bass entrance.\n02 [Instrumental]: 00:16-00:48, 16 bars; Bass and brushed drums establish the relaxed pocket while guitar completes the theme, leaving the piano silent for contrast.\n03 [Instrumental]: 00:48-01:20, 16 bars; Electric piano answers fragments of the theme in a higher register; the bass becomes more melodic and a brief drum fill prepares the reduction.\n04 [Bridge]: 01:20-01:52, 16 bars; Drums drop out and piano reharmonizes the motif over sustained bass tones, creating a quieter harmonic detour before the groove returns.\n05 [Instrumental]: 01:52-02:24, 16 bars; The original pulse returns with a syncopated guitar variation; short piano responses build anticipation without overcrowding the melody.\n06 [Solo]: 02:24-03:12, 24 bars; Guitar develops the motif into a focused solo over the established harmony; drums move from brushes to light stick accents and build toward the final theme.\n07 [Instrumental]: 03:12-03:44, 16 bars; Guitar and piano trade the returning theme across registers for the fullest statement; a descending bass answer begins the release.\n08 [Outro]: 03:44-04:00, 8 bars including the final decay; Drums and bass withdraw, leaving the opening guitar motif simplified into a resolved final chord with a short natural decay.\nThe corresponding Lyrics content is exactly:\n[Intro]\n\n[Instrumental]\n\n[Instrumental]\n\n[Bridge]\n\n[Instrumental]\n\n[Solo]\n\n[Instrumental]\n\n[Outro]\nFor other genres, invent appropriate instruments, contrasting functions and form while preserving this one-to-one correspondence. The example illustrates map synchronization, not a duration guarantee. The final answer still requires the complete Style identity paragraph, all four top-level sections and the user's own musical choices.\n\nTITLE AND COVER\nAfter Style and Lyrics are complete and synchronized, choose one short final title derived from their musical concept, emotional arc or imagery. Then write a cohesive square album-cover description with a clear subject, composition, palette, atmosphere and lighting. The image prompt is for FLUX.2 only. Avoid artist imitation or unwanted lettering. End Image_Prompt with: No text, letters, words, numbers, symbols, logos, watermarks, labels, signage, or other written characters.\n\nFINAL CHECK (silent)\n- Extract the bracketed tag from every numbered Style arrangement entry. Compare that ordered list with ALL Lyrics section tags, including repeated occurrences. The lists must be identical in spelling, order and count; fix both fields if they are not.\n- Every Style section has a concrete musical function, a stated change or intentional continuity, and a coherent transition. Repeated sections develop the motif, groove, harmony, register, texture or dynamics rather than repeat generic prose.\n- The instrumental arc is fully described even though Lyrics contains no words. For instrumentals remove every non-tag line from Lyrics and retain all matching structural tags; only expressly requested humming may appear in Style.\n- Vocal entries agree with where words actually occur in Lyrics. The arrangement fits the user's genre, ensemble, target length and desired degree of repetition. Tempo/key/meter and vocal exclusions do not contradict one another.\n- Output exactly [Style], [Lyrics], [Title], [Image_Prompt], each once, with no analysis or extra top-level heading. Emit only finished content.\n",
         "Save as custom system prompt": null,
         "Refresh prompt lists": null
       },
@@ -4842,13 +4884,13 @@
         "auto_increment",
         "album - title",
         true,
-        "YuE2 / MiniMax Music Production Toolkit 2.6.0"
+        "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0"
       ],
       "widgets_values_named": {
         "collision_mode": "auto_increment",
         "filename_mode": "album - title",
         "create_directories": true,
-        "workflow_name": "YuE2 / MiniMax Music Production Toolkit 2.6.0"
+        "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0"
       },
       "color": "#4b766a",
       "bgcolor": "#252b33"
@@ -4862,7 +4904,7 @@
       ],
       "size": [
         560,
-        280
+        310
       ],
       "flags": {},
       "order": 18,
@@ -4929,6 +4971,14 @@
             "name": "yue2_models"
           },
           "link": null
+        },
+        {
+          "name": "sheetsage2_models",
+          "type": "BOOLEAN",
+          "link": null,
+          "widget": {
+            "name": "sheetsage2_models"
+          }
         }
       ],
       "outputs": [
@@ -4937,7 +4987,8 @@
           "name": "report",
           "type": "STRING",
           "links": [
-            220
+            220,
+            353
           ]
         }
       ],
@@ -4951,6 +5002,7 @@
         true,
         false,
         true,
+        true,
         true
       ],
       "widgets_values_named": {
@@ -4959,7 +5011,8 @@
         "flashsr_models": true,
         "llm_model": false,
         "auto_download": true,
-        "yue2_models": true
+        "yue2_models": true,
+        "sheetsage2_models": true
       },
       "color": "#486679",
       "bgcolor": "#252b33"
@@ -4985,7 +5038,7 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Song request → LLM → parser\n\nChoose where the LLM runs: In ComfyUI (GGUF), Local app / server, or Cloud service. Only relevant controls are shown. External: start the API server, Set API key if needed, then Find models. Cloud sends prompts to the provider and may incur charges.\n\nThe LLM generates fresh text on every queued execution; no session/seed helper is needed. Unload releases only integrated models; manage external app memory in that app. Manual route: LLM enabled=false and parser manual fields. See LLM_PROVIDERS.md."
+        "## Song request → LLM → parser\n\nChoose where the LLM runs: In ComfyUI (GGUF), Local app / server, or Cloud service. Only relevant controls are shown. External: start the API server, Set API key if needed, then Find models. Cloud sends prompts to the provider and may incur charges.\n\nThe LLM generates fresh text on every queued execution; no session/seed helper is needed. Unload releases only integrated models; manage external app memory in that app. Manual route: LLM enabled=false and parser manual fields. See LLM_PROVIDERS.md.\n\nYuE2 Cover also sends source filename and ABC notation to the selected LLM. The cover title is fixed to the source filename plus -cover."
       ],
       "widgets_values_named": {
         "text": "## Song request → LLM → parser\n\nChoose where the LLM runs: In ComfyUI (GGUF), Local app / server, or Cloud service. Only relevant controls are shown. External: start the API server, Set API key if needed, then Find models. Cloud sends prompts to the provider and may incur charges.\n\nThe LLM generates fresh text on every queued execution; no session/seed helper is needed. Unload releases only integrated models; manage external app memory in that app. Manual route: LLM enabled=false and parser manual fields. See LLM_PROVIDERS.md."
@@ -5043,7 +5096,7 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Generate music\n\nSong model selects MiniMax or YuE2 and the matching settings. YuE2 generates ABC first, then music tokens, acoustic latents and 48 kHz audio. max_duration is a ceiling; generation may end earlier. Model filenames are editable on Generate song."
+        "## Generate music\n\nChoose YuE2, YuE2 Cover or MiniMax in CHOOSE. New-song YuE2 generates an ABC score first. YuE2 Cover uses the unchanged SheetSage2 transcription from SOURCE AUDIO, with the same full/melody mode for transcription and music. Both YuE2 paths produce 48 kHz audio; release conversion is independent. Duration is a ceiling. Model filenames are editable on Generate song."
       ],
       "widgets_values_named": {
         "text": "## Generate music\n\nSong model selects MiniMax or YuE2 and the matching settings. YuE2 generates ABC first, then music tokens, acoustic latents and 48 kHz audio. max_duration is a ceiling; generation may end earlier. Model filenames are editable on Generate song."
@@ -5130,7 +5183,7 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Start here\n\n1. Choose **YuE2** (default) or MiniMax in 00 · CHOOSE / Song model.\n2. Set Cover (ON), Refinement (model default: YuE2 OFF / MiniMax ON) and Mastering (ON).\n3. Check model filenames, output folder and artist/album.\n4. Choose your song brief and LLM provider; review settings and queue.\n\nOnly the selected music engine loads. Model check downloads missing selected weights when auto_download is ON (default). YuE2 requires native YuE2 nodes."
+        "## Start here · 3.0\n\n1. Choose YuE2 (default), YuE2 Cover or MiniMax in CHOOSE.\n2. For YuE2 Cover, select audio in SOURCE AUDIO; full retains melody/harmony, melody allows a new accompaniment.\n3. Set artwork, Refinement (YuE2/Cover off; MiniMax on) and Mastering. Check output folder, models and artist/album.\n4. Describe the arrangement in WRITE and queue. Cover prompts also receive source ABC; lyric words are not transcribed.\n\nSelected-model autoload is on, including SheetSage2 in Cover mode. See YUE2.md."
       ],
       "widgets_values_named": {
         "text": "## Start here\n\n1. Choose YuE2 or MiniMax on Song model.\n2. Check the selected model filenames, output folder and artist/album.\n3. Choose your song brief and LLM provider.\n4. Review model-specific settings and queue.\n\nOnly the selected music engine loads. Model check downloads missing selected song weights when auto_download is on (default). YuE2 requires native YuE2 nodes."
@@ -5787,7 +5840,7 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This resample-only stage also runs with mastering bypassed. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
+        "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This runs with the compressor bypassed; central Mastering OFF skips conversion too. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
       ],
       "widgets_values_named": {
         "text": "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This resample-only stage also runs with mastering bypassed. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
@@ -5812,7 +5865,7 @@
       "title": "Cover control",
       "properties": {},
       "widgets_values": [
-        "Cover creation is controlled centrally in **00 · CHOOSE / Song model**.\n\nCover is enabled by default. Switching it off also skips the FLUX.2 model check/download."
+        "Cover creation is controlled centrally in **00 · CHOOSE / Song model**.\n\nCover is enabled by default. Switching it off also skips the FLUX.2 model check/download.\n\nThis switch controls artwork, independently of the YuE2 Cover audio mode."
       ]
     },
     {
@@ -5970,7 +6023,9 @@
             290,
             300,
             305,
-            307
+            307,
+            346,
+            347
           ]
         },
         {
@@ -6380,6 +6435,131 @@
       "widgets_values_named": {
         "stage": "Mastering"
       }
+    },
+    {
+      "id": 121,
+      "type": "MusicCoverSource",
+      "pos": [
+        700,
+        -435
+      ],
+      "size": [
+        505,
+        230
+      ],
+      "flags": {},
+      "order": 53,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_profile_json",
+          "type": "STRING",
+          "link": 346
+        },
+        {
+          "name": "audio",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "audio"
+          }
+        },
+        {
+          "name": "mode",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "mode"
+          }
+        },
+        {
+          "name": "sheetsage2_model",
+          "type": "STRING",
+          "link": null,
+          "widget": {
+            "name": "sheetsage2_model"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "links": [
+            348,
+            349,
+            350,
+            351,
+            352
+          ]
+        },
+        {
+          "name": "cover_title",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MusicCoverSource"
+      },
+      "widgets_values": [
+        "<select audio>",
+        "full",
+        "sheetsage2_bf16.safetensors"
+      ],
+      "title": "Cover song / Source audio",
+      "widgets_values_named": {
+        "audio": "<select audio>",
+        "mode": "full",
+        "sheetsage2_model": "sheetsage2_bf16.safetensors"
+      }
+    },
+    {
+      "id": 122,
+      "type": "MusicCoverTranscription",
+      "pos": [
+        1260,
+        -435
+      ],
+      "size": [
+        465,
+        150
+      ],
+      "flags": {},
+      "order": 54,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_profile_json",
+          "type": "STRING",
+          "link": 347
+        },
+        {
+          "name": "cover_source_json",
+          "type": "STRING",
+          "link": 348
+        },
+        {
+          "name": "model_check_report",
+          "type": "STRING",
+          "link": 353
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cover_abc",
+          "type": "STRING",
+          "links": [
+            354,
+            355
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MusicCoverTranscription"
+      },
+      "widgets_values": [],
+      "title": "Cover song / SheetSage2 → ABC"
     }
   ],
   "links": [
@@ -6700,7 +6880,7 @@
       80,
       1,
       53,
-      5,
+      7,
       "STRING"
     ],
     [
@@ -6708,7 +6888,7 @@
       80,
       2,
       53,
-      6,
+      8,
       "STRING"
     ],
     [
@@ -6876,7 +7056,7 @@
       101,
       0,
       53,
-      12,
+      14,
       "STRING"
     ],
     [
@@ -6884,7 +7064,7 @@
       81,
       1,
       53,
-      13,
+      15,
       "STRING"
     ],
     [
@@ -7196,7 +7376,7 @@
       118,
       4,
       53,
-      14,
+      16,
       "INT"
     ],
     [
@@ -7510,6 +7690,102 @@
       115,
       1,
       "BOOLEAN"
+    ],
+    [
+      346,
+      118,
+      0,
+      121,
+      0,
+      "STRING"
+    ],
+    [
+      347,
+      118,
+      0,
+      122,
+      0,
+      "STRING"
+    ],
+    [
+      348,
+      121,
+      0,
+      122,
+      1,
+      "STRING"
+    ],
+    [
+      349,
+      121,
+      0,
+      80,
+      1,
+      "STRING"
+    ],
+    [
+      350,
+      121,
+      0,
+      53,
+      2,
+      "STRING"
+    ],
+    [
+      351,
+      121,
+      0,
+      55,
+      2,
+      "STRING"
+    ],
+    [
+      352,
+      121,
+      0,
+      37,
+      4,
+      "STRING"
+    ],
+    [
+      353,
+      101,
+      0,
+      122,
+      2,
+      "STRING"
+    ],
+    [
+      354,
+      122,
+      0,
+      80,
+      2,
+      "STRING"
+    ],
+    [
+      355,
+      122,
+      0,
+      37,
+      5,
+      "STRING"
+    ],
+    [
+      356,
+      80,
+      3,
+      53,
+      3,
+      "STRING"
+    ],
+    [
+      357,
+      53,
+      10,
+      55,
+      3,
+      "STRING"
     ]
   ],
   "groups": [
@@ -7608,6 +7884,18 @@
       ],
       "color": "#4e7064",
       "flags": {}
+    },
+    {
+      "title": "YuE2 Cover / SOURCE AUDIO (only used in Cover mode)",
+      "bounding": [
+        665,
+        -515,
+        1085,
+        460
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
     }
   ],
   "config": {},
@@ -7624,8 +7912,8 @@
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
-    "workflow_name": "YuE2 Production Toolkit 2.5.2",
-    "workflow_version": "2.6.0",
+    "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0",
+    "workflow_version": "3.0.0",
     "song_model_switching": true
   },
   "version": 0.4

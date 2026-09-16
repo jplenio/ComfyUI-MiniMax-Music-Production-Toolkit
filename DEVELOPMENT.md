@@ -119,7 +119,10 @@ After adding tracks, paste their normal SoundCloud URLs into `soundcloudUrl` and
 python scripts/package_release.py --output-dir dist
 ```
 
-5. Review `SHA256SUMS.txt` and the ZIP contents.
+5. Review `SHA256SUMS.txt` and the ZIP contents. Prefer a versioned output directory
+   such as `dist/v3.0.0/` to retain previous checksums. Check all three workflow
+   versions/names, including named and positional metadata widgets. Refresh the
+   intentional node-contract snapshot if the version appears in a widget default.
 6. Commit and push.
 7. Create GitHub tag/release `vX.Y.Z`.
 8. The GitHub Action publishes package version `X.Y.Z` to the Comfy Registry using `REGISTRY_ACCESS_TOKEN`.

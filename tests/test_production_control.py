@@ -22,7 +22,7 @@ class ProductionControlTests(unittest.TestCase):
 
     def test_defaults_and_overrides(self):
         self.assertEqual(self.control.build()[-3:], (True, False, True))
-        for model, default in [('YuE2', False), ('MiniMax Music 3', True)]:
+        for model, default in [('YuE2', False), ('YuE2 Cover', False), ('MiniMax Music 3', True)]:
             for setting, expected in [('Model default', default), ('On', True), ('Off', False)]:
                 result = self.control.build(model, False, setting, False)
                 self.assertEqual(result[-3:], (False, expected, False))
@@ -66,7 +66,7 @@ class ProductionControlTests(unittest.TestCase):
         refinement_nodes = {45, 49, 50, 93, 94, 95}
         mastering_nodes = {109, 110, 112, 91, 111}
         for model, cover, refinement, mastering in itertools.product(
-                ['YuE2', 'MiniMax Music 3'], [False, True], ['Model default', 'On', 'Off'], [False, True]):
+                ['YuE2', 'YuE2 Cover', 'MiniMax Music 3'], [False, True], ['Model default', 'On', 'Off'], [False, True]):
             result = self.control.build(model, cover, refinement, mastering)
             seen = set()
             def visit(nid):
@@ -116,7 +116,8 @@ class ProductionControlTests(unittest.TestCase):
                     model_profile_json=self.control.build()[0])
         result = cls().build(**args)
         self.assertIn('INSTRUMENTAL CONSTRAINT', result[1])
-        self.assertIn('only a short instrumental section map', result[1])
+        self.assertIn('full chronological arrangement in Style', result[1])
+        self.assertIn('exactly the same order and number of occurrences', result[1])
         self.assertIn('no sung or spoken words', result[0])
         for path in (ROOT/'prompts/system/yue2').glob('*.txt'):
             self.assertIn('Lyrics section MUST contain ONLY', path.read_text(encoding='utf-8'))

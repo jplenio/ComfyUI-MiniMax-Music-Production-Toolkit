@@ -1,0 +1,37 @@
+[Style]
+Target duration: 240 seconds.
+Aim for approximately four minutes; finish the final phrase and natural decay even if they run beyond the target. Section times below are approximate planning landmarks.
+Instrumental melodic progressive house, 120 BPM, 4/4, A minor, warm rounded bass, a restrained four-on-the-floor kick, dry percussion, a plucked synth lead and one soft chord pad. A rising three-note motif moves from intimate anticipation through rhythmic discovery and a suspended middle passage to an expansive return, then resolves quietly. Keep bass and kick distinct, the lead in the foreground and the pad supportive; use short delays and clear transients. No sung or spoken words, no lead vocals, no backing vocals, no choir.
+
+Arrangement (section order):
+01 [Intro]: 00:00-00:16, 8 bars; The plucked synth introduces the motif alone over a quiet pad, with long spaces between answers. A filtered bass pickup introduces the pulse without a full drum entrance.
+02 [Instrumental]: 00:16-00:48, 16 bars; Kick and rounded bass establish the groove beneath the complete motif; dry closed hats gradually articulate the offbeats. Keep the register narrow and leave room for the lead's short decay.
+03 [Instrumental]: 00:48-01:20, 16 bars; Shift the motif's answer upward and introduce a syncopated bass variation, while short percussion accents increase forward motion. Thin the pad before a brief drum fill signals the contrasting passage.
+04 [Bridge]: 01:20-01:52, 16 bars; Remove kick and hats, exposing a slower harmonic reinterpretation of the motif over sustained bass. Reduce the lead to two-note fragments; a rising pickup suggests the original theme without restoring full energy yet.
+05 [Instrumental]: 01:52-02:24, 16 bars; Bass and muted kick return first, then the lead rebuilds its complete phrase with a changed rhythmic accent. Reintroduce hats in stages, opening the register while preserving space for the coming peak.
+06 [Instrumental]: 02:24-03:12, 24 bars; Present the fullest statement with the theme answered an octave higher, a wider chord voicing and firmer percussion. The recognizable bass pattern anchors the change; keep added accents short instead of creating a continuous cymbal wash.
+07 [Instrumental]: 03:12-03:44, 16 bars; Return to the lower motif register and remove alternating percussion layers, allowing a descending bass answer to relax the tension. Reduce the pad to held chord tones as the beat gives way.
+08 [Outro]: 03:44-04:00, 8 bars including the final decay; Let drums and bass withdraw completely, leaving a simplified version of the opening motif over a resolved final chord. End with a short, natural delay tail instead of restarting the groove.
+
+[Lyrics]
+[Intro]
+
+[Instrumental]
+
+[Instrumental]
+
+[Bridge]
+
+[Instrumental]
+
+[Instrumental]
+
+[Instrumental]
+
+[Outro]
+
+[Title]
+After the Last Light
+
+[Image_Prompt]
+A single amber light above a quiet coastal terrace at blue hour, its reflection stretching across dark polished stone toward a calm horizon. An intimate foreground opens into a spacious sky, with a restrained amber and deep-blue palette, subtle atmospheric depth and balanced square composition. No text, letters, words, numbers, symbols, logos, watermarks, labels, signage, or other written characters.

@@ -391,7 +391,7 @@ class StructuredPromptNodeTests(unittest.TestCase):
         # source_name_override moved into required so it can sit before system_prompt.
         # 2.6.0 appended exactly one optional input - the selected song model - and
         # nothing else may move into the optional group without a migration.
-        self.assertEqual(list(data.get("optional", {})), ["model_profile_json"])
+        self.assertEqual(list(data.get("optional", {})), ["model_profile_json", "cover_source_json", "cover_abc"])
         self.assertTrue(data["optional"]["model_profile_json"][1]["forceInput"])
         self.assertEqual(required["source_name_override"][1].get("default"), "")
         self.assertEqual(required["user_prompt_file"][1].get("default"), "electronic/synth-pop-vocal.txt")

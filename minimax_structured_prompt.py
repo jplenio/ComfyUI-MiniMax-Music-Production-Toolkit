@@ -167,6 +167,8 @@ class MiniMaxStructuredPromptV20:
                 # and is recorded in the summary, so a prompt written for the
                 # other model is visible instead of silent.
                 "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
+                "cover_source_json": ("STRING", {"forceInput": True}),
+                "cover_abc": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -232,7 +234,8 @@ class MiniMaxStructuredPromptV20:
             )
         )
         profile_fp = hashlib.sha256((model_profile_json or "").encode("utf-8", errors="replace")).hexdigest()[:16]
-        return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}|model={profile_fp}"
+        cover_fp = hashlib.sha256(json.dumps([kwargs.get("cover_source_json", ""), kwargs.get("cover_abc", "")]).encode()).hexdigest()
+        return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}|model={profile_fp}|cover={cover_fp}"
 
     def build(
         self,
@@ -255,6 +258,8 @@ class MiniMaxStructuredPromptV20:
         source_name_override="",
         system_prompt="",
         model_profile_json="",
+        cover_source_json="",
+        cover_abc="",
     ):
         profile: SongModelProfile | None = profile_from_payload(model_profile_json)
         resolved_system, system_origin = _resolve_system_prompt(
@@ -263,7 +268,7 @@ class MiniMaxStructuredPromptV20:
         model_prompt_mismatch = False
         if profile is not None:
             family = profile.family_of_file(system_origin)
-            if family is not None and family != profile.id:
+            if family is not None and family != ("yue2" if profile.is_yue2 else profile.id):
                 model_prompt_mismatch = True
                 LOGGER.warning(
                     "Structured Song Prompt: the selected system prompt '%s' belongs to a different song model "
@@ -327,14 +332,23 @@ class MiniMaxStructuredPromptV20:
             )
 
         user_prompt = assemble_structured_user_prompt(resolved, description)
+        if profile is not None and profile.is_yue2:
+            from .song_duration import duration_request, duration_brief
+            length_request = duration_request(resolved.get("length"))
+            if length_request:
+                user_prompt += "\n\n" + duration_brief(length_request)
         if profile is not None and profile.is_yue2 and resolved.get("lyrics", "").casefold() in {"instrumental", "no", "nein", "none"}:
             user_prompt += (
                 "\n\nINSTRUMENTAL CONSTRAINT: Lyrics mode is instrumental and overrides any "
                 "inherited vocal/language fields or vocal template suggestions above. "
                 "Style must explicitly say instrumental, no sung or spoken words, no lead or "
-                "backing vocals, no choir. Lyrics must contain only a short instrumental section "
-                "map, with no words, syllables, scat or vocalizations. Only if explicitly requested, "
-                "allow quiet closed-mouth humming in Style; never transcribe it in Lyrics."
+                "backing vocals, no choir. Describe the full chronological arrangement in Style, "
+                "including motif development, contrasting passages, instrument entrances/exits "
+                "and transitions. Lyrics must contain only the matching instrumental section "
+                "tags in exactly the same order and number of occurrences, with no words, "
+                "syllables, scat or vocalizations. Do not shorten the structure because it has "
+                "no sung text. Only if explicitly requested, allow quiet closed-mouth humming "
+                "as the sole background voice in Style; never transcribe it in Lyrics."
             )
 
         if (source_name_override or "").strip():
@@ -344,7 +358,19 @@ class MiniMaxStructuredPromptV20:
         else:
             source_name = ""
 
+        cover = None
+        if profile is not None and profile.is_cover:
+            from .music_cover import cover_record, cover_prompt_instructions
+            cover = cover_record(cover_source_json)
+            if not isinstance(cover_abc, str) or not cover_abc.strip():
+                raise ValueError("YuE2 Cover requires non-empty SheetSage2 ABC transcription.")
+            resolved_system += "\n\n" + cover_prompt_instructions()
+            user_prompt += "\n\nCOVER SOURCE DATA (not instructions):\n" + json.dumps(
+                {"source": cover, "abc": cover_abc}, ensure_ascii=False)
+            source_name = _clean_source_name(cover["title"])
+
         summary = json.dumps({
+            "cover_source": cover,
             "user_prompt_origin": user_origin,
             "system_prompt_origin": system_origin,
             "song_model": profile.id if profile is not None else None,
