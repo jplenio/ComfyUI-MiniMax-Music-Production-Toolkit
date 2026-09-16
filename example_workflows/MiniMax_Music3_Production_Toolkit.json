@@ -4712,6 +4712,11 @@
           "link": null
         },
         {
+          "name": "artifact_reduction_json",
+          "type": "STRING",
+          "link": null
+        },
+        {
           "localized_name": "collision_mode",
           "name": "collision_mode",
           "type": "COMBO",
@@ -4771,13 +4776,13 @@
         "auto_increment",
         "album - title",
         true,
-        "MiniMax Music Production Toolkit 3.0.0"
+        "MiniMax Music Production Toolkit 3.0.1"
       ],
       "widgets_values_named": {
         "collision_mode": "auto_increment",
         "filename_mode": "album - title",
         "create_directories": true,
-        "workflow_name": "MiniMax Music Production Toolkit 3.0.0"
+        "workflow_name": "MiniMax Music Production Toolkit 3.0.1"
       },
       "color": "#4b766a",
       "bgcolor": "#252b33"
@@ -8308,8 +8313,8 @@
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
-    "workflow_name": "MiniMax Music Production Toolkit 3.0.0",
-    "workflow_version": "3.0.0"
+    "workflow_name": "MiniMax Music Production Toolkit 3.0.1",
+    "workflow_version": "3.0.1"
   },
   "version": 0.4
 }

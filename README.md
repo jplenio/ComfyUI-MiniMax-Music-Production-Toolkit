@@ -1,4 +1,4 @@
-# MiniMax Music Production Toolkit 3.0 for ComfyUI
+# MiniMax Music Production Toolkit 3.0.1 for ComfyUI
 
 **New in 3.0: Turn an audio file into a YuE2 cover version.** Upload your track,
 describe a new musical direction and take it through generation, mastering,
@@ -9,7 +9,13 @@ ABC notation. Your LLM uses that score to adapt the cover's Style and Lyrics
 plan, while YuE2 receives the original transcription for generation. This is
 the first cover implementation in the toolkit—and a first step toward doing
 more with an open, readable musical description.
-[Try YuE2 Cover](YUE2.md#cover-an-audio-file) · [What's new in 3.0.0](RELEASE_NOTES_v3.0.0.md)
+[Try YuE2 Cover](YUE2.md#cover-an-audio-file) · [What's new in 3.0.1](RELEASE_NOTES_v3.0.1.md)
+
+**3.0.1 adds more control over the sound:** 10 Auto-EQ presets, 24 manual EQ
+presets (including YuE2 Smooth highs), and switchable experimental artifact
+reduction. Auto-EQ starts at **Warm - gentle**; artifact reduction starts
+**on / Balanced**. Reference matching without a reference now warns and skips
+correction instead of stopping production.
 
 <p align="center">
   <img src="assets/branding/banner.png" alt="MiniMax Music Production Toolkit" width="100%" />
@@ -88,7 +94,7 @@ is claimed for this toolkit.
   **Balanced - gentle glue**, which retains the previous settings.
 
 Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json)
-and read the [YuE2 guide](YUE2.md) or [release notes](RELEASE_NOTES_v2.6.0.md).
+and read the [YuE2 guide](YUE2.md) or [2.6.0 release notes](RELEASE_NOTES_v2.x.md#v260).
 The classic MiniMax and Audio Enhancement Lab workflows remain available.
 
 ## What's new in 2.5.2
@@ -219,14 +225,29 @@ versions at similar listening loudness and keep the processing that helps.
 
 ## Mastering, with as much control as you want
 
-**Auto-EQ is enabled by default when Mastering runs.** The starting preset is a
-gentle Warm tilt at 35% strength with a maximum 2 dB correction. Switch
-`enabled` off to leave automatic tonal shaping out, or connect a reference
-track and choose Reference track mode for a guided tonal comparison.
+**Auto-EQ is enabled by default when Mastering runs.** The main workflow starts with
+**Warm - gentle (workflow default)**: Warm tilt, 35% strength, maximum 2 dB,
+four bands, 40–16000 Hz. No reference audio is needed. Switch `enabled` off to
+leave automatic tonal shaping out, or connect a reference track and choose a
+Reference preset for a guided tonal comparison. Missing reference audio in
+Reference mode produces a warning and skips correction.
 
 The **manual 8-band EQ** stays editable whether Auto-EQ is on or off. Shape the
 curve visually or enter precise values. Use its own `bypass` control to
 disable only your manual EQ.
+
+Choose from **10 Auto-EQ presets** and **24 manual EQ presets**, plus Custom.
+The Auto-EQ workflow preset is **Warm - gentle**; manual EQ starts **Flat**.
+For harsh YuE2 highs, try **YuE2 - Smooth highs** or its stronger variant.
+Presets remain fully editable and save with the workflow. See the
+[preset guide and YuE2 recommendations](EQ_PRESETS.md).
+
+The main workflow also includes **experimental AI Audio Artifact Reduction**
+for brief whistles and metallic spectral spikes. Control `artifact_reduction_enabled`
+in **CHOOSE**; it starts **on**, uses **Balanced** sensitivity and runs independently between Refinement and
+Mastering. An analysis-only mode and a removed-audio output help you judge what
+it detects. It cannot distinguish every unwanted artifact from wanted music.
+See [research, usage and limitations](ARTIFACT_REDUCTION.md).
 
 The **mastering compressor** starts with a gentle 1.5:1 ratio and a
 **−14 LUFS / −1 dBTP** target. Switch `compressor_enabled` off to retain
@@ -310,11 +331,11 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
+- [Release 3.0.1 notes](RELEASE_NOTES_v3.0.1.md)
 - [Release 3.0.0 notes](RELEASE_NOTES_v3.0.0.md)
 - [YuE2 new songs and audio cover guide](YUE2.md)
-- [Release 2.6.0 notes](RELEASE_NOTES_v2.6.0.md)
-- [Release 2.5.1 notes](RELEASE_NOTES_v2.5.1.md)
-- [Release 2.5 notes](RELEASE_NOTES_v2.5.0.md)
+- [Combined 2.x release notes](RELEASE_NOTES_v2.x.md)
+- [Combined 1.0.x release notes](RELEASE_NOTES_v1.0.x.md)
 - [Installation and dependencies](INSTALLATION.md)
 - [Complete workflow guide](WORKFLOW.md)
 - [Mastering workflow controls](WORKFLOW_OPTIMIZED.md)

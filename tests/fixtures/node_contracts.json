@@ -1,4 +1,99 @@
 {
+  "AudioArtifactReduction": {
+    "python_class": "AudioArtifactReduction",
+    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "function": "process",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "AUDIO",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "removed_audio",
+      "artifact_reduction_json",
+      "info"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "mode": [
+        [
+          "Reduce",
+          "Analyze only"
+        ],
+        {
+          "default": "Reduce"
+        }
+      ],
+      "sensitivity": [
+        [
+          "Gentle",
+          "Balanced",
+          "Strong"
+        ],
+        {
+          "default": "Balanced"
+        }
+      ],
+      "min_frequency_hz": [
+        "FLOAT",
+        {
+          "default": 3000.0,
+          "min": 1000.0,
+          "max": 16000.0,
+          "step": 100.0
+        }
+      ],
+      "max_frequency_hz": [
+        "FLOAT",
+        {
+          "default": 18000.0,
+          "min": 2000.0,
+          "max": 20000.0,
+          "step": 100.0
+        }
+      ],
+      "max_reduction_db": [
+        "FLOAT",
+        {
+          "default": 3.0,
+          "min": 0.0,
+          "max": 8.0,
+          "step": 0.25
+        }
+      ],
+      "protect_transients": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "mix": [
+        "FLOAT",
+        {
+          "default": 1.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.05
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
   "AudioDeclipRepair": {
     "python_class": "AudioDeclipRepair",
     "category": "MiniMax Music Production Toolkit/audio restoration",
@@ -3307,7 +3402,7 @@
       "workflow_name": [
         "STRING",
         {
-          "default": "MiniMax Music Production Toolkit 3.0.0",
+          "default": "MiniMax Music Production Toolkit 3.0.1",
           "multiline": false
         }
       ],
@@ -3354,6 +3449,12 @@
         }
       ],
       "template_version": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "artifact_reduction_json": [
         "STRING",
         {
           "forceInput": true
@@ -5021,6 +5122,7 @@
       "STRING",
       "BOOLEAN",
       "BOOLEAN",
+      "BOOLEAN",
       "BOOLEAN"
     ],
     "return_names": [
@@ -5034,7 +5136,8 @@
       "info",
       "cover_enabled",
       "refinement_enabled",
-      "mastering_enabled"
+      "mastering_enabled",
+      "artifact_reduction_enabled"
     ],
     "required": {
       "model": [
@@ -5064,6 +5167,12 @@
         }
       ],
       "mastering_enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "artifact_reduction_enabled": [
         "BOOLEAN",
         {
           "default": true

@@ -15,19 +15,22 @@ class MusicProductionControl(MiniMaxMusicModelProfile):
             "cover_enabled": ("BOOLEAN", {"default": True}),
             "refinement": (["Model default", "On", "Off"], {"default": "Model default"}),
             "mastering_enabled": ("BOOLEAN", {"default": True}),
+            "artifact_reduction_enabled": ("BOOLEAN", {"default": True}),
         }}
 
-    RETURN_TYPES = MiniMaxMusicModelProfile.RETURN_TYPES + ("BOOLEAN",) * 3
+    RETURN_TYPES = MiniMaxMusicModelProfile.RETURN_TYPES + ("BOOLEAN",) * 4
     RETURN_NAMES = MiniMaxMusicModelProfile.RETURN_NAMES + (
         "cover_enabled", "refinement_enabled", "mastering_enabled",
+        "artifact_reduction_enabled",
     )
     DESCRIPTION = (
         "Choose the song model and production stages. Model default enables refinement for "
         "MiniMax and disables it for YuE2. On/Off override that choice. Cover and mastering "
-        "are independent and enabled by default."
+        "are independent and enabled by default. Experimental artifact reduction is independent and on by default."
     )
 
-    def build(self, model="YuE2", cover_enabled=True, refinement="Model default", mastering_enabled=True):
+    def build(self, model="YuE2", cover_enabled=True, refinement="Model default", mastering_enabled=True,
+              artifact_reduction_enabled=True):
         if refinement not in ("Model default", "On", "Off"):
             raise ValueError(f"Unknown refinement choice: {refinement}")
         refined = (not get_profile(model).is_yue2) if refinement == "Model default" else refinement == "On"
@@ -36,10 +39,12 @@ class MusicProductionControl(MiniMaxMusicModelProfile):
         payload["production_stages"] = {
             "cover": bool(cover_enabled), "refinement": refined,
             "refinement_selection": refinement, "mastering": bool(mastering_enabled),
+            "artifact_reduction": bool(artifact_reduction_enabled),
         }
         result[0] = json.dumps(payload, ensure_ascii=False)
         result[7] += f" | cover: {bool(cover_enabled)} | refinement: {refined} | mastering: {bool(mastering_enabled)}"
-        return tuple(result) + (bool(cover_enabled), refined, bool(mastering_enabled))
+        result[7] += f" | artifact reduction: {bool(artifact_reduction_enabled)}"
+        return tuple(result) + (bool(cover_enabled), refined, bool(mastering_enabled), bool(artifact_reduction_enabled))
 
 
 class MusicOptionalStage:

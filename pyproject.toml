@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-minimax-music-production-toolkit"
-version = "3.0.0"
+version = "3.0.1"
 description = "ComfyUI music production with YuE2 audio cover versions, SheetSage2 score-aware prompts, YuE2 and MiniMax Music 3 song generation, restoration, mastering, artwork and release metadata."
 readme = "README.md"
 requires-python = ">=3.10"

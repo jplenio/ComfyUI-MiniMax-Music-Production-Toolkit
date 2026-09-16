@@ -101,6 +101,7 @@ def build_generation_metadata(
     model_identity_json: str = "",
     template_version: str = "",
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
+    artifact_reduction_json: str = "",
 ) -> Dict[str, Any]:
     """Assemble the complete generation metadata payload (schema v7).
 
@@ -239,6 +240,10 @@ def build_generation_metadata(
         mastering["chain"] = mastering_chain
     if mastering:
         payload["mastering"] = mastering
+
+    artifact_report = parse_object(artifact_reduction_json, "artifact_reduction_json")
+    if artifact_report:
+        payload["artifact_reduction"] = artifact_report
 
     runtime: Dict[str, Any] = dict(payload.get("runtime") or {})
     resource_profile = parse_object(resource_profile_json, "resource_profile_json")

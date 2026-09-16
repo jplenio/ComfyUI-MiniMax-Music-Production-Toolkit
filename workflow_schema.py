@@ -129,6 +129,7 @@ JSON_NEW_INPUT_ORDER = (
     "llm_runtime_json",
     "model_identity_json",
     "template_version",
+    "artifact_reduction_json",
 )
 
 # External custom nodes the toolkit replaced with integrated implementations.

@@ -16,6 +16,7 @@ workflow for existing users.
    | Cover | On | Controls rendering, preview, cover file and FLUX.2 model checks/downloads. |
    | Refinement | Model default | MiniMax: on. YuE2: off. Choose On or Off for a fixed override. |
    | Mastering | On | Controls Auto-EQ, manual EQ, release sample rate and compressor. |
+   | Artifact reduction | On (Balanced) | Experimental spectral outlier attenuation after Refinement, before Mastering; independent of both. |
 
 2. On **Generate song**, enter the installed model filenames. The YuE2 example
    uses `yue2_3b_bf16.safetensors`.
@@ -34,12 +35,18 @@ workflow for existing users.
 5. Set output folder and artist/album, then queue.
 
 The YuE2 default path skips declipping, PRE/POST filtering, FlashSR, crossover
-and HF repair, and sends generation directly to mastering. This saves the time
+and HF repair, and sends generation through Balanced artifact reduction to mastering. This saves the time
 and model loading required for restoration. Refinement remains available for
 tracks that benefit from it. When Mastering is off, release files receive the
 incoming audio at its existing sample rate. Original generation is always saved;
-the saver's configured peak handling still applies. Disabling both audio stages
+the saver's configured peak handling still applies. Keeping artifact reduction
+off and disabling Refinement and Mastering
 passes generation straight to the release savers.
+
+Enable `artifact_reduction_enabled` to audition the new **CLEAN** stage for
+brief metallic/whistling outliers. Analyze-only mode, candidate reports and
+removed-audio audition help assess it; wanted high notes can also trigger it.
+See [artifact reduction](ARTIFACT_REDUCTION.md) for research and limitations.
 
 Skipped stages do not execute to produce reports: their JSON sections say
 `status: bypassed`. Effective central choices are recorded under

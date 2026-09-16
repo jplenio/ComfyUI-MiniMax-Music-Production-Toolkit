@@ -12,6 +12,12 @@ jplenio
 
 ## Release checklist
 
+Documentation history is kept in [combined 1.0.x notes](RELEASE_NOTES_v1.0.x.md),
+[combined 2.x notes](RELEASE_NOTES_v2.x.md) and individual notes from 3.0.0 onward.
+Historical defaults describe those releases, not current workflow behavior.
+For documentation changes after a release is tagged, keep the published tag,
+assets and checksums intact; include updated documentation in the next release.
+
 Before every release:
 
 1. Update `VERSION`.
@@ -41,7 +47,7 @@ The release validator checks required files, Python syntax, version consistency,
 ## Build release assets
 
 ```bash
-python scripts/package_release.py --output-dir dist/v3.0.0
+python scripts/package_release.py --output-dir dist/v3.0.1
 ```
 
 This runs validation/tests first and creates:
@@ -54,16 +60,16 @@ MiniMax_Music3_Production_Toolkit_AudioEnhance_vX.Y.Z.json
 SHA256SUMS.txt
 ```
 
-The assets are written to `dist/v3.0.0/`; this keeps previous release checksums
+The assets are written to `dist/v3.0.1/`; this keeps previous release checksums
 and archives intact. The ZIP excludes VCS state, Python caches and earlier builds.
 
-## Commit v3.0.0
+## Commit v3.0.1
 
 For an existing checkout:
 
 ```bash
 git add -A
-git commit -m "Release v3.0.0"
+git commit -m "Release v3.0.1"
 git push
 ```
 
@@ -74,17 +80,29 @@ Do not re-run `git init` for an already existing repository.
 Create a new GitHub Release with:
 
 ```text
-Tag:   v3.0.0
-Title: MiniMax Music Production Toolkit 3.0.0 — YuE2 Cover Versions
+Tag:   v3.0.1
+Title: MiniMax Music Production Toolkit 3.0.1 — EQ Presets & Artifact Reduction
 ```
 
-Use `RELEASE_NOTES_v3.0.0.md` as the release description and upload the five generated release assets (ZIP, all three workflow JSON files, checksums).
+Use `RELEASE_NOTES_v3.0.1.md` as the release description and upload the five generated release assets (ZIP, all three workflow JSON files, checksums).
 
-`REDDIT_POST_v3.0.0.md` contains the announcement draft. Post it after the release
+`REDDIT_POST_v3.0.1.md` contains the announcement draft. Post it after the release
 and Registry publication have succeeded. Preparing local assets does not create
 a remote GitHub release or publish to the Registry.
 
-The Git tag uses a leading `v`; the package/Registry version remains `3.0.0` without the leading `v`.
+The Git tag uses a leading `v`; the package/Registry version remains `3.0.1` without the leading `v`.
+
+After committing and pushing the checked release tree above, the equivalent
+GitHub CLI commands are:
+
+```bash
+git tag -a v3.0.1 -m "Release v3.0.1"
+git push origin v3.0.1
+gh release create v3.0.1 --verify-tag --title "MiniMax Music Production Toolkit 3.0.1 — EQ Presets & Artifact Reduction" --notes-file RELEASE_NOTES_v3.0.1.md dist/v3.0.1/ComfyUI-MiniMax-Music-Production-Toolkit-v3.0.1.zip dist/v3.0.1/Yue2_MM3_Production_Toolkit_v3.0.1.json dist/v3.0.1/MiniMax_Music3_Production_Toolkit_v3.0.1.json dist/v3.0.1/MiniMax_Music3_Production_Toolkit_AudioEnhance_v3.0.1.json dist/v3.0.1/SHA256SUMS.txt
+```
+
+Run these only once for this new version. A successful local build alone does
+not create the commit, tag or published release.
 
 ## Comfy Registry
 

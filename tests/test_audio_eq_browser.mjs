@@ -20,7 +20,7 @@ try {
 const server = http.createServer(async(req,res)=>{
     try {
         if(req.url==="/scripts/app.js") {res.setHeader("Content-Type","text/javascript");res.end("export const app={registerExtension(){}};");return;}
-        if(req.url==="/web/audio_eq.js" || req.url==="/web/eq_dsp.js") {res.setHeader("Content-Type","text/javascript");res.end(await readFile(new URL(`..${req.url}`,import.meta.url)));return;}
+        if(["/web/audio_eq.js", "/web/eq_dsp.js", "/web/eq_presets.js", "/web/eq_presets.json"].includes(req.url)) {res.setHeader("Content-Type",req.url.endsWith(".json") ? "application/json" : "text/javascript");res.end(await readFile(new URL(`..${req.url}`,import.meta.url)));return;}
         res.setHeader("Content-Type","text/html");res.end('<!doctype html><html><body style="background:#111"><main style="width:620px"></main></body></html>');
     } catch {res.statusCode=404;res.end();}
 });
@@ -38,6 +38,11 @@ try {
             setDirtyCanvas(){},addDOMWidget(name,type,element){document.querySelector('main').append(element);return {};}};
         globalThis.editor=attachEQEditor(testNode);
     });
+    const preset = page.getByRole('combobox',{name:'Manual EQ preset'});
+    await preset.selectOption('YuE2 - Smooth highs');
+    assert.equal(await page.evaluate(()=>JSON.parse(testNode.widgets[0].value).bands.length),2);
+    await page.getByRole('button',{name:'Undo',exact:true}).click();
+    assert.equal(await preset.inputValue(),'Flat');
     await page.getByRole('button',{name:'Add band',exact:true}).click();
     await page.getByRole('spinbutton',{name:'dB',exact:true}).fill('6');
     await page.getByRole('spinbutton',{name:'dB',exact:true}).press('Tab');
@@ -48,6 +53,7 @@ try {
     assert.equal(await page.evaluate(()=>JSON.parse(testNode.widgets[0].value).bands[0].frequency_hz),1000);
     await page.evaluate(()=>{testNode.inputs[0].link=42;editor.sync();});
     assert.ok(await page.getByRole('spinbutton',{name:'dB',exact:true}).isDisabled());
+    assert.ok(await preset.isDisabled());
     await page.evaluate(()=>{testNode.inputs[0].link=null;editor.sync();});
     await page.getByRole('combobox',{name:'Band 1 type'}).selectOption('low_shelf');
     assert.equal(await page.getByRole('spinbutton',{name:'Slope',exact:true}).count(),1);

@@ -113,6 +113,7 @@ NODE_INPUT_TOOLTIPS = {
         "sheetsage2_model": "Audio encoder filename in models/audio_encoders. Autoload provides sheetsage2_bf16.safetensors; custom filenames must already be installed or configured in the model catalog.",
     },
     "MusicProductionControl": {
+        "artifact_reduction_enabled": "Independent experimental spectral outlier reduction after Refinement and before Mastering. On by default with Balanced sensitivity; audition removed_audio to judge the effect on a song. Works with every song model.",
         "model": "Select the actual song generator and matching prompt family. YuE2 is the default in the dual-model workflow.",
         "cover_enabled": "On creates and previews cover artwork. Off skips the image branch and its FLUX.2 model check/download.",
         "refinement": "Model default means OFF for YuE2 and ON for MiniMax. On/Off override that choice. Controls declipping, filtering, FlashSR, crossover and HF repair, including FlashSR model downloads.",

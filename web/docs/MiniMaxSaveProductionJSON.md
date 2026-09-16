@@ -21,9 +21,11 @@ The node assembles the **complete generation record** from direct inputs (no sep
 
 - the full LLM stage: system prompt, user prompt, raw LLM output and status;
 - the structured-prompt summary (origin, resolved fields, overrides);
-- the parsed Caption / Lyrics / Title / Image_Prompt with source provenance, seeds, run/variant counters;
-- the MiniMax Music 3 generation settings (max duration, text seed/CFG/top-k, sampler seed/steps/CFG/denoise);
+- the parsed Caption (MiniMax) or Style (YuE2), Lyrics, Title and Image_Prompt with source provenance, seeds and run/variant counters;
+- the selected engine's settings: MiniMax's generation parameters, or YuE2's `song_model`, `generation` and `style`, including ABC, approximate duration target, configured ceiling and actual generated seconds;
+- for YuE2 Cover, the source record, filename-derived title and original SheetSage2 ABC;
 - every audio-enhancement report: de-clipping, PRE/POST low-pass, FlashSR settings, hybrid crossover, HF cymbal/shimmer repair and release preparation;
+- the optional `artifact_reduction_json` report, stored under `artifact_reduction`, including effective settings, candidate timestamps and bypass/analysis status;
 - (V01) the EQ / auto-EQ / mastering reports under `mastering`, the **effective** resource and LLM runtime under `runtime`, the model identity under `models` and the system-prompt template version under `llm.template_version`;
 - the standard audio tags,
 - original-audio / release FLAC / release MP3 save information,
@@ -31,7 +33,11 @@ The node assembles the **complete generation record** from direct inputs (no sep
 
 Audio save information includes format, sample rate, peak before final file writing, any constant safety gain applied by the saver, filename mode and embedded-cover size.
 
-Together with the `outputs` section this is enough to recreate a song (with modified settings) from the JSON file alone - the optional `MiniMaxMetadataLoader` node (used in a separate restore workflow) reads the same schema.
+These records support inspection and reconstruction of settings; they are not
+a self-contained generation checkpoint. Models, source audio for covers and a
+compatible runtime are still required. The legacy `MiniMaxMetadataLoader` extracts
+MiniMax fields only; YuE2 Style, ABC and generation settings must be read from the
+full JSON. Semantic tokens and latent arrays are not exported.
 
 ## Reproducibility and the V01 additions
 
@@ -71,7 +77,11 @@ Since 2.0.4 the node additionally writes the MiniMax prompt report beside the JS
 
 `log/Example Album - Northern Light.md`
 
-The Markdown report (from the `MiniMaxPromptReport` node, wired to the new `minimax_prompt_md` input) contains the cleaned caption, the normalized lyrics, the verbatim final prompt sent to MiniMax and the FLUX.2 image prompt. When the input is empty (not wired), no `.md` file is written.
+The Markdown report (from `MiniMaxPromptReport`, connected to `minimax_prompt_md`)
+contains the selected model's prompt: MiniMax's cleaned/native prompt when
+available, or the actual YuE2 Style and Lyrics. Artwork is separate. Literal
+Markdown blocks and CRLF file line endings preserve lyric lines on Windows.
+When the input is empty, no `.md` file is written.
 
 This affects only the filesystem name. It does not change the song Title metadata.
 

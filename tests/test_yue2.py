@@ -175,7 +175,7 @@ class Yue2Tests(unittest.TestCase):
         w=json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
         ns={n['id']:n for n in w['nodes']}
         self.assertEqual(ns[37]['type'],'MusicGeneration')
-        self.assertEqual(ns[118]['widgets_values'],['YuE2', True, 'Model default', True])
+        self.assertEqual(ns[118]['widgets_values'],['YuE2', True, 'Model default', True, True])
         seen=set()
         for lid,src,ss,dst,ds,typ in w['links']:
             self.assertNotIn((dst,ds),seen);seen.add((dst,ds))

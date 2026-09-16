@@ -79,7 +79,7 @@ When it is missing, the node still registers and explains the dependency at exec
   Neither the nodes nor their `INPUT_TYPES` ever touch the network at load time; the transfer only starts when you ask for it.
 - **Downloads are resumable and verified.** An interrupted transfer keeps a partial that a later run continues (HTTP range/ETag), retries transient failures, and publishes the file only after its size (and hash, where one is recorded) checks out. `Retry-After` is honoured; a 401/403/404 fails immediately instead of retrying.
 - The **MiniMax Music 3** files and the **FLUX.2 Klein** files are publicly readable in the Comfy-Org mirrors; no token is needed for those. A gated source would be reported separately, with its permission problem named.
-- The FlashSR **inference code is bundled** with the toolkit in `flashsr_inference/` (vendored from `jakeoneijk/FlashSR_Inference` and `jakeoneijk/TorchJaekwon`; see `flashsr_inference/NOTICE.md`). Nothing is downloaded into the models directory except the three **weights** from the `jakeoneijk/FlashSR_weights` dataset (`student_ldm.pth`, `sr_vocoder.pth`, `vae.pth` → `models/audio/flashsr/`) and the MiniMax/FLUX files listed above.
+- The FlashSR **inference code is bundled** in `flashsr_inference/` (see [attribution](flashsr_inference/NOTICE.md)); only its three weights (`student_ldm.pth`, `sr_vocoder.pth`, `vae.pth`) download to `models/audio/flashsr/`. Other enabled checks may download the selected MiniMax, YuE2, SheetSage2, FLUX or GGUF artifacts from the configured catalog. The main workflow skips checks for inactive song models and disabled artwork/refinement stages.
 - Alternative quantizations (e.g. the int8 DiT) are marked `"optional": true` in the catalog and are **never** downloaded automatically — a family is not pulled in as a whole.
 - Set the per-node `auto_download` toggle to OFF to fail fast instead of downloading.
 
@@ -125,7 +125,7 @@ Choose matching official model variants if your installation uses different file
 
 Install a GGUF model supported by your LLM node. The workflow includes one example filename only; that model is not bundled.
 
-The v1.0.7 example LLM settings use:
+The bundled production workflows' integrated GGUF settings use:
 
 ```text
 max_tokens = 16384
@@ -166,7 +166,7 @@ or reinstall the toolkit requirements.
 1. Completely stop and restart ComfyUI.
 2. Hard-refresh the browser once (`Ctrl+F5`) so frontend JavaScript is reloaded.
 3. Check the console for `IMPORT FAILED` messages.
-4. Load `example_workflows/MiniMax_Music3_Production_Toolkit.json`.
+4. Load `example_workflows/Yue2_MM3_Production_Toolkit.json` for YuE2, YuE2 Cover or MiniMax. The classic `MiniMax_Music3_Production_Toolkit.json` is also available for fixed MiniMax generation.
 5. Select the model files that exist on your system.
 6. Run a short test generation before starting a large batch.
 
@@ -184,9 +184,17 @@ configuration_subdir  = log/
 
 All are configurable. The current example workflow writes one final JSON to `configuration_subdir` rather than one sidecar beside every audio file.
 
+The table above describes the classic MiniMax workflow. The main YuE2/MM3
+workflow uses `original-flac/` for originals because the source sample rate
+depends on the selected model. Both workflows write the prompt report beside
+the JSON in `log/`.
+
 ## 9. ComfyUI Manager / Registry
 
-After publication in the Comfy Registry, users can install the toolkit through ComfyUI Manager. Manager can install this package's `requirements.txt`, but it does **not** automatically provide the external FlashSR custom node or large model weights used by the full example workflow.
+Users can install published versions through ComfyUI Manager. Manager can install
+this package's `requirements.txt`; FlashSR inference is included and requires no
+external custom node. Model weights are separate and are checked/downloaded by
+the toolkit when the relevant checks and `auto_download` are enabled.
 
 ## 10. Updating
 
@@ -201,4 +209,7 @@ Then restart ComfyUI and hard-refresh the browser.
 
 ## YuE2 and model selection
 
-The new `example_workflows/Yue2_MM3_Production_Toolkit.json` supports both MiniMax and YuE2 through its first Song model control. It includes matched templates, native ABC planning and generation records. See [YUE2.md](YUE2.md) for setup, prompt examples and verification scope. The classic MiniMax workflow remains fixed to MiniMax.
+The main `example_workflows/Yue2_MM3_Production_Toolkit.json` offers YuE2,
+YuE2 Cover and MiniMax Music 3 in CHOOSE. New YuE2 songs use native ABC planning;
+cover songs use the source's SheetSage2 ABC. See [YUE2.md](YUE2.md) for required
+native nodes, checkpoint/encoder folders, prompts and verification scope.

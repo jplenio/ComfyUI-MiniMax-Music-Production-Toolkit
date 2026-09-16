@@ -1,0 +1,680 @@
+{
+  "auto": [
+    {
+      "name": "Warm - gentle (workflow default)",
+      "description": "Workflow setting: a restrained warmer balance; no reference required.",
+      "values": {
+        "target_mode": "Warm tilt",
+        "strength_percent": 35,
+        "max_gain_db": 2,
+        "max_bands": 4,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Warm - subtle mastering",
+      "description": "Small broad tonal move for already balanced mixes.",
+      "values": {
+        "target_mode": "Warm tilt",
+        "strength_percent": 20,
+        "max_gain_db": 1,
+        "max_bands": 3,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Warm - rounded mix",
+      "description": "More warmth for thin, bright mixes; audition against bypass.",
+      "values": {
+        "target_mode": "Warm tilt",
+        "strength_percent": 55,
+        "max_gain_db": 3,
+        "max_bands": 5,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Warm - upper-mid softening",
+      "description": "Limit the warming proposal to 1-10 kHz; not dynamic harshness removal.",
+      "values": {
+        "target_mode": "Warm tilt",
+        "strength_percent": 45,
+        "max_gain_db": 2,
+        "max_bands": 4,
+        "min_frequency_hz": 1000,
+        "max_frequency_hz": 10000
+      }
+    },
+    {
+      "name": "Bright - subtle mastering",
+      "description": "Small brightness lift for a dull mix; avoid on already harsh material.",
+      "values": {
+        "target_mode": "Bright tilt",
+        "strength_percent": 20,
+        "max_gain_db": 1,
+        "max_bands": 3,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Bright - gentle clarity",
+      "description": "Moderate broad brightness shift, with a 2 dB correction cap.",
+      "values": {
+        "target_mode": "Bright tilt",
+        "strength_percent": 35,
+        "max_gain_db": 2,
+        "max_bands": 4,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Bright - open mix",
+      "description": "Stronger brightness shift for dark sources; may expose hiss or artifacts.",
+      "values": {
+        "target_mode": "Bright tilt",
+        "strength_percent": 50,
+        "max_gain_db": 3,
+        "max_bands": 5,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Reference - subtle mastering",
+      "description": "Requires reference_audio. Restrained matching to a comparable finished mix.",
+      "values": {
+        "target_mode": "Reference track",
+        "strength_percent": 25,
+        "max_gain_db": 1.5,
+        "max_bands": 4,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Reference - balanced",
+      "description": "Requires reference_audio. Existing new-node reference settings.",
+      "values": {
+        "target_mode": "Reference track",
+        "strength_percent": 50,
+        "max_gain_db": 3,
+        "max_bands": 6,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    },
+    {
+      "name": "Reference - broad match",
+      "description": "Requires reference_audio. Stronger matching with bounded total correction.",
+      "values": {
+        "target_mode": "Reference track",
+        "strength_percent": 70,
+        "max_gain_db": 4,
+        "max_bands": 6,
+        "min_frequency_hz": 40,
+        "max_frequency_hz": 16000
+      }
+    }
+  ],
+  "manual": [
+    {
+      "name": "Flat",
+      "description": "Unity response: no EQ bands and 0 dB preamp. The manual EQ default.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": []
+      }
+    },
+    {
+      "name": "YuE2 - Smooth highs",
+      "description": "Start here for harsh YuE2 songs: broad -1.5 dB at 3.5 kHz and -2 dB high shelf at 7.5 kHz. Static tone shaping, not artifact repair.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 3500,
+            "gain_db": -1.5,
+            "q": 0.9,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 7500,
+            "gain_db": -2,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "YuE2 - Smooth highs (strong)",
+      "description": "For persistently brittle or fizzy YuE2 output: -2.5 dB at 3.5 kHz, -3 dB shelf at 7 kHz and a gentle 14 kHz low-pass. Can dull cymbals.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 3500,
+            "gain_db": -2.5,
+            "q": 0.9,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 7000,
+            "gain_db": -3,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-2"
+          },
+          {
+            "type": "lowpass",
+            "enabled": true,
+            "frequency_hz": 14000,
+            "gain_db": 0,
+            "q": 0.70710678,
+            "slope": 1,
+            "id": "preset-3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Warm - gentle tilt",
+      "description": "A little more weight and softer treble; -1 dB preamp reserves gain headroom.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1,
+        "bands": [
+          {
+            "type": "low_shelf",
+            "enabled": true,
+            "frequency_hz": 180,
+            "gain_db": 1,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 6000,
+            "gain_db": -1,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Warm - dark mix",
+      "description": "A darker broad tonal balance for overly bright mixes.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 4500,
+            "gain_db": -2.5,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Air - gentle lift",
+      "description": "Open up dull mixes; avoid boosting existing hiss or harshness.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1.5,
+        "bands": [
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 10000,
+            "gain_db": 1.5,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Clarity - gentle presence",
+      "description": "A small broad presence lift for recessed detail.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1.2,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 2200,
+            "gain_db": 1.2,
+            "q": 0.8,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Bass - gentle weight",
+      "description": "Add low-end body without a large sub boost.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1.5,
+        "bands": [
+          {
+            "type": "low_shelf",
+            "enabled": true,
+            "frequency_hz": 110,
+            "gain_db": 1.5,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Bass - tighten boom",
+      "description": "Reduce boomy upper bass while retaining the deepest notes.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 140,
+            "gain_db": -2,
+            "q": 0.8,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sub - reduce rumble",
+      "description": "A 28 Hz high-pass for unwanted subsonic energy; may change deep bass.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "highpass",
+            "enabled": true,
+            "frequency_hz": 28,
+            "gain_db": 0,
+            "q": 0.70710678,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sub - lighter low end",
+      "description": "A broad reduction of excess deep bass.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "low_shelf",
+            "enabled": true,
+            "frequency_hz": 65,
+            "gain_db": -2,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Low mids - reduce mud",
+      "description": "Gentle wide cut around 280 Hz; stop if the mix loses body.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 280,
+            "gain_db": -1.8,
+            "q": 0.85,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Low mids - add body",
+      "description": "Add a little body to thin recordings.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1.2,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 220,
+            "gain_db": 1.2,
+            "q": 0.7,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Mids - reduce boxiness",
+      "description": "Moderate reduction around 550 Hz.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 550,
+            "gain_db": -1.8,
+            "q": 1,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Mids - soften nasal tone",
+      "description": "Moderate reduction around 1.2 kHz.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 1200,
+            "gain_db": -1.8,
+            "q": 1.2,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Upper mids - tame bite",
+      "description": "Soften a hard presence region without rolling off all the air.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 3200,
+            "gain_db": -2,
+            "q": 0.9,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Treble - soften cymbals",
+      "description": "Reduce bright cymbal energy and the top shelf; static, not transient-selective.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 6500,
+            "gain_db": -1.5,
+            "q": 1,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 10000,
+            "gain_db": -1.5,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Treble - reduce sibilant tone",
+      "description": "A static 7 kHz reduction; this is not a dynamic de-esser.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 7000,
+            "gain_db": -2.5,
+            "q": 1.3,
+            "slope": 1,
+            "id": "preset-1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Treble - reduce hiss and fizz",
+      "description": "Broad high-shelf cut plus a 14 kHz low-pass; also removes useful high-frequency detail.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 8500,
+            "gain_db": -2,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          },
+          {
+            "type": "lowpass",
+            "enabled": true,
+            "frequency_hz": 14000,
+            "gain_db": 0,
+            "q": 0.70710678,
+            "slope": 1,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Acoustic - gentle warmth",
+      "description": "A small body lift with softened pick/string bite.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 180,
+            "gain_db": 1,
+            "q": 0.7,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 3500,
+            "gain_db": -1,
+            "q": 0.9,
+            "slope": 1,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Piano - softer attack",
+      "description": "Reduce hard upper-mid piano attacks while retaining body.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 2800,
+            "gain_db": -1.5,
+            "q": 0.8,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 9000,
+            "gain_db": -0.8,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vocal mix - gentle focus",
+      "description": "Reduce low-mid masking and add subtle vocal presence across a full mix.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -1,
+        "bands": [
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 300,
+            "gain_db": -1,
+            "q": 0.8,
+            "slope": 1,
+            "id": "preset-1"
+          },
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 1800,
+            "gain_db": 1,
+            "q": 0.9,
+            "slope": 1,
+            "id": "preset-2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Electronic - tighten and open",
+      "description": "Reduce low-mid congestion with small low/high shelf lifts; avoid on brittle sources.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": -2,
+        "bands": [
+          {
+            "type": "low_shelf",
+            "enabled": true,
+            "frequency_hz": 80,
+            "gain_db": 1,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          },
+          {
+            "type": "peak",
+            "enabled": true,
+            "frequency_hz": 300,
+            "gain_db": -1.5,
+            "q": 0.8,
+            "slope": 1,
+            "id": "preset-2"
+          },
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 9000,
+            "gain_db": 1,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vintage - mellow top",
+      "description": "Broad darker shelf with a 12 kHz low-pass for an intentionally softer tone.",
+      "settings": {
+        "schema": "minimax_eq_v1",
+        "preamp_db": 0,
+        "bands": [
+          {
+            "type": "high_shelf",
+            "enabled": true,
+            "frequency_hz": 5000,
+            "gain_db": -2,
+            "q": 0.70710678,
+            "slope": 0.7,
+            "id": "preset-1"
+          },
+          {
+            "type": "lowpass",
+            "enabled": true,
+            "frequency_hz": 12000,
+            "gain_db": 0,
+            "q": 0.70710678,
+            "slope": 1,
+            "id": "preset-2"
+          }
+        ]
+      }
+    }
+  ]
+}

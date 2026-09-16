@@ -1,5 +1,16 @@
 """Product help for additive audio nodes, isolated from legacy tooltip changes."""
 AUDIO_TOOLTIPS = {
+    "AudioArtifactReduction": {
+        "audio": "Music to inspect; batch, channels, sample rate and full duration are preserved.",
+        "enabled": "Off passes the original audio unchanged without spectral analysis. Independent of Refinement and Mastering.",
+        "mode": "Reduce attenuates spectral outliers. Analyze only reports candidates and passes audio unchanged; removed_audio is silence.",
+        "sensitivity": "Gentle needs strong frequency AND time contrast. Strong finds more candidates but can affect legitimate notes. Not an AI-origin detector.",
+        "min_frequency_hz": "Lower edge of the detection/reduction band; default 3 kHz protects bass and much of the vocal body.",
+        "max_frequency_hz": "Upper edge, limited to 45% of the actual sample rate. Both edges have soft transitions.",
+        "max_reduction_db": "Maximum spectral-bin attenuation before wet/dry mixing. Start at 3 dB; no gain or replacement synthesis is added.",
+        "protect_transients": "Reduce intervention around detected broadband attacks, helping preserve percussion. Cannot guarantee preservation of every instrument.",
+        "mix": "Wet/dry strength. Zero returns original audio. Listen to removed_audio to judge what the node is taking away.",
+    },
     "MiniMaxParametricEQ": {
         "audio": "Audio to equalize. All batch items/channels are preserved; processing uses the CPU.",
         "eq_settings_json": "Versioned EQ settings. Edit using the curve/table or connect Auto-EQ's proposal. Batch proposals must match the audio batch.",
@@ -9,7 +20,7 @@ AUDIO_TOOLTIPS = {
         "enabled": "Off skips analysis and emits unity settings; manual EQ in the optimized workflows stays independent.",
         "audio": "Source audio to analyze. This node proposes filters without processing the audio.",
         "target_mode": "Reference matches broad tonal balance. Warm/Bright tilt are creative choices, not an ideal mastering standard.",
-        "reference_audio": "Reference track: one item for all sources, or one reference per source batch item.",
+        "reference_audio": "Reference track: one item for all sources, or one reference per source batch item. If missing in Reference mode, warns and returns unity EQ so production can continue; choose Warm/Bright for correction without a reference.",
         "strength_percent": "Fraction of the broad tonal difference to correct. Start at 50% and audition.",
         "max_gain_db": "Limits individual gains and the predicted combined curve. Start at 3 dB.",
         "max_bands": "Maximum number of broad parametric bands, up to six.",

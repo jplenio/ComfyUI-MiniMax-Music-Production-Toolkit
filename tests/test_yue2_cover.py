@@ -38,7 +38,7 @@ class CoverTests(unittest.TestCase):
         self.assertTrue(cover.is_cover and cover.is_yue2)
         for field in ['sampler_defaults', 'text_defaults', 'default_duration_seconds', 'system_prompt_file']:
             self.assertEqual(getattr(normal, field), getattr(cover, field))
-        self.assertEqual(self.node('MusicProductionControl').build('YuE2 Cover')[-3:], (True, False, True))
+        self.assertEqual(self.node('MusicProductionControl').build('YuE2 Cover')[8:], (True, False, True, True))
 
     def test_non_cover_does_not_touch_file_or_expand_transcription(self):
         with patch.dict(sys.modules, {'folder_paths': None, 'comfy_execution.graph_utils': None}):

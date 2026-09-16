@@ -4,6 +4,9 @@ from __future__ import annotations
 from .audio_dsp_utils import audio_numpy, check_cancelled, number, report_json
 from .audio_analysis import spectral_profile
 from .eq_config import SCHEMA, BATCH_SCHEMA, parse_settings, response_db
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("audio_auto_eq")
 
 
 def fit_eq(source, target, sr, *, strength=0.5, max_gain=3.0, max_bands=6,
@@ -124,7 +127,17 @@ class MiniMaxAutoEQAnalyze:
         ref = None
         if target_mode == "Reference track":
             if reference_audio is None:
-                raise ValueError("Connect reference_audio or choose an explicit tilt target")
+                info = ("Auto-EQ skipped: Reference track selected but reference_audio is missing. "
+                        "Using unity EQ; connect reference_audio or choose Warm tilt / Bright tilt.")
+                LOGGER.warning(info)
+                settings = {"schema": SCHEMA, "preamp_db": 0, "bands": []}
+                report = {"schema": "minimax_auto_eq_report_v1", "enabled": True,
+                          "target_mode": target_mode, "status": "skipped_missing_reference",
+                          "analysis_performed": False, "applied": False, "warning": info,
+                          "batch_reports": [{"accepted": False, "reason": "Missing reference audio"}
+                                            for _ in x]}
+                return {"ui": {"text": [info]}, "result": (
+                    report_json(settings), report_json(report), info)}
             ref, ref_sr = audio_numpy(reference_audio, "Auto-EQ reference")
             if len(ref) not in (1, len(x)):
                 raise ValueError("Reference batch must contain one item or match the source batch")

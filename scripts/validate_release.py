@@ -426,6 +426,7 @@ def check_migration_logic() -> None:
         # The EQ frontend compares its JS coefficient/response math against the
         # Python implementation, so a drift between the two is a release blocker.
         "tests/test_audio_eq_frontend.mjs",
+        "tests/test_eq_presets_frontend.mjs",
         # Optional real-browser check: it exits 0 with a "skipped" message when
         # Playwright is not installed, and fails for real when it is.
         "tests/test_audio_eq_browser.mjs",

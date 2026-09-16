@@ -125,11 +125,13 @@ Place alternate system prompts in:
 prompts/system/
 ```
 
-A system prompt should document the output contract expected by your downstream parser. The bundled production prompt currently expects Caption → Lyrics → Title → Image Prompt.
+A system prompt must match the selected model's output contract: MiniMax uses
+`[Caption]` → `[Lyrics]` → `[Title]` → `[Image_Prompt]`; YuE2 and YuE2 Cover use
+`[Style]` in place of `[Caption]`. The remaining top-level headings are identical.
 
 ## Current bundled library
 
-The v2.0.5 repository contains **239 user prompt files** across:
+The current library contains **239 user prompt files** across:
 
 `african`, `alternative`, `ambient`, `asian`, `blues`, `cinematic`, `classical`, `comedy`, `country`, `disco`, `edm`, `electronic`, `european`, `folk`, `funk`, `gospel`, `hiphop`, `house`, `jazz`, `kids`, `latin`, `meditation`, `metal`, `musical`, `pop`, `punk`, `reggae`, `rock`, `seasonal`, `soul`, and `world`.
 
@@ -137,7 +139,10 @@ All 95 files were unified in v2.0.3: every file carries a canonical metadata blo
 
 In v2.0.5 the library was expanded to 239 templates and every template gained the canonical **Meter** (time signature) field. New categories cover blues, country, disco, gospel, kids, meditation, musical, punk, seasonal, soul, cinematic, and world music; the existing categories gained dozens of new subgenres (UK drill, phonk, cloud rap, dubstep, hardstyle, big room, eurodance, future bass, goa trance, acid/french/disco house, Berlin school, vaporwave, chiptune, IDM, EBM, electro swing, bebop, cool jazz, dixieland, swing, gypsy jazz, baroque, choral, string quartet, minimalism, death/black/folk/nu metal, metalcore, djent, britpop, new wave, shoegaze, garage rock, psychedelic rock, surf rock, rockabilly, post-rock, stoner rock, cumbia, merengue, son cubano, bachata, dancehall, rocksteady, ska, enka, mandopop, gqom, soukous, and many more). The structured-field vocabulary was extended to match: the curated genre, voice and language lists now cover the full world map, the key list follows the circle of fifths starting with the minor keys, and the new time-signature combo offers common, odd and free meters.
 
-The production system prompt is stored only in `prompts/system/minimax-music3-production.txt`; avoid duplicating that long prompt in Python source.
+The authoritative production templates are `prompts/system/minimax-music3-production.txt`
+and `prompts/system/yue2/production.txt`. Each family has twelve templates in total.
+Python reads these files; bundled workflows also store editable copies. Refresh
+those copies when templates change, including both named and positional widget values.
 
 ## Implementation notes for developers
 
@@ -156,4 +161,7 @@ seconds so its last phrase and decay can complete naturally; only the separate
 configured maximum limits generation. No target-time cropping is applied.
 See [duration planning](YUE2.md#requested-duration-and-a-natural-ending).
 
-The new `example_workflows/Yue2_MM3_Production_Toolkit.json` supports both MiniMax and YuE2 through its first Song model control. It includes matched templates, native ABC planning and generation records. See [YUE2.md](YUE2.md) for setup, prompt examples and verification scope. The classic MiniMax workflow remains fixed to MiniMax.
+The main `example_workflows/Yue2_MM3_Production_Toolkit.json` offers YuE2,
+YuE2 Cover and MiniMax Music 3 in CHOOSE. Cover mode uses source ABC instead of
+generating a new score. See [YUE2.md](YUE2.md) for setup and verification scope.
+The classic MiniMax workflow remains fixed to MiniMax.

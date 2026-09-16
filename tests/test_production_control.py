@@ -21,11 +21,11 @@ class ProductionControlTests(unittest.TestCase):
         cls.gate = cls.package.NODE_CLASS_MAPPINGS['MusicOptionalStage']()
 
     def test_defaults_and_overrides(self):
-        self.assertEqual(self.control.build()[-3:], (True, False, True))
+        self.assertEqual(self.control.build()[8:], (True, False, True, True))
         for model, default in [('YuE2', False), ('YuE2 Cover', False), ('MiniMax Music 3', True)]:
             for setting, expected in [('Model default', default), ('On', True), ('Off', False)]:
                 result = self.control.build(model, False, setting, False)
-                self.assertEqual(result[-3:], (False, expected, False))
+                self.assertEqual(result[8:], (False, expected, False, True))
                 self.assertEqual(json.loads(result[0])['production_stages']['refinement'], expected)
 
     def test_lazy_gate_only_requests_selected_audio_and_reports(self):
@@ -65,9 +65,9 @@ class ProductionControlTests(unittest.TestCase):
         links = {link[0]: link for link in workflow['links']}
         refinement_nodes = {45, 49, 50, 93, 94, 95}
         mastering_nodes = {109, 110, 112, 91, 111}
-        for model, cover, refinement, mastering in itertools.product(
-                ['YuE2', 'YuE2 Cover', 'MiniMax Music 3'], [False, True], ['Model default', 'On', 'Off'], [False, True]):
-            result = self.control.build(model, cover, refinement, mastering)
+        for model, cover, refinement, mastering, artifacts in itertools.product(
+                ['YuE2', 'YuE2 Cover', 'MiniMax Music 3'], [False, True], ['Model default', 'On', 'Off'], [False, True], [False, True]):
+            result = self.control.build(model, cover, refinement, mastering, artifacts)
             seen = set()
             def visit(nid):
                 if nid in seen: return
@@ -98,7 +98,8 @@ class ProductionControlTests(unittest.TestCase):
                 cls = self.package.NODE_CLASS_MAPPINGS.get(node['type'])
                 if (cls and getattr(cls, 'OUTPUT_NODE', False)) or node['type'] in ('PreviewImage', 'PreviewAudio'):
                     visit(nid)
-            with self.subTest(model=model, cover=cover, refinement=refinement, mastering=mastering):
+            with self.subTest(model=model, cover=cover, refinement=refinement, mastering=mastering, artifacts=artifacts):
+                self.assertIn(123, seen)  # Report still records a truthful bypass when off.
                 self.assertEqual(refinement_nodes & seen, refinement_nodes if result[9] else set())
                 self.assertEqual(mastering_nodes & seen, mastering_nodes if mastering else set())
                 self.assertEqual(76 in seen, cover)  # Image decode has no other output consumer.

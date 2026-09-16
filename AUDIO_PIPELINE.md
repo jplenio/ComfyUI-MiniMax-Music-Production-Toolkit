@@ -1,14 +1,18 @@
-# Release 3.0 workflow overview
+# Audio processing pipeline
 
 **Version 3.0:** Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2, YuE2 Cover or MiniMax. CHOOSE controls the song mode, artwork, refinement and mastering; SOURCE AUDIO supplies a cover track. See [the song and cover guide](YUE2.md). The classic MiniMax workflow below retains its existing processing chain.
 
 The canonical examples now include Auto-EQ (enabled by default), a separate manual
 8-band EQ, resample-only Release Prep, and final compressor/LUFS/true-peak mastering.
+The main YuE2/MM3 graph additionally includes default-on
+[experimental artifact reduction](ARTIFACT_REDUCTION.md) after optional
+Refinement and before Mastering, independently controlled in CHOOSE.
 Output defaults to 44.1 kHz, with 48 kHz selectable before the limiter. Historical
 static-gain Release Prep behavior remains available for personal workflows.
+In the main YuE2/MM3 workflow, CHOOSE → Mastering off skips conversion as well
+as EQ and compression; export then retains the incoming sample rate. The
+compressor node's own bypass leaves the separate conversion stage active.
 See [the current workflow controls](WORKFLOW_OPTIMIZED.md).
-
-# Audio processing pipeline
 
 This document describes the restoration/release stages used by the example workflow.
 

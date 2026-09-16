@@ -12,6 +12,11 @@ the same independently controlled mastering chain:
 
 `Restoration → POST → Auto-EQ application → Manual EQ → Output rate → Mastering → Export`
 
+The main YuE2/MM3 graph adds an independent, default-on **CLEAN / Artifact
+reduction** stage between the optional Refinement output and this mastering
+chain. Both Auto-EQ audio inputs receive its output, as does the Mastering
+bypass. See [artifact reduction](ARTIFACT_REDUCTION.md).
+
 Auto-EQ analyzes the same post-restoration audio that its application EQ receives.
 Its settings feed a dedicated EQ, leaving the second, manual EQ freely editable.
 Numbered nodes and a separate green mastering area show the processing order.
@@ -23,7 +28,7 @@ source setup.
 ## Independent controls
 
 In the main YuE2/MM3 workflow, CHOOSE selects YuE2, YuE2 Cover or MiniMax and
-centrally switches artwork, refinement and mastering. YuE2 and its Cover mode
+centrally switches artwork, refinement, artifact reduction and mastering. YuE2 and its Cover mode
 default to refinement off, mastering/artwork on. Central Mastering off skips
 the entire area, including sample-rate conversion; the compressor's own bypass
 only affects its dynamics/loudness processing. [Cover usage](YUE2.md#cover-an-audio-file).
@@ -37,9 +42,10 @@ cover. See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for setup and compatibility deta
 
 | Control | Effect | Starting setting |
 |---|---|---|
+| CHOOSE `artifact_reduction_enabled` | Independent spectral outlier attenuation before mastering (main workflow) | On; Balanced, maximum 3 dB |
 | Auto-EQ `enabled` | Off skips analysis and emits neutral settings | On |
 | Manual EQ `bypass` | Disable only manual EQ | False, but empty bands / unity |
-| Output rate `target_sample_rate` | Final rate, also with mastering bypassed | 44100; 48000 selectable |
+| Output rate `target_sample_rate` | Final rate when this stage executes; unaffected by compressor-only bypass, skipped by central Mastering off | 44100; 48000 selectable |
 | Master `compressor_enabled` | Compression only; LUFS and limiter stay active | True; ratio 1.5:1 |
 | Master `bypass` | Disable all dynamics and loudness processing | False |
 
@@ -47,9 +53,11 @@ The manual EQ can be enabled or bypassed with Auto-EQ either on or off.
 No rewiring is required. The linked Auto-EQ application panel shows the automatic
 curve; add your own bands in the separate manual EQ panel.
 
-Auto-EQ has Warm tilt, strength 35%, maximum correction 2 dB preconfigured, and is enabled by default. This is a creative option, not a universal spectral
+All bundled workflows use Warm - gentle (workflow default): Warm tilt, strength
+35%, maximum correction 2 dB, four bands, 40–16000 Hz; no reference is needed. Auto-EQ is enabled by
+default in all examples. Warm tilt is a creative option, not a universal spectral
 ideal. For reference matching, add a core LoadAudio, connect reference_audio and
-select Reference track. Use musically comparable source/reference material.
+choose a Reference preset. Use musically comparable source/reference material.
 Personal workflows lacking the optional enabled input retain the analyzer's original
 behavior: enabled=True. Disabling analysis does not require a reference.
 
@@ -57,10 +65,11 @@ behavior: enabled=True. Disabling analysis does not require a reference.
 
 The former G / Release Prep node is retained solely as **Resample only**. Set
 44100 or 48000 there. Keep the final master's target_sample_rate at **keep**.
-The dedicated rate stage remains useful because complete mastering bypass also
-bypasses the master's own resampling. Thus the workflow still exports the selected
-rate with EQ and dynamics switched off. There is no second loudness stage and no
-resampling after the limiter.
+The dedicated rate stage still executes when only the compressor node's `bypass`
+is on, even though that node also bypasses its own resampling. In the main
+YuE2/MM3 workflow, CHOOSE → Mastering off skips the entire mastering area,
+including the dedicated rate stage, so export keeps the incoming sample rate.
+There is no second loudness stage and no resampling after the limiter.
 
 Starting mastering settings are -14 LUFS / -1 dBTP, ratio 1.5:1, soft knee,
 20 ms attack and 150 ms release. Makeup and limiter reduction are bounded.
@@ -82,19 +91,22 @@ All music generation, LLM, restoration and artwork settings are retained.
 The original audio saver still archives the branch before restoration, with its
 existing peak-handling policy (not a guaranteed bit-exact archive).
 
-Both source decoder alternatives inside the MiniMax Music 3 subgraph now use
+In the classic MiniMax workflow, both decoder alternatives inside its subgraph use
 `MiniMaxSafeAudioDecode`. The public `tiled_decode` input, decoder connections
 and configured tile size are preserved. Valid audio keeps ComfyUI's original
 gain rule. Non-finite decoder output triggers at most one conservative tiled
 retry, while invalid sampler latents stop immediately with a specific error.
 Reopen the updated example to use this decoder in a previously saved workflow,
-or replace both audio decode nodes inside its subgraph manually. See
+or replace both audio decode nodes inside its subgraph manually. The main
+YuE2/MM3 workflow creates its checked decoder through `MusicGeneration` expansion. See
 [audio export troubleshooting](TROUBLESHOOTING.md#audio-export-fails-with-a-blank-assertionerror).
 
 Production JSON receives the manual EQ report, Auto-EQ analysis and final
 mastering report through the existing optional metadata inputs. The analyzer's
 applied=false describes analysis itself; the following EQ applies its settings.
 The separate automatic application EQ report is not additionally persisted.
+The main workflow also persists the independent artifact reduction report under
+`artifact_reduction`, including candidate times, effective settings and bypass.
 The resample-only report still records input/output rates. AudioEnhance exports
 FLAC without a central production JSON, as before.
 
@@ -117,7 +129,7 @@ for limited memory. These settings do not automatically adapt to hardware.
 
 ## Rebuild and validation
 
-Edit the two canonical JSON files directly. The former optimizer script now
+Edit the three canonical JSON files directly. The former optimizer script now
 validates without rewriting files; its historical input graphs have been retired.
 Keep personal workflow copies separate when updating the toolkit.
 

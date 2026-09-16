@@ -8,7 +8,7 @@ The included workflow is designed as an end-to-end MiniMax Music 3 production ex
 
 `Structured Song Prompt` provides two independent prompt sources:
 
-- the **user prompt** assembled from structured fields (Genre, Tempo, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description area;
+- the **user prompt** assembled from structured fields (Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description area;
 - the **system prompt** describing how the LLM must transform that request for MiniMax Music 3.
 
 Each can come from:
@@ -77,7 +77,9 @@ The generated Caption and Lyrics are sent into the MiniMax Music 3 node/subgraph
 
 ## 5. Original source archive
 
-The raw MiniMax output can be saved as the original FLAC before restoration/upscaling. This is useful because it preserves the untouched model output for later comparison or re-processing.
+The MiniMax output can be saved as the original FLAC before restoration/upscaling
+for later comparison or re-processing. The saver's configured peak handling and
+file encoding still apply, so this is not a guaranteed bit-exact archive.
 
 The bundled workflow does **not** write its own JSON sidecar at this stage.
 
@@ -99,7 +101,10 @@ The full workflow intentionally preserves an original branch as well so you are 
 
 `FlashSR Hybrid Crossover` combines the clean resampled original with controlled FlashSR high-frequency content.
 
-The default `Original + FlashSR air` mode prioritizes original source/transient information and adds only a selected amount of reconstructed high band.
+The bundled workflows start in `FlashSR only` mode. Select `Original + FlashSR air`
+to retain the original low band and add a controlled amount of reconstructed
+high-frequency content. This stage executes only when refinement is active in
+the main YuE2/MM3 workflow.
 
 ## 9. HF cymbal / shimmer repair
 
@@ -205,7 +210,10 @@ For new workflows, the centralized JSON design is recommended.
 
 ## 17. Batch generation
 
-For batches, use a changing generation/session seed and prompt-library entries. Each run can independently vary:
+For batches, use the parser's song count/seed mode and prompt-library entries.
+The LLM reruns on every queued execution without a session-ID input. Multiple
+parser variants share one LLM response but receive different music seeds;
+queue a fresh LLM execution for new lyrics or a new prompt. Across runs you can vary:
 
 - composition;
 - arrangement;
@@ -218,7 +226,12 @@ The output-path and JSON structure keeps the resulting assets associated without
 
 ## YuE2 and model selection
 
-The new `example_workflows/Yue2_MM3_Production_Toolkit.json` supports both MiniMax and YuE2 through its first Song model control. It includes matched templates, native ABC planning and generation records. See [YUE2.md](YUE2.md) for setup, prompt examples and verification scope. The classic MiniMax workflow remains fixed to MiniMax.
+The main `example_workflows/Yue2_MM3_Production_Toolkit.json` offers YuE2,
+YuE2 Cover and MiniMax Music 3 through CHOOSE. New YuE2 songs generate ABC;
+cover songs use source ABC from SheetSage2. YuE2's approximate Length guides
+Style/Lyrics and a natural ending, without lowering the configured maximum
+or cropping at the target. See [YUE2.md](YUE2.md) for setup and verification.
+The numbered guide above describes the classic MiniMax workflow.
 
 ## Audio covers with YuE2
 

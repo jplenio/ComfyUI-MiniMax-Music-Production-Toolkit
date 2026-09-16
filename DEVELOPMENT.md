@@ -26,13 +26,15 @@ Important areas:
 
 - `minimax_prompt_source.py` / `prompt_library.py` — prompt sources, structured LLM parser and safe prompt-file loading.
 - `minimax_settings.py`, `ksampler_config.py`, `minimax_batch.py` — generation settings and batching helpers.
+- `model_profiles.py`, `music_generation.py`, `music_cover.py` — engine selection, native graph expansion and conditional SheetSage2 cover transcription.
+- `music_production_control.py`, `song_duration.py` — stage routing and approximate song-length contracts; Length must never lower the separate YuE2 maximum or crop audio at the target.
 - `audio_declip.py`, `audio_lowpass.py`, `audio_hf_repair.py`, `audio_release_prep.py` — restoration and release processing.
 - `save_audio_smart_prefix.py`, `save_audio_absolute.py`, `minimax_artwork.py`, `minimax_json_output.py` — persistent artifacts and naming.
 - `minimax_audio_tags.py`, `minimax_metadata.py` — tags and reproducibility metadata.
-- `session_utils.py` — LLM session/cache-buster helper.
+- `session_utils.py` — legacy session helper; current LLM execution uses its own per-queue cache invalidation.
 - `web/` — ComfyUI frontend extensions and per-node help.
 - `prompts/` — bundled system/user prompt library.
-- `example_workflows/` — public workflow.
+- `example_workflows/` — main YuE2/MM3 production, classic MiniMax production and Audio Enhancement Lab workflows.
 - `docs/` — GitHub Pages SoundCloud demo.
 - `scripts/` — workflow sanitizer, validation, packaging and demo-maintenance utilities.
 - `tests/` — regression tests that do not require a full ComfyUI runtime.
@@ -62,23 +64,21 @@ Useful maintainer helpers:
 python scripts/package_release.py --dry-run        # release contents summary, no assets
 python scripts/toolkit_diagnostics.py              # self-diagnostics report
 python scripts/preview_output_paths.py --album "My Album" --title "My Song"   # planned output paths
-python scripts/bump_version.py 2.0.1               # version bump + release-notes skeleton
+python scripts/bump_version.py X.Y.Z               # replace X.Y.Z with the next unpublished version
 ```
 
 When runtime nodes or the example workflow changed, also run the headless smoke test against a real ComfyUI checkout:
 
-```bash
-python scripts/comfyui_smoke_test.py \
-    --comfy-dir D:/ComfyUI \
-    --venv-python D:/ComfyUI/.venv/Scripts/python.exe \
-    --base-dir %TEMP%/minimax_smoke_v2
+```powershell
+python scripts/comfyui_smoke_test.py --comfy-dir D:/ComfyUI --venv-python D:/ComfyUI/.venv/Scripts/python.exe --base-dir "$env:TEMP/minimax_smoke"
 ```
 
 It registers the toolkit in an isolated base directory (junction, no changes to the real installation), validates the full workflow graph including the MiniMax subgraph, and executes the prompt/LLM section with the LLM disabled and manual parser fallbacks.
 
 ## Workflow editing
 
-Treat `example_workflows/MiniMax_Music3_Production_Toolkit.json` as a serialized API surface, not as an arbitrary JSON document.
+Treat all three JSON files in `example_workflows/` as serialized API surfaces,
+including the classic MiniMax subgraph and the main workflow's dynamic engine.
 
 When changing a toolkit node schema:
 
@@ -116,7 +116,7 @@ After adding tracks, paste their normal SoundCloud URLs into `soundcloudUrl` and
 4. Build assets:
 
 ```bash
-python scripts/package_release.py --output-dir dist
+python scripts/package_release.py --output-dir dist/vX.Y.Z
 ```
 
 5. Review `SHA256SUMS.txt` and the ZIP contents. Prefer a versioned output directory

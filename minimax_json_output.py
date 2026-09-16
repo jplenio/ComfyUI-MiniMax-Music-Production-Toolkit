@@ -159,6 +159,7 @@ class MiniMaxSaveProductionJSON:
                 "llm_runtime_json": ("STRING", {"forceInput": True}),
                 "model_identity_json": ("STRING", {"forceInput": True}),
                 "template_version": ("STRING", {"forceInput": True}),
+                "artifact_reduction_json": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -223,6 +224,7 @@ class MiniMaxSaveProductionJSON:
         template_version: str = "",
         workflow_name: str = DEFAULT_WORKFLOW_NAME,
         minimax_prompt_md: str = "",
+        artifact_reduction_json: str = "",
     ):
         metadata = _parse_object(metadata_json, "metadata_json")
         payload = _generation_metadata(
@@ -263,6 +265,7 @@ class MiniMaxSaveProductionJSON:
             eq_report_json=eq_report_json,
             auto_eq_analysis_json=auto_eq_analysis_json,
             mastering_json=mastering_json,
+            artifact_reduction_json=artifact_reduction_json,
             resource_profile_json=resource_profile_json,
             llm_runtime_json=llm_runtime_json,
             model_identity_json=model_identity_json,

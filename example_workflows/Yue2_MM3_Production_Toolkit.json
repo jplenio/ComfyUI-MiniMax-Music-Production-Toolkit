@@ -1,8 +1,8 @@
 {
   "id": "fec45db6-55a7-4a7b-a9c0-d3f2329a9e93",
   "revision": 1,
-  "last_node_id": 122,
-  "last_link_id": 357,
+  "last_node_id": 124,
+  "last_link_id": 360,
   "nodes": [
     {
       "id": 35,
@@ -2192,7 +2192,7 @@
       "type": "MiniMaxSquareImageSize",
       "pos": [
         691.1426373085375,
-        3738.867697552519
+        4308.8676975525195
       ],
       "size": [
         480,
@@ -2261,7 +2261,7 @@
       "type": "UNETLoader",
       "pos": [
         1249.8212133696104,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         390,
@@ -2322,7 +2322,7 @@
       "type": "CLIPLoader",
       "pos": [
         1249.8212133696104,
-        3356.686659123846
+        3926.686659123846
       ],
       "size": [
         390,
@@ -2395,7 +2395,7 @@
       "type": "VAELoader",
       "pos": [
         1249.8212133696104,
-        3576.686659123846
+        4146.686659123846
       ],
       "size": [
         390,
@@ -2445,7 +2445,7 @@
       "type": "CLIPTextEncode",
       "pos": [
         1719.8212133696104,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         470,
@@ -2502,7 +2502,7 @@
       "type": "ConditioningZeroOut",
       "pos": [
         1719.8212133696104,
-        3436.686659123846
+        4006.686659123846
       ],
       "size": [
         470,
@@ -2543,7 +2543,7 @@
       "type": "CFGGuider",
       "pos": [
         2269.8212133696084,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         360,
@@ -2611,7 +2611,7 @@
       "type": "RandomNoise",
       "pos": [
         2269.8212133696084,
-        3386.686659123846
+        3956.686659123846
       ],
       "size": [
         360,
@@ -2663,7 +2663,7 @@
       "type": "KSamplerSelect",
       "pos": [
         2269.8212133696084,
-        3606.686659123846
+        4176.686659123846
       ],
       "size": [
         360,
@@ -2713,7 +2713,7 @@
       "type": "Flux2Scheduler",
       "pos": [
         2269.8212133696084,
-        3776.686659123846
+        4346.686659123846
       ],
       "size": [
         360,
@@ -2785,7 +2785,7 @@
       "type": "EmptyFlux2LatentImage",
       "pos": [
         1719.8212133696104,
-        3596.686659123846
+        4166.686659123846
       ],
       "size": [
         470,
@@ -2857,7 +2857,7 @@
       "type": "SamplerCustomAdvanced",
       "pos": [
         2709.8212133696084,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         380,
@@ -2928,7 +2928,7 @@
       "type": "VAEDecode",
       "pos": [
         3169.8212133696084,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         380,
@@ -2975,7 +2975,7 @@
       "type": "SaveImageSmartPrefix",
       "pos": [
         3629.8212133696084,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         490,
@@ -3879,7 +3879,7 @@
       "type": "AudioReleasePrep",
       "pos": [
         2542.769237648653,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         560,
@@ -4411,7 +4411,7 @@
       "type": "MiniMaxSquareImageSize",
       "pos": [
         689.1372521390475,
-        3972.9568666287933
+        4542.956866628793
       ],
       "size": [
         480,
@@ -4825,6 +4825,11 @@
           "link": null
         },
         {
+          "name": "artifact_reduction_json",
+          "type": "STRING",
+          "link": 360
+        },
+        {
           "localized_name": "collision_mode",
           "name": "collision_mode",
           "type": "COMBO",
@@ -4884,13 +4889,13 @@
         "auto_increment",
         "album - title",
         true,
-        "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0"
+        "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.1"
       ],
       "widgets_values_named": {
         "collision_mode": "auto_increment",
         "filename_mode": "album - title",
         "create_directories": true,
-        "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0"
+        "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.1"
       },
       "color": "#4b766a",
       "bgcolor": "#252b33"
@@ -5051,7 +5056,7 @@
       "type": "MarkdownNote",
       "pos": [
         689.8212133696102,
-        3166.686659123846
+        3736.686659123846
       ],
       "size": [
         480,
@@ -5262,7 +5267,7 @@
       "type": "MiniMaxAutoEQAnalyze",
       "pos": [
         702.7692376486534,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         420,
@@ -5405,7 +5410,7 @@
       "type": "MiniMaxParametricEQ",
       "pos": [
         1182.7692376486539,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         620,
@@ -5485,7 +5490,7 @@
       "type": "MiniMaxMasteringCompressor",
       "pos": [
         3162.769237648653,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         640,
@@ -5742,7 +5747,7 @@
       "type": "MiniMaxParametricEQ",
       "pos": [
         1862.7692376486539,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         620,
@@ -5824,7 +5829,7 @@
       "type": "MarkdownNote",
       "pos": [
         2.7692376486534633,
-        2166.4176169344382
+        2736.4176169344382
       ],
       "size": [
         560,
@@ -5840,10 +5845,10 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This runs with the compressor bypassed; central Mastering OFF skips conversion too. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
+        "## Mastering controls\n\nAuto-EQ default: Warm - gentle (workflow default): Warm tilt, 35%, max 2 dB, four bands, 40–16000 Hz. No reference audio required. Switch enabled off to skip analysis.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This runs with the compressor bypassed; central Mastering OFF skips conversion too. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
       ],
       "widgets_values_named": {
-        "text": "## Mastering controls\n\nAuto-EQ enabled: on by default; switch off to skip automatic tonal correction. Warm tilt is a creative choice, not a universal correction. Connect reference_audio for Reference track.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This resample-only stage also runs with mastering bypassed. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
+        "text": "## Mastering controls\n\nAuto-EQ default: Warm - gentle (workflow default): Warm tilt, 35%, max 2 dB, four bands, 40–16000 Hz. No reference audio required. Switch enabled off to skip analysis.\n\nManual EQ: edit its unlinked panel; bypass=true turns only manual EQ off. Auto-EQ has its own application node. Both can be off or on independently.\n\nOutput rate: 44100 default, 48000 selectable. This runs with the compressor bypassed; central Mastering OFF skips conversion too. Master rate stays keep.\n\ncompressor_enabled=false disables compression while retaining LUFS / peak control. Master bypass=true disables all dynamics / loudness protection.\n\nStart: unity manual EQ, Auto-EQ on, gentle 1.5:1 compression, -14 LUFS / -1 dBTP. Compare at matched loudness; presets cannot repair a poor mix."
       },
       "color": "#4e7064",
       "bgcolor": "#252b33"
@@ -5853,7 +5858,7 @@
       "type": "MarkdownNote",
       "pos": [
         689.3331981922792,
-        3541.8306949993716
+        4111.830694999371
       ],
       "size": [
         479,
@@ -5965,11 +5970,11 @@
       "type": "MusicProductionControl",
       "pos": [
         17.42,
-        -440
+        -480
       ],
       "size": [
         505,
-        385
+        425
       ],
       "flags": {},
       "order": 14,
@@ -6009,6 +6014,14 @@
           "link": null,
           "widget": {
             "name": "mastering_enabled"
+          }
+        },
+        {
+          "name": "artifact_reduction_enabled",
+          "type": "BOOLEAN",
+          "link": null,
+          "widget": {
+            "name": "artifact_reduction_enabled"
           }
         }
       ],
@@ -6098,19 +6111,29 @@
             315
           ],
           "slot_index": 10
+        },
+        {
+          "name": "artifact_reduction_enabled",
+          "type": "BOOLEAN",
+          "links": [
+            359
+          ],
+          "slot_index": 11
         }
       ],
       "widgets_values": [
         "YuE2",
         true,
         "Model default",
+        true,
         true
       ],
       "widgets_values_named": {
         "model": "YuE2",
         "cover_enabled": true,
         "refinement": "Model default",
-        "mastering_enabled": true
+        "mastering_enabled": true,
+        "artifact_reduction_enabled": true
       }
     },
     {
@@ -6201,9 +6224,7 @@
           "name": "audio",
           "type": "AUDIO",
           "links": [
-            308,
-            309,
-            316
+            358
           ],
           "slot_index": 0
         },
@@ -6284,7 +6305,7 @@
       "type": "MusicOptionalStage",
       "pos": [
         3862.769,
-        2166.418
+        2736.418
       ],
       "size": [
         420,
@@ -6560,6 +6581,173 @@
       },
       "widgets_values": [],
       "title": "Cover song / SheetSage2 → ABC"
+    },
+    {
+      "id": 123,
+      "type": "AudioArtifactReduction",
+      "pos": [
+        705,
+        2070
+      ],
+      "size": [
+        590,
+        420
+      ],
+      "flags": {},
+      "order": 55,
+      "mode": 0,
+      "title": "Artifact reduction · experimental · CHOOSE on/off",
+      "properties": {
+        "Node name for S&R": "AudioArtifactReduction"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 358
+        },
+        {
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "link": 359,
+          "widget": {
+            "name": "enabled"
+          }
+        },
+        {
+          "name": "mode",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "mode"
+          }
+        },
+        {
+          "name": "sensitivity",
+          "type": "COMBO",
+          "link": null,
+          "widget": {
+            "name": "sensitivity"
+          }
+        },
+        {
+          "name": "min_frequency_hz",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "min_frequency_hz"
+          }
+        },
+        {
+          "name": "max_frequency_hz",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "max_frequency_hz"
+          }
+        },
+        {
+          "name": "max_reduction_db",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "max_reduction_db"
+          }
+        },
+        {
+          "name": "protect_transients",
+          "type": "BOOLEAN",
+          "link": null,
+          "widget": {
+            "name": "protect_transients"
+          }
+        },
+        {
+          "name": "mix",
+          "type": "FLOAT",
+          "link": null,
+          "widget": {
+            "name": "mix"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            308,
+            309,
+            316
+          ]
+        },
+        {
+          "name": "removed_audio",
+          "type": "AUDIO",
+          "links": []
+        },
+        {
+          "name": "artifact_reduction_json",
+          "type": "STRING",
+          "links": [
+            360
+          ]
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "widgets_values": [
+        true,
+        "Reduce",
+        "Balanced",
+        3000.0,
+        18000.0,
+        3.0,
+        true,
+        1.0
+      ],
+      "widgets_values_named": {
+        "enabled": true,
+        "mode": "Reduce",
+        "sensitivity": "Balanced",
+        "min_frequency_hz": 3000.0,
+        "max_frequency_hz": 18000.0,
+        "max_reduction_db": 3.0,
+        "protect_transients": true,
+        "mix": 1.0
+      }
+    },
+    {
+      "id": 124,
+      "type": "MarkdownNote",
+      "pos": [
+        5,
+        2070
+      ],
+      "size": [
+        600,
+        420
+      ],
+      "flags": {},
+      "order": 56,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Artifact reduction · compare and audition",
+      "properties": {
+        "Node name for S&R": "MarkdownNote"
+      },
+      "widgets_values": [
+        "## Optional artifact reduction\n\nEnable artifact_reduction_enabled in CHOOSE (default ON). Independent of Refinement and Mastering; works with MiniMax, YuE2 and YuE2 Cover.\n\nDefault: Balanced, 3 dB maximum. Analyze only reports candidates without changing audio. Connect removed_audio to PreviewAudio to hear what was removed. If you hear wanted notes, lower Mix/reduction or switch off.\n\nTargets brief spectral whistles/spikes. Candidates are not confirmed AI errors. Does not repair wrong notes, lyrics, dropouts or all watery noise. Candidate times/settings are saved in Production JSON. See ARTIFACT_REDUCTION.md."
+      ],
+      "widgets_values_named": {
+        "text": "## Optional artifact reduction\n\nEnable artifact_reduction_enabled in CHOOSE (default ON). Independent of Refinement and Mastering; works with MiniMax, YuE2 and YuE2 Cover.\n\nDefault: Balanced, 3 dB maximum. Analyze only reports candidates without changing audio. Connect removed_audio to PreviewAudio to hear what was removed. If you hear wanted notes, lower Mix/reduction or switch off.\n\nTargets brief spectral whistles/spikes. Candidates are not confirmed AI errors. Does not repair wrong notes, lyrics, dropouts or all watery noise. Candidate times/settings are saved in Production JSON. See ARTIFACT_REDUCTION.md."
+      },
+      "color": "#686587",
+      "bgcolor": "#252b33"
     }
   ],
   "links": [
@@ -7389,7 +7577,7 @@
     ],
     [
       308,
-      119,
+      123,
       0,
       109,
       0,
@@ -7397,7 +7585,7 @@
     ],
     [
       309,
-      119,
+      123,
       0,
       110,
       0,
@@ -7453,7 +7641,7 @@
     ],
     [
       316,
-      119,
+      123,
       0,
       120,
       1,
@@ -7786,6 +7974,30 @@
       55,
       3,
       "STRING"
+    ],
+    [
+      358,
+      119,
+      0,
+      123,
+      0,
+      "AUDIO"
+    ],
+    [
+      359,
+      118,
+      11,
+      123,
+      1,
+      "BOOLEAN"
+    ],
+    [
+      360,
+      123,
+      2,
+      99,
+      49,
+      "STRING"
     ]
   ],
   "groups": [
@@ -7794,9 +8006,9 @@
       "title": "00 · CHOOSE / Song model",
       "bounding": [
         -35,
-        -515,
+        -555,
         630,
-        505
+        545
       ],
       "color": "#3f789e",
       "flags": {}
@@ -7866,7 +8078,7 @@
       "title": "05 · ILLUSTRATE / Cover artwork",
       "bounding": [
         654.8212133696102,
-        3081.686659123846,
+        3651.686659123846,
         3507.928543633564,
         1093.5023111403248
       ],
@@ -7878,7 +8090,7 @@
       "title": "MASTERING · Auto-EQ → Manual EQ → Rate → Dynamics",
       "bounding": [
         -32.230762351346534,
-        2081.4176169344396,
+        2651.4176169344396,
         4350,
         820
       ],
@@ -7896,6 +8108,18 @@
       "color": "#3f789e",
       "font_size": 24,
       "flags": {}
+    },
+    {
+      "id": 9,
+      "title": "CLEAN · Artifact reduction (optional, before mastering)",
+      "bounding": [
+        -32,
+        2010,
+        4350,
+        520
+      ],
+      "color": "#686587",
+      "flags": {}
     }
   ],
   "config": {},
@@ -7912,8 +8136,8 @@
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
-    "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.0",
-    "workflow_version": "3.0.0",
+    "workflow_name": "YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.1",
+    "workflow_version": "3.0.1",
     "song_model_switching": true
   },
   "version": 0.4

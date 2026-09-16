@@ -34,4 +34,10 @@ Loads compatible values from a previously saved MiniMax production JSON (or comp
 
 ## Usage notes
 
+The individual output sockets read the legacy `minimax_music3` fields. They do
+not reconstruct YuE2 or YuE2 Cover settings and may return MiniMax defaults when
+those fields are absent. For YuE2, inspect `song_model`, `generation`, `style`
+and cover data in the complete `metadata_json` output; do not treat the scalar
+outputs as a YuE2 restore workflow.
+
 Start with the defaults used by the bundled example workflow unless you have a specific reason to change this stage. Hover each input label in ComfyUI for parameter guidance.

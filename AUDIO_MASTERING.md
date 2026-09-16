@@ -1,5 +1,11 @@
 # Parametric EQ, Auto-EQ and mastering
 
+The main dual-model workflow offers an independent, default-on
+[artifact reduction stage](ARTIFACT_REDUCTION.md) after optional Refinement and
+before this mastering chain. Its output also feeds the Mastering bypass, so
+turning Mastering off does not disable artifact reduction. Detector candidates
+and effective settings are saved separately from mastering reports.
+
 These are **additional** CPU audio tools. They need no AI weights, GPU, Numba,
 model downloads or changes to ComfyUI's memory settings. Existing nodes and
 saved workflows, including the static `AudioReleasePrep`, retain their behavior.
@@ -44,6 +50,11 @@ metadata. The unrelated production-JSON work remains with the main improvement
 integration; none of its sockets was changed by this implementation.
 
 ## Parametric EQ
+
+The editor offers **24 presets plus Custom**, starting at **Flat**, including
+two YuE2 curves for gentler upper mids/highs. Selecting a preset writes the
+existing settings JSON; Undo restores the previous curve. Connected settings
+remain read-only. See [EQ presets](EQ_PRESETS.md) for every recipe and sources.
 
 The graph editor adds a frequency-response canvas, band enable switches,
 frequency/gain/Q or shelf-slope inputs, Add/Remove, Reset and Undo. All operations
@@ -100,6 +111,22 @@ never mutates input tensors, preserves length/rate and uses separate states
 for every channel and batch item. Empty/non-finite audio is rejected.
 
 ## Auto-EQ
+
+The **Auto-EQ preset** selector offers 10 starting points plus Custom. It sets
+the six existing analysis controls without changing `enabled` or the reference
+connection. All bundled workflows use **Warm - gentle (workflow default)**
+(Warm tilt, 35%, 2 dB, four bands, 40–16000 Hz), requiring no reference audio. A newly added standalone node retains its
+Reference/50%/3 dB/six-band defaults, named **Reference - balanced**. Reference
+presets need reference audio. See [EQ presets](EQ_PRESETS.md).
+
+This is the single visible preset selection. The separate target_mode dropdown
+is hidden; the preset sets the target and Custom shows it in the explanation.
+Numerical controls remain editable, and old saved workflows retain their values.
+
+Missing reference audio in Reference mode now produces a visible/logged warning
+and unity EQ, not an exception after generation. The analysis report records
+`status: skipped_missing_reference` and `analysis_performed: false`; no implicit
+Warm/Bright target is substituted. Remaining manual EQ/mastering can continue.
 
 Reference mode compares broad tonal balance after removing the global level
 difference. It does not normalize loudness, reconstruct missing frequencies,
@@ -245,4 +272,3 @@ compare drums, sustained cymbals, vocals, bass, sparse acoustic and dense music
 at matched playback loudness. Check fresh creation, workflow restore, connected
 Auto-EQ settings, output saving and user cancellation in the installed host.
 Do not replace the legacy node contracts to accommodate a failure.
-

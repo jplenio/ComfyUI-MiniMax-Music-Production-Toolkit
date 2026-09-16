@@ -1,7 +1,7 @@
 # MiniMax Music Production Toolkit 1.0.x – Combined Release Notes
 
-All pre-2.0.0 releases in one file (kept for reference; the 2.x notes are
-versioned separately).
+All pre-2.0.0 releases in one file, kept for historical reference. See also
+[combined 2.x release notes](RELEASE_NOTES_v2.x.md) and [3.0.0 notes](RELEASE_NOTES_v3.0.0.md).
 
 ---
 

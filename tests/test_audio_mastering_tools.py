@@ -155,9 +155,25 @@ class AutoEQTests(unittest.TestCase):
             c,r=auto.fit_eq(profile,profile,48000)
             self.assertFalse(r['accepted']);self.assertEqual(c['bands'],[])
 
-    def test_reference_required_and_no_source_mutation(self):
+    def test_missing_reference_skips_analysis_and_preserves_batch_audio(self):
+        source=audio(np.stack([self.x,self.x]));before=source['waveform'].clone()
+        with patch.object(auto,'spectral_profile',side_effect=AssertionError('No analysis without reference')):
+            with self.assertLogs(auto.LOGGER,level='WARNING') as logged:
+                result=auto.MiniMaxAutoEQAnalyze().analyze(source)['result']
+        settings,report=json.loads(result[0]),json.loads(result[1])
+        self.assertEqual(settings,{'schema':eq.SCHEMA,'preamp_db':0,'bands':[]})
+        self.assertEqual(report['status'],'skipped_missing_reference')
+        self.assertEqual(report['target_mode'],'Reference track')
+        self.assertTrue(report['enabled'])
+        self.assertFalse(report['analysis_performed'])
+        self.assertEqual(len(report['batch_reports']),2)
+        self.assertIn('Warm tilt',logged.output[0])
+        applied=audio_eq.MiniMaxParametricEQ().process(source,result[0])['result'][0]
+        self.assertIs(applied,source)
+        self.assertTrue(torch.equal(before,source['waveform']))
+
+    def test_connected_reference_and_no_source_mutation(self):
         source=audio(self.x[None,:,:]);before=source['waveform'].clone()
-        with self.assertRaises(ValueError):auto.MiniMaxAutoEQAnalyze().analyze(source)
         result=auto.MiniMaxAutoEQAnalyze().analyze(source,reference_audio=source)['result']
         self.assertEqual(json.loads(result[0])['bands'],[])
         self.assertTrue(torch.equal(before,source['waveform']))

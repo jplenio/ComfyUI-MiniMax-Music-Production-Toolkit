@@ -4,6 +4,29 @@ All notable changes to this project will be documented here. The project follows
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-09-16
+
+- Added 10 Auto-EQ and 24 manual EQ presets, plus Custom, with editable values,
+  saved settings and manual Undo. Manual EQ starts Flat; two clearly named
+  YuE2 Smooth highs presets soften harsh upper mids and highs.
+- Unified Auto-EQ to one visible preset selector with explanations. The legacy
+  target_mode stays serialized internally for compatibility. All bundled
+  workflows start at Warm - gentle: 35%, maximum 2 dB, four bands, 40–16000 Hz.
+- Fixed the production abort when Reference mode has no reference audio:
+  warn and return unity settings, record skipped analysis, and continue.
+- Added experimental AudioArtifactReduction for brief spectral outliers:
+  bounded attenuation, transient protection, linked channel masks, analysis-only
+  mode, removed-audio audition and candidate reports. Main workflow places it
+  between Refinement and Mastering, with its own CHOOSE switch, default ON and
+  Balanced sensitivity. Production JSON stores the report. No additional models
+  or downloads; this heuristic cannot reliably identify AI origin or repair all
+  generation artifacts.
+- Consolidated all twelve 2.x release notes into RELEASE_NOTES_v2.x.md and
+  corrected documentation for installation, model-aware prompts/reports,
+  approximate duration targets, stage bypass and production metadata.
+- Added an App-Mode concept and selectable configuration catalog as planning
+  documents. An App-Mode interface is not implemented in this release.
+
 ## [3.0.0] - 2026-09-16
 
 - Requested song length now guides a timed arrangement in all active system

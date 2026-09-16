@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { response, TYPES, readSettings } from "./eq_dsp.js";
+import { presetControl } from "./eq_presets.js";
 
 // Canonical value is the existing STRING widget, not an extra serialized UI value.
 export function attachEQEditor(node) {
@@ -19,6 +20,10 @@ export function attachEQEditor(node) {
     const linked = () => node.inputs?.some(i => i.name === "eq_settings_json" && i.link != null);
     const dirty = () => node.setDirtyCanvas?.(true, true);
     const remember = () => { undo.push(String(widget.value)); if (undo.length > 40) undo.shift(); };
+    const presets = presetControl("Manual EQ preset", "manual", () => settings, linked, value => {
+        settings = value; selected = 0; commit(); renderRows();
+    });
+    root.prepend(presets.root);
     function commit(record = true) {
         if (linked()) return;
         if (record) remember();
@@ -26,6 +31,7 @@ export function attachEQEditor(node) {
         last = widget.value;
         widget.callback?.(widget.value);
         measured = null;
+        presets.sync();
         dirty();
         draw();
     }
@@ -111,7 +117,7 @@ export function attachEQEditor(node) {
         lastLinked=Boolean(linked());
         try { settings=linked() && measured ? measured.settings : readSettings(widget.value); status.textContent=linked()?"Connected settings: read-only. Gold = last rendered curve.":`Preview at ${sr} Hz; actual rate updates after execution. Not realtime audio.`; }
         catch(error){settings=null;status.textContent=error.message;}
-        renderRows();draw();
+        presets.sync();renderRows();draw();
     }
     canvas.onpointerdown=event=>{
         if(!settings?.bands.length||linked())return;

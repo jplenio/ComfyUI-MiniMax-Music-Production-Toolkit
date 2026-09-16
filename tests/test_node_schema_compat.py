@@ -18,6 +18,7 @@ WORKFLOWS = [
 # workflow.  ComfyUI-core types (loaders, samplers, ...) and the embedded
 # MiniMax subgraph instance are covered separately or intentionally skipped.
 NODE_MODULE = {
+    "AudioArtifactReduction": "audio_artifact_reduction",
     "MusicCoverSource": "music_cover",
     "MusicCoverTranscription": "music_cover",
     "MusicOptionalCoverPreview": "music_production_control",
@@ -74,6 +75,7 @@ CORE_NODE_TYPES = {
 
 # Order dependencies: toolkit_logging first, then anything using it.
 MODULE_NAMES = (
+    "audio_artifact_reduction",
     "music_cover",
     "music_production_control",
     "music_generation",

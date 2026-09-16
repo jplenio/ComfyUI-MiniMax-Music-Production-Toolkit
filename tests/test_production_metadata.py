@@ -209,15 +209,15 @@ class AdditiveReportTests(unittest.TestCase):
         optional = inputs["optional"]
         for name in ("eq_report_json", "auto_eq_analysis_json", "mastering_json",
                      "resource_profile_json", "llm_runtime_json", "model_identity_json",
-                     "template_version"):
+                     "template_version", "artifact_reduction_json"):
             self.assertIn(name, optional, f"{name} missing from the node")
             self.assertTrue(optional[name][1].get("forceInput"), f"{name} must stay a socket")
         names = list(optional)
         # Appended, never inserted: a stored workflow keeps its input slots.
-        self.assertEqual(names[-7:], [
+        self.assertEqual(names[-8:], [
             "eq_report_json", "auto_eq_analysis_json", "mastering_json",
             "resource_profile_json", "llm_runtime_json", "model_identity_json",
-            "template_version",
+            "template_version", "artifact_reduction_json",
         ])
 
 class PublicSafePayloadTests(unittest.TestCase):
