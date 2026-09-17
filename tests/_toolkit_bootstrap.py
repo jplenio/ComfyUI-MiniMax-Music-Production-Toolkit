@@ -22,11 +22,20 @@ PACKAGE_NAME = "_toolkit_entry"
 CONTRACT_FIXTURE = ROOT / "tests" / "fixtures" / "node_contracts.json"
 _INSTANCES = itertools.count()
 
-# Toolkit node identifier -> defining module (section 2 of REFACTOR-PLAN.md).
+# Toolkit node identifier -> defining module (section 2 of docs/REFACTOR-PLAN.md).
 NODE_OWNER = {
     "AudioArtifactReduction": "audio_artifact_reduction",
     "MusicCoverSource": "music_cover",
     "MusicCoverTranscription": "music_cover",
+    "MusicCoverScore": "music_cover",
+    "YuE2CoverStudioPlan": "cover_studio",
+    "YuE2CoverStudioTransform": "cover_studio",
+    "YuE2CoverStudioApply": "cover_studio",
+    "MiniMaxInstrumentalVocalCheck": "instrumental_check",
+    "MiniMaxInstrumentalPick": "instrumental_check",
+    "MiniMaxAudioTagReader": "audio_tag_copy",
+    "MiniMaxStyleHint": "style_hint",
+    "MusicCoverLyrics": "whisper_lyrics",
     "MusicOptionalCoverPreview": "music_production_control",
     "MusicProductionControl": "music_production_control",
     "MusicOptionalStage": "music_production_control",

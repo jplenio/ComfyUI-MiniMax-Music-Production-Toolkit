@@ -60,7 +60,7 @@ class ProductionControlTests(unittest.TestCase):
         self.assertEqual(result['ui']['images'], ['preview'])
 
     def test_all_output_paths_respect_switches_including_reports_and_preview(self):
-        workflow = json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        workflow = json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         nodes = {n['id']: n for n in workflow['nodes']}
         links = {link[0]: link for link in workflow['links']}
         refinement_nodes = {45, 49, 50, 93, 94, 95}

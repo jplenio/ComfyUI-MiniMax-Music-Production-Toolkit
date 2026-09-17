@@ -23,7 +23,8 @@ ARCHIVE_EXCLUDED_PARTS = {
 }
 ARCHIVE_EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".zip"}
 # Local-only handoff files: present on the maintainer machine, never pushed and
-# never published.
+# never published. Matched by file NAME, so they stay excluded wherever they live
+# (they sit in docs/ since the 2026-09-17 documentation tidy-up).
 LOCAL_ONLY_NAMES = {"KONTEXT.md", "PROJECT_STATE.md"}
 
 # Maintainer planning documents that stay out of every release artifact (the

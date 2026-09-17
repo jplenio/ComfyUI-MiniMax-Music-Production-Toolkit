@@ -389,9 +389,10 @@ class StructuredPromptNodeTests(unittest.TestCase):
             self.assertIn(field, required)
             self.assertEqual(required[field][0][0], CUSTOM)
         # source_name_override moved into required so it can sit before system_prompt.
-        # 2.6.0 appended exactly one optional input - the selected song model - and
-        # nothing else may move into the optional group without a migration.
-        self.assertEqual(list(data.get("optional", {})), ["model_profile_json", "cover_source_json", "cover_abc"])
+        # 2.6.0 appended exactly one optional input - the selected song model.
+        # 3.1.0 appended the Whisper cover lyrics after the existing cover
+        # inputs; nothing may move into the optional group without a migration.
+        self.assertEqual(list(data.get("optional", {})), ["model_profile_json", "cover_source_json", "cover_abc", "cover_lyrics"])
         self.assertTrue(data["optional"]["model_profile_json"][1]["forceInput"])
         self.assertEqual(required["source_name_override"][1].get("default"), "")
         self.assertEqual(required["user_prompt_file"][1].get("default"), "electronic/synth-pop-vocal.txt")
@@ -716,6 +717,109 @@ class ParserLeakAndImagePromptTests(unittest.TestCase):
         self.assertIn("Square album cover artwork", image_prompt)
         # The prohibition was missing in the LLM text -> appended by the parser.
         self.assertTrue(image_prompt.endswith(MODULES["minimax_prompt_source"].NO_TEXT_PROHIBITION))
+
+
+class CoverFieldPrecedenceTests(unittest.TestCase):
+    """'Song request · template & fields' is the master; the cover mode owns the vocals.
+
+    These tests pin which instruction wins where, so the answer to "where does this
+    come from?" stays a property of the code and not of the documentation.
+    """
+
+    ABC = (
+        'X:1\nT:\nM:4/4\nL:1/8\nQ:1/4=100\n'
+        'V: Vocal clef=treble name="Vocal Melody" snm="Vocal"\n'
+        'V: Ins clef=treble name="Ins Melody" snm="Inst."\n'
+        'K:C\n% intro\nV: Vocal\nz2 "Cmaj7"C2 E2 G2-|G2 c2 z4|\nV: Ins\nC,2 G,2 C2 E2|G2 c2 z4|\n'
+    )
+
+    @staticmethod
+    def profile_json():
+        return json.dumps({
+            "id": "yue2_cover", "display_name": "YuE2 Cover", "is_yue2": True,
+            "is_cover": True, "prompt_token_hard_limit": 24576,
+            "conditioning_section": "Style", "system_prompt_file": "yue2/production.txt",
+        })
+
+    @staticmethod
+    def cover_source(lyrics_mode):
+        return json.dumps({
+            "schema": "music_cover_source_v1", "audio": "song.wav", "mode": "full",
+            "audio_encoder": "sheetsage2_bf16.safetensors", "lyrics_mode": lyrics_mode,
+            "lead_instrument": "Saxophone",
+        })
+
+    def build(self, lyrics_mode, **overrides):
+        base = dict(
+            user_prompt_source="manual",
+            user_prompt_directory="",
+            user_prompt_file=PLACEHOLDER,
+            genre="Deep House",
+            tempo="Dancefloor (120-130 BPM)",
+            meter="4/4 (common time)",
+            key="C major",
+            lyrics="yes",
+            language="German",
+            voice="female alto",
+            theme="lost love",
+            length="3 minutes",
+            description_override="A late-night club track.",
+            system_prompt="You are a music assistant.",
+            system_prompt_source="manual",
+            system_prompt_directory="",
+            system_prompt_file=PLACEHOLDER,
+            source_name_override="",
+            model_profile_json=self.profile_json(),
+            cover_source_json=self.cover_source(lyrics_mode),
+            cover_abc=self.ABC,
+        )
+        base.update(overrides)
+        return structured_node().build(**base)
+
+    def test_an_instrumental_cover_drops_every_vocal_field_but_keeps_the_music(self):
+        system, user, _source, summary = self.build("instrumental")
+        self.assertIn("Lyrics: instrumental", user)
+        for field in ("Voice:", "Language:", "Lyrics theme:"):
+            self.assertNotIn(field, user, f"{field} must not compete with the mode")
+        for kept in ("Genre: Deep House", "Tempo:", "Time signature:", "Key:", "Length:"):
+            self.assertIn(kept, user)
+        self.assertIn("INSTRUMENTAL CONSTRAINT", user)
+        self.assertIn("LYRICS MODE - INSTRUMENTAL", system)
+        data = json.loads(summary)
+        self.assertEqual(sorted(data["cover_mode_removed_fields"]), ["language", "theme", "voice"])
+
+    def test_original_lyrics_drop_the_theme_and_take_the_language_from_the_transcript(self):
+        report = json.dumps({"schema": "music_cover_lyrics_v1", "text": "hold on to me",
+                             "language": "en"})
+        _system, user, _source, summary = self.build("original lyrics", cover_lyrics=report)
+        self.assertNotIn("Lyrics theme:", user, "the words are fixed by the transcription")
+        self.assertNotIn("Language: German", user)
+        self.assertIn("Language: English", user, "the transcript owns the language")
+        self.assertEqual(json.loads(summary)["cover_mode_removed_fields"], ["theme"])
+
+    def test_new_lyrics_keep_the_fields_the_new_words_are_written_from(self):
+        report = json.dumps({"schema": "music_cover_lyrics_v1", "text": "hold on",
+                             "language": "en"})
+        _system, user, _source, summary = self.build("new lyrics", cover_lyrics=report)
+        self.assertIn("Lyrics theme: lost love", user)
+        self.assertIn("Voice: female alto", user)
+        # New words are written from this node, so its language field stays master -
+        # the transcript language only informs the original-lyrics mode.
+        self.assertIn("Language: German", user)
+        self.assertEqual(json.loads(summary)["cover_mode_removed_fields"], [])
+
+    def test_the_summary_lists_every_field_the_mode_forced(self):
+        _system, user, _source, summary = self.build("instrumental")
+        data = json.loads(summary)
+        self.assertEqual(data["forced_lyrics_field"], "instrumental")
+        self.assertEqual(data["fields"]["lyrics"], "instrumental")
+        self.assertEqual(data["cover_source"]["lyrics_mode"], "instrumental")
+
+    def test_the_master_forwards_the_style_rules_including_the_cover_override(self):
+        system, _user, _source, _summary = self.build("new lyrics")
+        self.assertIn("STYLE PRIORITY", system)
+        self.assertIn("never weakens", system)
+        self.assertIn("AUDIO COVER OVERRIDE", system)
 
 
 if __name__ == "__main__":

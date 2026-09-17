@@ -125,7 +125,7 @@ class Yue2Tests(unittest.TestCase):
                          re.findall(r'^\[[^\]]+\]$', parsed['lyrics'], re.M))
 
     def test_workflow_uses_revised_prompt_and_archive_is_outside_active_library(self):
-        workflow = json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        workflow = json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         node = next(n for n in workflow['nodes'] if n['type'] == 'MiniMaxStructuredPromptV20')
         named = node['widgets_values_named']
         bundled = (ROOT/'prompts/system'/named['system_prompt_file']).read_text(encoding='utf-8')
@@ -172,7 +172,7 @@ class Yue2Tests(unittest.TestCase):
         self.assertEqual(result['style'],'folk')
 
     def test_yue_workflow_links_and_types(self):
-        w=json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        w=json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         ns={n['id']:n for n in w['nodes']}
         self.assertEqual(ns[37]['type'],'MusicGeneration')
         self.assertEqual(ns[118]['widgets_values'],['YuE2', True, 'Model default', True, True])
@@ -198,7 +198,7 @@ class Yue2Tests(unittest.TestCase):
         self.assertEqual(node.build(**args,yue2_max_duration=360)[0],210)
 
     def test_yue_workflow_requested_defaults(self):
-        w=json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        w=json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         nodes={n['type']:n for n in w['nodes']}
         self.assertEqual(nodes['MiniMaxMusicModelSettings']['widgets_values_named']['yue2_steps'],40)
         self.assertEqual(nodes['MiniMaxMusicModelSettings']['widgets_values_named']['yue2_max_duration'],360)

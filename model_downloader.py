@@ -445,6 +445,7 @@ def normalize_model_entries(
     include_optional: bool = False,
     yue2: bool = False,
     sheetsage2: bool = False,
+    whisper: bool = False,
 ) -> List[Dict[str, Any]]:
     """Expand the configured model groups into flat check entries.
 
@@ -479,6 +480,13 @@ def normalize_model_entries(
         group = config.get("sheetsage2", {}) or {}
         for entry in group.get("files", []) or []:
             add(entry, note=group.get("note", ""), default_target="models/audio_encoders")
+    if whisper:
+        # The whole group installs one checkpoint folder, so the group target is
+        # also the loader's directory; a per-file target would split it.
+        group = config.get("whisper", {}) or {}
+        default_target = str(group.get("target") or "models/audio_encoders/whisper-large-v3")
+        for entry in group.get("files", []) or []:
+            add(entry, note=group.get("note", ""), default_target=default_target)
     if yue2:
         group = config.get("yue2", {}) or {}
         for entry in group.get("files", []) or []:

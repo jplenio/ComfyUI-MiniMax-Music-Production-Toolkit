@@ -36,3 +36,10 @@ Checks the model files referenced by the bundled workflow and downloads missing 
 ## Notes
 
 The node is placed early in the example workflow and its report feeds the parser node, so the checks run before generation. The selected YuE2 or MiniMax song model is chosen through `model_profile_json`; artwork, FlashSR and LLM checks remain independently switchable. The integrated FlashSR and LLM chat nodes additionally perform their own lazy first-use checks.
+
+Two switches cover optional branches and default to *on* but are only ever
+effective for the run that needs them: `sheetsage2_models` for YuE2 Cover, and
+`whisper_models` for a YuE2 cover whose **Cover lyrics** mode is
+*new lyrics* or *original lyrics*. Connect `cover_source_json` so the node can see that mode;
+without it no Whisper weight is requested. The pinned Whisper files are about
+2.9 GB and land in `models/audio_encoders/whisper-large-v3`.

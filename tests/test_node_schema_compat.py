@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = [
-    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json",
-    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
-    ROOT / "example_workflows" / "Yue2_MM3_Production_Toolkit.json",
+    ROOT / "example_workflows" / "Music_Production_Toolkit.json",
+    ROOT / "example_workflows" / "Music_Production_AudioEnhance.json",
+    ROOT / "example_workflows" / "Music_Production_Toolkit.json",
 ]
 
 # Toolkit node type -> defining module, for every toolkit node in the bundled
@@ -21,6 +21,8 @@ NODE_MODULE = {
     "AudioArtifactReduction": "audio_artifact_reduction",
     "MusicCoverSource": "music_cover",
     "MusicCoverTranscription": "music_cover",
+    "MusicCoverScore": "music_cover",
+    "MusicCoverLyrics": "whisper_lyrics",
     "MusicOptionalCoverPreview": "music_production_control",
     "MusicProductionControl": "music_production_control",
     "MusicOptionalStage": "music_production_control",
@@ -31,6 +33,13 @@ NODE_MODULE = {
     "MiniMaxSquareImageSize": "minimax_artwork",
     "MiniMaxFlashSRAudio": "flashsr_audio",
     "MiniMaxParseExternalLLMOutputV16": "minimax_prompt_source",
+    "YuE2CoverStudioPlan": "cover_studio",
+    "YuE2CoverStudioTransform": "cover_studio",
+    "YuE2CoverStudioApply": "cover_studio",
+    "MiniMaxInstrumentalVocalCheck": "instrumental_check",
+    "MiniMaxInstrumentalPick": "instrumental_check",
+    "MiniMaxStyleHint": "style_hint",
+    "MiniMaxAudioTagReader": "audio_tag_copy",
     "MiniMaxOutputPaths": "minimax_batch",
     "MiniMaxMusic3GenerationSettings": "minimax_settings",
     "MiniMaxMusicModelSettings": "minimax_settings",
@@ -71,12 +80,15 @@ CORE_NODE_TYPES = {
     # YuE2 support (2.6.0): the YuE2_Production_Toolkit example drives the
     # ComfyUI-core YuE2 nodes plus a checkpoint loader.
     "CheckpointLoaderSimple", "YuE2GenerateMusic", "EmptyYuE2LatentAudio",
+    "PrimitiveBoolean",
 }
 
 # Order dependencies: toolkit_logging first, then anything using it.
 MODULE_NAMES = (
     "audio_artifact_reduction",
+    "cover_score",
     "music_cover",
+    "whisper_lyrics",
     "music_production_control",
     "music_generation",
     "toolkit_logging",
@@ -111,6 +123,12 @@ MODULE_NAMES = (
     "audio_eq",
     "audio_auto_eq",
     "audio_mastering",
+    # 3.1.0: the Cover Studio, the instrumental vocal check and the tag reader.
+    "cover_studio",
+    "instrumental_check",
+    "audio_tag_copy",
+    # 3.1.0: the one style source the studio can read without a dependency cycle.
+    "style_hint",
 )
 
 
@@ -167,9 +185,9 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
     def test_serialized_input_order_matches_input_types(self):
         # The frontend serializes inputs as two ordered groups: socket-only
         # inputs first (entries without a "widget" key), then widget inputs.
-        # Within each group the definition order must be preserved, and the
-        # name set must match INPUT_TYPES exactly - otherwise link slot
-        # indexes in older saved workflows land on the wrong inputs.
+        # Within each group the definition order must be preserved, and every
+        # contract input must be present - otherwise link slot indexes in older
+        # saved workflows land on the wrong inputs.
         for name, wf in self.workflows.items():
             inner_nodes = [node for subgraph in wf.get("definitions", {}).get("subgraphs", [])
                            for node in subgraph.get("nodes", [])]
@@ -188,14 +206,27 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
                 if node_type == "MiniMaxAutoEQAnalyze" and "enabled" not in actual:
                     self.assertIs(data["optional"]["enabled"][1]["default"], True)
                     expected.remove("enabled")
+                # ComfyUI's audio widget serialises two helper entries next to the
+                # value itself (audioUI + upload) as soon as the node declares
+                # audio_upload. They are frontend scaffolding, not contract inputs:
+                # allowed in a saved workflow, never required by it.
+                allowed_extras = set()
+                if any(isinstance(spec[1], dict) and spec[1].get("audio_upload")
+                       for spec in data.get("required", {}).values() if len(spec) > 1):
+                    allowed_extras = {"audioUI", "upload"}
+                missing = [n for n in expected if n not in actual]
+                unexpected = [n for n in actual if n not in expected and n not in allowed_extras]
                 self.assertEqual(
-                    sorted(actual), sorted(expected),
-                    f"{name}: {node_type} (id {node.get('id')}): serialized input names drifted from INPUT_TYPES.",
+                    missing + unexpected, [],
+                    f"{name}: {node_type} (id {node.get('id')}): serialized inputs drifted from "
+                    f"INPUT_TYPES (missing={missing}, unexpected={unexpected}).",
                 )
+                contract = [n for n in expected]
                 sockets_actual = [item.get("name") for item in entries if "widget" not in item]
-                widgets_actual = [item.get("name") for item in entries if "widget" in item]
-                expected_sockets = [n for n in expected if n in sockets_actual]
-                expected_widgets = [n for n in expected if n in widgets_actual]
+                widgets_actual = [item.get("name") for item in entries
+                                  if "widget" in item and item.get("name") not in allowed_extras]
+                expected_sockets = [n for n in contract if n in sockets_actual]
+                expected_widgets = [n for n in contract if n in widgets_actual]
                 self.assertEqual(
                     sockets_actual, expected_sockets,
                     f"{name}: {node_type} (id {node.get('id')}): socket-input order drifted from INPUT_TYPES.",

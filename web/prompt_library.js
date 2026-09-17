@@ -2,6 +2,7 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import {
     PLACEHOLDER,
+    applyTooltip,
     beginRequest,
     isCurrentRequest,
     markDirty,
@@ -158,7 +159,8 @@ function attach(node) {
 
     // A manual refresh button is useful after adding/deleting prompt files while
     // ComfyUI is already running.  It does not become part of the execution input.
-    node.addWidget?.("button", "Refresh prompt lists", null, () => refreshBoth(node));
+    applyTooltip(node.addWidget?.("button", "Refresh prompt lists", null, () => refreshBoth(node)),
+        "Re-reads the prompt directories so files you added outside ComfyUI show up in the lists. Your edited field values are never overwritten.");
 }
 
 app.registerExtension({

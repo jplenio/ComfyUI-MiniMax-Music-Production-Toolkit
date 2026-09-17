@@ -11,7 +11,7 @@ from _toolkit_bootstrap import load_entry_point
 from test_yue2 import Graph
 
 ROOT = Path(__file__).resolve().parents[1]
-ABC = 'X:1\nM:4/4\nL:1/8\nQ:1/4=100\nK:C\nCDEF G2G2|'
+from test_cover_lyrics import ABC
 
 
 class CoverTests(unittest.TestCase):
@@ -23,9 +23,13 @@ class CoverTests(unittest.TestCase):
 
     def node(self, name): return self.pkg.NODE_CLASS_MAPPINGS[name]()
     def profile(self, name='YuE2 Cover'): return self.node('MusicProductionControl').build(name)[0]
-    def source(self, mode='full', audio='Night.theme.wav'):
+    def source(self, mode='full', audio='Night.theme.wav', lyrics_mode='new lyrics'):
+        # These tests are about the conditioning mode and the score handover, so the
+        # lyrics mode is explicit: the standard default (instrumental) legitimately
+        # rewrites the Vocal part and would change the expected score.
         return json.dumps(dict(schema='music_cover_source_v1', audio=audio, mode=mode,
-                               audio_encoder='sheetsage2_bf16.safetensors', title='Wrong title'))
+                               audio_encoder='sheetsage2_bf16.safetensors', title='Wrong title',
+                               lyrics_mode=lyrics_mode))
     def settings(self, mode='full'):
         node = self.node('MiniMaxMusicModelSettings')
         args = {k: s[1]['default'] for k, s in node.INPUT_TYPES()['required'].items() if 'default' in s[1]}
@@ -67,24 +71,25 @@ class CoverTests(unittest.TestCase):
         for mode in ['melody', 'full']:
             with patch.dict(sys.modules, {'comfy_execution.graph_utils': self.graph_module()}):
                 trans = self.node('MusicCoverTranscription').transcribe(self.profile(), self.source(mode))['expand']
-                gen = self.node('MusicGeneration').generate(self.profile(), self.settings(mode), 'folk', '[Instrumental]',
+                gen = self.node('MusicGeneration').generate(self.profile(), self.settings(mode), 'folk', '[Verse]\nWe follow the road',
                     'yue.safetensors', 'dit', 'clip', 'vae', cover_source_json=self.source(mode), cover_abc=ABC)['expand']
             trans = {n['class_type']: n['inputs'] for n in trans.values()}
             gen = {n['class_type']: n['inputs'] for n in gen.values()}
             self.assertEqual(set(trans), {'LoadAudio', 'AudioEncoderLoader', 'SheetSage2AudioToABC'})
             self.assertEqual(trans['SheetSage2AudioToABC']['mode'], mode)
             self.assertEqual(gen['YuE2GenerateMusic']['mode'], mode)
-            self.assertEqual(gen['YuE2GenerateMusic']['abc'], ABC)
+            expected = ABC if mode == 'full' else importlib.import_module(self.pkg.__name__+'.third_party.yue2_abc').strip_chords(ABC)
+            self.assertEqual(gen['YuE2GenerateMusic']['abc'], expected)
             self.assertNotIn('YuE2GenerateABC', gen)
             record = json.loads(self.node('MusicGenerationReceipt').build(**gen['MusicGenerationReceipt'] | {'seconds': 20})[0])
-            self.assertEqual(record['abc'], ABC)
+            self.assertEqual(record['abc'], expected)
             self.assertEqual(record['cover_source']['title'], 'Night.theme-cover')
             self.assertNotIn('abc_settings', record)
 
     def test_empty_score_cannot_silently_generate_an_unrelated_song(self):
         with patch.dict(sys.modules, {'comfy_execution.graph_utils': self.graph_module()}):
             with self.assertRaisesRegex(ValueError, 'non-empty'):
-                self.node('MusicGeneration').generate(self.profile(), self.settings(), 'folk', '[Instrumental]',
+                self.node('MusicGeneration').generate(self.profile(), self.settings(), 'folk', '[Verse]\nWe follow the road',
                     'yue', 'dit', 'clip', 'vae', cover_source_json=self.source(), cover_abc=' ')
 
     def test_prompt_uses_score_without_asking_for_new_title(self):
@@ -104,9 +109,9 @@ class CoverTests(unittest.TestCase):
 
     def test_parser_overrides_llm_and_manual_title_and_source_prefix(self):
         node = self.node('MiniMaxParseExternalLLMOutputV16')
-        for raw in ['', '[Style]\nfolk\n[Lyrics]\n[Instrumental]\n[Title]\nInvented\n[Image_Prompt]\nA mountain']:
+        for raw in ['', '[Style]\nfolk\n[Lyrics]\n[Verse]\nWe follow the road\n[Title]\nInvented\n[Image_Prompt]\nA mountain']:
             result = node.parse(1, 'fixed', 1, 'brief', 'Wrong prefix', 'Wrong fallback',
-                structured_llm_output=raw, manual_caption='folk', manual_lyrics='[Instrumental]', manual_title='Wrong manual',
+                structured_llm_output=raw, manual_caption='folk', manual_lyrics='[Verse]\nWe follow the road', manual_title='Wrong manual',
                 model_profile_json=self.profile(), cover_source_json=self.source())
             self.assertEqual(result[2], ['Night.theme-cover'])
             self.assertNotIn('Wrong', result[4][0])
@@ -126,13 +131,26 @@ class CoverTests(unittest.TestCase):
                         self.assertEqual(run.call_args.kwargs['auto_download'], download)
 
     def test_workflow_is_acyclic_and_cover_score_and_title_feed_all_consumers(self):
-        d=json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        d=json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         nodes={n['id']:n for n in d['nodes']};links={l[0]:l for l in d['links']}
         def source(nid,name):
             return links[next(i['link'] for i in nodes[nid]['inputs'] if i['name']==name)][1]
-        for nid in [80,37]:self.assertEqual(source(nid,'cover_abc'),122)
-        for nid in [80,53,55,37,122]:self.assertEqual(source(nid,'cover_source_json'),121)
+        # The prompt and the generator both plan against the score the Cover
+        # Studio validated and handed over, so an instrumental rewrite reaches
+        # both of them.  Node 131 keeps the score node's own output as a safety
+        # net for a bypassed studio.
+        for nid in [80,37]:self.assertEqual(source(nid,'cover_abc'),131)
+        self.assertEqual(source(131,'cover_abc'),125)
+        self.assertEqual(source(127,'cover_abc'),125)
+        self.assertEqual(source(125,'cover_abc'),122)
+        for nid in [80,53,55,37,122,125,126,101]:self.assertEqual(source(nid,'cover_source_json'),121)
         self.assertEqual(source(122,'model_check_report'),101)
+        self.assertEqual(source(126,'model_check_report'),101)
+        self.assertEqual(source(126,'model_profile_json'),118)
+        self.assertEqual(source(80,'cover_lyrics'),126)
+        self.assertEqual(source(53,'cover_lyrics'),126)
+        self.assertEqual(source(99,'cover_score_json'),125)
+        self.assertEqual(source(99,'cover_lyrics_json'),126)
         for nid in [35,46,52,63,99,77,108]:self.assertEqual(source(nid,'title'),53)
         for nid in [54,99]:self.assertEqual(source(nid,'source_name'),53)
         done=set()

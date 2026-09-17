@@ -161,20 +161,34 @@ class CheckedDecodeTests(unittest.TestCase):
             vae.decode.assert_not_called()
             vae.decode_tiled.assert_not_called()
 
-    def test_both_workflow_decoder_alternatives_are_checked(self):
-        wf = json.loads((_toolkit_bootstrap.ROOT / "example_workflows" /
-                         "MiniMax_Music3_Production_Toolkit.json").read_text(encoding="utf-8"))
-        subgraph, = wf["definitions"]["subgraphs"]
-        nodes = {n["id"]: n for n in subgraph["nodes"]}
-        for node_id, tiled, size in ((12, False, 512), (42, True, 1536)):
-            node = nodes[node_id]
-            self.assertEqual(node["type"], "MiniMaxSafeAudioDecode")
-            self.assertEqual(node["widgets_values"], [size, 64, tiled])
-            self.assertEqual([i["name"] for i in node["inputs"]],
-                             ["samples", "vae", "tile_size", "overlap", "tiled"])
-            self.assertEqual(node["outputs"][0]["type"], "AUDIO")
-            self.assertTrue(all(i["link"] is not None for i in node["inputs"][:2]))
-        self.assertFalse(any(n["type"] in ("VAEDecodeAudio", "VAEDecodeAudioTiled") for n in subgraph["nodes"]))
+    def test_both_decoder_alternatives_are_checked(self):
+        """Both models decode through the safe tiled node, with the right tile size.
+
+        The decoders are created by the generation expansion rather than stored in
+        the workflow file, so the contract is checked on the expanded graph.
+        """
+        package, _host = _toolkit_bootstrap.load_entry_point()
+        for model, tile_size, tiled in (("MiniMax Music 3", 1536, True), ("YuE2", 1920, True)):
+            profile = package.NODE_CLASS_MAPPINGS["MusicProductionControl"]().build(model)[0]
+            settings_node = package.NODE_CLASS_MAPPINGS["MiniMaxMusicModelSettings"]()
+            spec = settings_node.INPUT_TYPES()["required"]
+            args = {name: options[1]["default"] for name, options in spec.items()
+                    if "default" in options[1]}
+            settings = settings_node.build(**args, generation_seed=7, profile_json=profile)[-1]
+            import sys
+            import types
+            from test_yue2 import Graph
+            module = types.ModuleType("comfy_execution.graph_utils")
+            module.GraphBuilder = Graph
+            from unittest.mock import patch as _patch
+            with _patch.dict(sys.modules, {"comfy_execution.graph_utils": module}):
+                expanded = package.NODE_CLASS_MAPPINGS["MusicGeneration"]().generate(
+                    profile, settings, "style", "lyrics", "yue2.safetensors",
+                    "dit", "clip", "vae")["expand"]
+            decoders = [node for node in expanded.values() if node["class_type"] == "MiniMaxSafeAudioDecode"]
+            self.assertEqual(len(decoders), 1, model)
+            self.assertEqual(decoders[0]["inputs"]["tile_size"], tile_size, model)
+            self.assertEqual(decoders[0]["inputs"]["tiled"], tiled, model)
 
 
 class AudioExportSafetyTests(unittest.TestCase):

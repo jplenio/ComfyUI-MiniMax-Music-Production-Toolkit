@@ -41,15 +41,15 @@ audio. YuE2 Cover and its ABC-informed arrangement remain the flagship 3.0 featu
   production. Connect a reference or select a Warm/Bright preset to apply EQ.
 - Consolidated the twelve 2.x release notes into [one history file](RELEASE_NOTES_v2.x.md).
   Corrected installation, workflow, prompt/report and production-metadata docs.
-- Included an [App-Mode concept](APP_MODE_KONZEPT.md) and
-  [configuration selection catalog](APP_MODE_KONFIGURATIONSKATALOG.md).
+- Included an [App-Mode concept](docs/APP_MODE_KONZEPT.md) and
+  [configuration selection catalog](docs/APP_MODE_KONFIGURATIONSKATALOG.md).
   These are planning documents; this release does not add an App-Mode interface.
 
 ## Upgrade notes
 
 Update the toolkit, restart ComfyUI and reload its browser page so the new
 frontend controls load. Open the bundled
-[Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json)
+[Yue2_MM3_Production_Toolkit.json](example_workflows/Music_Production_Toolkit.json)
 to get the artifact-reduction branch, its central switch and the new defaults.
 Existing saved workflows retain their stored settings; they are not silently
 rewired or reset. The classic MiniMax and Audio Enhancement Lab examples retain
@@ -63,8 +63,8 @@ Artifact reduction is experimental: candidates are not confirmed AI errors,
 and wanted musical detail may also be detected. It does not reconstruct wrong
 notes, lyrics or dropouts, nor eliminate every watery or metallic artifact.
 Compare the processed and removed signals, and reduce its strength or switch it
-off when it removes wanted material. See [artifact reduction](ARTIFACT_REDUCTION.md)
-and the [EQ preset guide](EQ_PRESETS.md).
+off when it removes wanted material. See [artifact reduction](docs/ARTIFACT_REDUCTION.md)
+and the [EQ preset guide](docs/EQ_PRESETS.md).
 
 No breaking removal of existing node APIs is intended. New control/report
 connections are appended, preserving existing output positions.

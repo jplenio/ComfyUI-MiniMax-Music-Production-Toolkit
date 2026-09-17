@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-minimax-music-production-toolkit"
-version = "3.0.1"
+version = "3.1.0"
 description = "ComfyUI music production with YuE2 audio cover versions, SheetSage2 score-aware prompts, YuE2 and MiniMax Music 3 song generation, restoration, mastering, artwork and release metadata."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,14 @@ dependencies = [
   "imageio-ffmpeg>=0.5",
   "mutagen>=1.47",
   "Pillow>=10.0"
+]
+
+[project.optional-dependencies]
+# Original-lyrics transcription for YuE2 covers. Optional on purpose: it is
+# only needed by the "original lyrics" cover mode and must not be forced on
+# users who never use it. See requirements-whisper.txt for the same install.
+whisper = [
+  "faster-whisper>=1.0"
 ]
 classifiers = [
   "Development Status :: 4 - Beta",

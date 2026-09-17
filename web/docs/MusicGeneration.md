@@ -25,6 +25,16 @@ filenames, generated duration and, for YuE2, ABC. Connect it to the production
 JSON's model_identity_json input. Tiled decoding reduces decoder working memory.
 
 **YuE2 Cover** uses the same YuE2 sampler and duration settings, but receives
-`cover_source_json` and the original `cover_abc` from SheetSage2. It does not
-generate a new score. The source mode must match the effective Music settings.
-The record includes source filename, fixed title, encoder, mode and actual ABC.
+`cover_source_json` and `cover_abc` from *Cover song · instrumental score / phrase map*. It
+does not generate a new score. The source mode must match the effective Music
+settings. The record includes source filename, fixed title, encoder, mode and the
+ABC that was actually handed to the engine.
+
+The engine also applies the selected **Cover lyrics** rewrite to the incoming
+score (idempotent, so a graph that already ran the score node lands on the same
+string). An instrumental cover therefore reaches `YuE2GenerateMusic` with the
+vocal notes muted and transferred to Ins, with overlapping Ins material replaced.
+Instrumental covers use compiled musical tags and empty section tags at the
+native input. Detailed production prose remains in the report. The receipt's
+`cover_conditioning` records exact native Style, Lyrics and ABC. A pinned upstream
+checker validates the native score; melody mode strips harmony explicitly.

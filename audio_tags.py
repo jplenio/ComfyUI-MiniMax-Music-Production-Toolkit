@@ -12,6 +12,10 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("audio_tags")
+
 try:
     from PIL import Image
 except Exception as exc:  # pragma: no cover - dependency guard
@@ -109,11 +113,19 @@ def _write_standard_tags(
     album_artist = str(tags_data.get("album_artist", "") or "")
     composer = str(tags_data.get("composer", "") or "")
     if (cover_image_path or "").strip():
-        cover_bytes = (
-            cover_cache.get(cover_image_path, embedded_cover_size)
-            if cover_cache is not None
-            else _load_cover_bytes(cover_image_path, target_side=embedded_cover_size)
-        )
+        try:
+            cover_bytes = (
+                cover_cache.get(cover_image_path, embedded_cover_size)
+                if cover_cache is not None
+                else _load_cover_bytes(cover_image_path, target_side=embedded_cover_size)
+            )
+        except FileNotFoundError as exc:
+            # A finished render must not be lost because the artwork file is no
+            # longer at the path the image node reported.  Embed nothing, say so
+            # loudly, and let the audio and its other tags be published.
+            LOGGER.warning(
+                "Cover image is missing, so the audio is written without embedded artwork: %s", exc)
+            cover_bytes = b""
     else:
         cover_bytes = b""
     cover_width = cover_height = 0

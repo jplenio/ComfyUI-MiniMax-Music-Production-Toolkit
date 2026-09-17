@@ -16,13 +16,101 @@ Select an audio file in SOURCE AUDIO and confirm the host has native
 or install it in `models/audio_encoders`. Custom filenames require matching
 installed files. An empty ABC transcript stops the run; try a different source
 or inspect the native SheetSage2 error. SheetSage2 extracts music, not lyric words.
+Use the **Cover lyrics** modes to decide what should happen to the vocals; see
+[docs/YUE2.md](docs/YUE2.md#cover-lyrics-modes).
 
 The source mode controls both transcription and generation. Editing `yue2_mode`
 in Music settings affects new songs; use SOURCE AUDIO for cover full/melody mode.
 
+## Cover lyrics transcription fails or produces no words
+
+**`'English' is not a valid language code`.** Update the toolkit and restart
+ComfyUI. The Whisper wrapper now converts common language names (English → en,
+German/Deutsch → de) and normalizes code casing before loading or decoding.
+Unknown names fail immediately with guidance; invalid input is not retried on
+CPU. In older installations, select **en** directly. This field describes the
+source recording's language, not the language requested for new cover lyrics.
+
+**VAD removes nearly the entire song.** **vad_filter=false** is now the song
+default. Older saved workflows with VAD enabled automatically retry the complete
+audio without VAD if less than half survives or no segments are found. The log
+and report record the retry and effective settings. The reported 207-second
+source previously retained only 7.3 seconds and produced 40 characters; such an
+obvious opening-only fragment now stops before generation if the retry cannot
+recover it. Review the words for recognition errors and hallucinations.
+
+**New lyrics seems stuck before the LLM.** That stage includes Whisper too.
+Inference now runs in an isolated, cancellable process, with progress every 15 s.
+A GPU stall times out after 180 s without progress and retries on CPU; CPU gets
+600 s without progress. The total limit is at least 20 minutes, scaled for long
+sources. No partial transcript is accepted. See the [Whisper node](web/docs/MusicCoverLyrics.md).
+
+**`faster-whisper` is not installed.** The error names
+`requirements-whisper.txt`. Install it into the same Python environment as
+ComfyUI, restart, and run the model check again. Choose **instrumental** to cover without Whisper; both lyric-bearing modes
+use it in the bundled workflow.
+
+**The checkpoint folder is missing.** Enable `whisper_models` in the model check
+node and run it once with **Cover lyrics = new lyrics or original lyrics**; it downloads the
+pinned `whisper-large-v3` files into
+`models/audio_encoders/whisper-large-v3`. The node's **Whisper model** field must
+match that folder name. Additional CTranslate2 checkpoints need a matching catalog entry for the model dropdown.
+
+**The transcription is wrong-language, repeated or empty.** Set **language** to
+the language actually sung instead of `auto`, try **vad_filter=false** if singing was omitted (speech detection may miss it), keep **condition_on_previous_text** off (carrying text
+between chunks can repeat a line), and prefer the full `whisper-large-v3`
+checkpoint over any smaller one. Whisper was not trained on singing and
+accompaniment reduces accuracy; hallucination over instrumental sections is a
+documented failure mode. For a cleaner read, separate the vocals first (for
+example with Demucs `--two-stems=vocals`) and use that stem as the cover source
+for a separate lyrics transcription. Keep the full mix as the musical
+cover source; otherwise SheetSage2 loses the accompaniment.
+
+**The GPU path fails.** `device = auto` falls back to CPU with int8 precision
+when CUDA cannot run the checkpoint; the report records which device actually
+ran. On Windows, CTranslate2 needs cuBLAS and cuDNN 9. `device = cpu` forces the
+working path. The worker exposes installed Torch/NVIDIA DLL directories on
+Windows; if those libraries are still missing/incompatible it falls back to CPU.
+After a CUDA runtime failure, further `auto` runs stay on CPU until ComfyUI
+restarts. Explicit `cuda` requests can retry a repaired GPU installation.
+
+**Instrumental covers still contain voice-like sounds.** The score's Vocal notes
+are muted and its lead transferred to Ins. The native YuE2 Lyrics input is now
+limited to empty section tags. Native Style uses musical tags, excluding the
+narrative production plan that was audible in the reported run. Native ABC
+headers are preserved. This strengthens conditioning but cannot guarantee voice-free audio.
+Listen to a new render; previously generated audio is unchanged.
+
+**The final lyrics barely contain the transcribed words.** The parser records a
+`lyrics_word_coverage` ratio in the production JSON. A low value means the LLM
+replaced the transcription instead of distributing it; check the prompt report
+and the system prompt in use.
+
 ## Toolkit nodes do not appear
 
 Check the ComfyUI console for `IMPORT FAILED`. Install this package's `requirements.txt` into the same Python environment that runs ComfyUI, then restart completely.
+
+## The console reports a missing engine or dependency
+
+The toolkit prints one line per missing engine as soon as it loads, with the exact command, for example:
+
+```text
+Optional engine not installed: faster-whisper (Whisper engine). Without it, cover lyrics
+mode 'original lyrics' and the instrumental vocal check is unavailable ...
+Install with: python -m pip install -r requirements.txt
+```
+
+It also warns when a *required* package is missing, because the toolkit cannot run
+correctly without it. Install into the environment that runs ComfyUI (not a system Python),
+then restart ComfyUI. `install_requirements.bat` finds a nearby venv or a portable Python
+for you. See [dependencies](INSTALLATION.md#toolkit-python-dependencies).
+
+## Not enough VRAM or RAM, or it is too slow
+
+Every supported lever is listed together - a non-local LLM, a smaller model, shorter
+songs, no artwork, skipping the restoration chain, fewer steps and the cost of the
+instrumental vocal check. See
+[if something is missing, too small or too slow](INSTALLATION.md#if-something-is-missing-too-small-or-too-slow).
 
 ## Prompt-file dropdown is empty
 
@@ -39,6 +127,14 @@ The toolkit fingerprints selected prompt-file contents, so the template node sho
 ## External LLM model is missing
 
 The example GGUF filename is not a bundled dependency. Install/select a compatible llama.cpp GGUF in `models/llm` (or configure a download URL in `models_config.json`). The integrated LLM node needs `llama-cpp-python` installed in the ComfyUI Python environment.
+
+## `LLM prompt exceeds the ... token budget`
+
+The parser node stops instead of cutting the prompt, because with `trim_long_prompt` off an oversized Caption+Lyrics is an error. The message names the measured count and the budget. Real cover productions measure 610-1707 tokens for Caption+Lyrics, so keep `max_prompt_tokens` at its 4500 default (4800 maximum) and shorten redundant Style wording rather than enabling trimming - trimming drops cover lyrics or ABC sections. Measured demand and the recommended LLM budgets are listed in `INSTALLATION.md` section 5.
+
+## The LLM answer stops mid-sentence
+
+Two independent caps can end it: `max_tokens` (the node's response cap) and `n_ctx` (the context window that prompt, response and thinking share). A response cap larger than `n_ctx` minus the prompt is cut by the runtime, not by the node, so the pair has to fit: the bundled values are `max_tokens = 24576` and `n_ctx = 37376`, which hold the largest measured prompt (~11.6k tokens) plus a maximum-length answer (36166 tokens in total). If you raise `max_tokens`, raise `n_ctx` by at least the same amount - in multiples of the widget step of 256.
 
 ## FlashSR code or weights are missing
 

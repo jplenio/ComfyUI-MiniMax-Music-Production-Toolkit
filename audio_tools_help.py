@@ -23,7 +23,7 @@ AUDIO_TOOLTIPS = {
         "reference_audio": "Reference track: one item for all sources, or one reference per source batch item. If missing in Reference mode, warns and returns unity EQ so production can continue; choose Warm/Bright for correction without a reference.",
         "strength_percent": "Fraction of the broad tonal difference to correct. Start at 50% and audition.",
         "max_gain_db": "Limits individual gains and the predicted combined curve. Start at 3 dB.",
-        "max_bands": "Maximum number of broad parametric bands, up to six.",
+        "max_bands": "Maximum number of broad parametric bands the analysis may propose, up to six.",
         "min_frequency_hz": "Lower correction boundary. Frequencies without reliable evidence are excluded.",
         "max_frequency_hz": "Upper correction boundary, also limited by source/reference sample rates.",
     },

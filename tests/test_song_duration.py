@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from _toolkit_bootstrap import load_entry_point
+from test_cover_lyrics import ABC
 from test_yue2 import Graph
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,7 +32,7 @@ class DurationTests(unittest.TestCase):
         args = dict(song_count=1, seed_mode='increment_from_base', base_seed=1,
                     user_prompt='Musical brief:\nLength: 4-5 minutes', source_name_override='',
                     fallback_title='Song', manual_caption='Instrumental piano.\n01 [Intro]: Motif.\n02 [Outro]: Resolve.',
-                    manual_lyrics='[Intro]\n\n[Outro]', model_profile_json=self.profile(model),
+                    manual_lyrics='[Intro]\nWe follow the road\n[Outro]' if model == 'YuE2 Cover' else '[Intro]\n\n[Outro]', model_profile_json=self.profile(model),
                     structured_summary_json=json.dumps({'fields': {'length': length}}))
         args.update(overrides)
         return self.node('MiniMaxParseExternalLLMOutputV16').parse(**args)
@@ -88,7 +89,7 @@ class DurationTests(unittest.TestCase):
                 self.assertEqual(receipt['duration_request']['requested_length'], length)
 
     def test_user_prompt_and_summary_keep_same_authoritative_target(self):
-        workflow = json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        workflow = json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         node = next(n for n in workflow['nodes'] if n['id'] == 80)
         values = {k: v for k, v in node['widgets_values_named'].items()
                   if k in inspect.signature(self.node('MiniMaxStructuredPromptV20').build).parameters}
@@ -118,7 +119,7 @@ class DurationTests(unittest.TestCase):
                 with patch.dict(sys.modules, {'comfy_execution.graph_utils': fake}):
                     result = self.node('MusicGeneration').generate(self.profile(model), settings,
                         parsed[0][0], parsed[1][0], 'yue', 'dit', 'clip', 'vae',
-                        cover_abc='X:1\nM:4/4\nK:C\nCDEF|', **extra)
+                        cover_abc=ABC, **extra)
                 graph = {n['class_type']: (key, n['inputs']) for key, n in result['expand'].items()}
                 music_id, music = graph['YuE2GenerateMusic']
                 self.assertEqual(music['max_duration'], 300)
@@ -159,23 +160,25 @@ class DurationTests(unittest.TestCase):
 
     def test_cover_keeps_original_score_and_target(self):
         source = json.dumps(dict(schema='music_cover_source_v1', audio='Theme.wav', mode='melody',
-                                 audio_encoder='sheetsage2_bf16.safetensors'))
+                                 audio_encoder='sheetsage2_bf16.safetensors',
+                                 lyrics_mode='new lyrics'))
         parsed = self.parse('2-3 minutes', model='YuE2 Cover', cover_source_json=source)
         settings = self.settings(parsed, model='YuE2 Cover', cover_source_json=source)
-        abc = 'X:1\nM:4/4\nQ:1/4=100\nK:C\nCDEF|'
+        abc = ABC
+        native = importlib.import_module(self.pkg.__name__ + '.third_party.yue2_abc')
         fake = types.SimpleNamespace(GraphBuilder=Graph)
         with patch.dict(sys.modules, {'comfy_execution.graph_utils': fake}):
             result = self.node('MusicGeneration').generate(self.profile('YuE2 Cover'), settings,
                 parsed[0][0], parsed[1][0], 'yue', 'dit', 'clip', 'vae', cover_source_json=source, cover_abc=abc)
         graph = {n['class_type']: n['inputs'] for n in result['expand'].values()}
         self.assertNotIn('YuE2GenerateABC', graph)
-        self.assertEqual(graph['YuE2GenerateMusic']['abc'], abc)
+        self.assertEqual(graph['YuE2GenerateMusic']['abc'], native.strip_chords(abc))
         self.assertEqual(graph['YuE2GenerateMusic']['max_duration'], 360)
         self.assertEqual(parsed[2][0], 'Theme-cover')
         self.assertIn('do not invent score extensions', parsed[0][0])
 
     def test_workflow_duration_wires_are_connected_by_name(self):
-        workflow = json.loads((ROOT/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        workflow = json.loads((ROOT/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         nodes = {n['id']: n for n in workflow['nodes']}
         for source, output, target, field in [(80, 3, 53, 'structured_summary_json'),
                                               (53, 10, 55, 'prompt_provenance_json')]:

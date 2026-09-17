@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
-import { visible, refresh, settings, signature, INTEGRATED, LOCAL, CLOUD } from "../web/llm_provider_ui.js";
+import { visible, refresh, settings, signature, INTEGRATED, LOCAL, CLOUD, BUTTONS } from "../web/llm_provider_ui.js";
 import { removeLegacyLLMSessionInput } from "../web/migration_utils.js";
+import { applyTooltip } from "../web/prompt_ui_utils.js";
+
+// Every action button must carry help text; a canvas button has no label
+// attribute of its own, so the tooltip is the only explanation available.
+const EXPECTED_BUTTONS = ["llm_ui_advanced", "llm_ui_key", "llm_ui_clear", "llm_ui_models", "llm_ui_help"];
+assert.deepEqual(Object.keys(BUTTONS).sort(), [...EXPECTED_BUTTONS].sort());
+for (const [name, entry] of Object.entries(BUTTONS)) {
+    assert.ok(entry.label && entry.label.length > 3, `${name} needs a label`);
+    assert.ok(entry.tooltip && entry.tooltip.length > 30, `${name} needs a real tooltip`);
+}
+
+const fakeWidget = {name: "x"};
+applyTooltip(fakeWidget, "help text");
+assert.equal(fakeWidget.tooltip, "help text");
+assert.equal(fakeWidget.options.tooltip, "help text");
+const fakeDom = {title: "", inputEl: {title: ""}};
+applyTooltip(fakeDom, "dom help");
+assert.equal(fakeDom.title, "dom help", "DOM elements need the native title attribute");
+assert.equal(fakeDom.inputEl.title, "dom help");
+assert.equal(applyTooltip(undefined, "ignored"), undefined, "a missing widget must not throw");
 
 for (const mode of [INTEGRATED, LOCAL, CLOUD]) {
     assert.equal(visible("backend", mode), true);

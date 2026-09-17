@@ -102,6 +102,8 @@ def build_generation_metadata(
     template_version: str = "",
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     artifact_reduction_json: str = "",
+    cover_score_json: str = "",
+    cover_lyrics_json: str = "",
 ) -> Dict[str, Any]:
     """Assemble the complete generation metadata payload (schema v7).
 
@@ -244,6 +246,19 @@ def build_generation_metadata(
     artifact_report = parse_object(artifact_reduction_json, "artifact_reduction_json")
     if artifact_report:
         payload["artifact_reduction"] = artifact_report
+
+    # The audio-cover branch: which lyrics mode ran, whether the score was
+    # rewritten for an instrumental cover, and the Whisper transcription the
+    # words came from.  Omitted entirely for normal songs.
+    cover_score = parse_object(cover_score_json, "cover_score_json")
+    cover_lyrics = parse_object(cover_lyrics_json, "cover_lyrics_json")
+    if cover_score or cover_lyrics:
+        cover: Dict[str, Any] = dict(payload.get("cover") or {})
+        if cover_score:
+            cover["score"] = cover_score
+        if cover_lyrics:
+            cover["lyrics_source"] = cover_lyrics
+        payload["cover"] = cover
 
     runtime: Dict[str, Any] = dict(payload.get("runtime") or {})
     resource_profile = parse_object(resource_profile_json, "resource_profile_json")

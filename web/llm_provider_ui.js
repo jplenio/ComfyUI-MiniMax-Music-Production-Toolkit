@@ -7,6 +7,35 @@ export const CONNECTION_FIELDS = ["backend", "local_provider", "cloud_provider",
 export const REMOTE_FIELDS = ["server_url", "remote_model", "api_key_env", "credential_id", "remote_max_tokens", "request_timeout"];
 const BASIC = new Set(["enabled", "model", "max_tokens", "temperature", "n_ctx", "auto_download"]);
 
+/**
+ * The node's action buttons, with the help text that must be attached to each.
+ *
+ * Kept as data so the frontend test can require that no button ships without a
+ * tooltip; ``llm_provider.js`` only reads it and adds the widgets.
+ */
+export const BUTTONS = {
+    llm_ui_advanced: {
+        label: "Show / hide advanced GGUF settings",
+        tooltip: "Shows the loaded model's sampler defaults and its tensor split / main GPU controls. These are advanced GGUF settings; the workflow defaults work for a single GPU.",
+    },
+    llm_ui_key: {
+        label: "Set API key…",
+        tooltip: "Stores a provider key in ComfyUI's memory for this session only. It is never written into the workflow or the production JSON, and it expires when ComfyUI restarts. Cloud requests are billed by the provider.",
+    },
+    llm_ui_clear: {
+        label: "Clear session key",
+        tooltip: "Forgets the session key entered for this connection. Runs fall back to the environment variable named in 'API key variable', if one is set.",
+    },
+    llm_ui_models: {
+        label: "Find models / test connection…",
+        tooltip: "Asks the configured server or provider for its model list and copies the selected ID into the model field. This also tests the connection; no generation request is sent and no charge is incurred.",
+    },
+    llm_ui_help: {
+        label: "Connection setup / status…",
+        tooltip: "Shows the resolved API address, where the key comes from and the setup steps for the selected provider. Use it when a request fails with an address or authentication error.",
+    },
+};
+
 export function widget(node, name) { return node.widgets?.find(w => w.name === name); }
 export function settings(node) {
     return Object.fromEntries(CONNECTION_FIELDS.map(name => [name, widget(node, name)?.value ?? ""]));

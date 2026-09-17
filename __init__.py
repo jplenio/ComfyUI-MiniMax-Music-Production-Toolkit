@@ -109,6 +109,33 @@ from .minimax_audio_branch import (
     NODE_CLASS_MAPPINGS as AUDIO_BRANCH_NODE_CLASS_MAPPINGS,
     NODE_DISPLAY_NAME_MAPPINGS as AUDIO_BRANCH_NODE_DISPLAY_NAME_MAPPINGS,
 )
+# Instrumental vocal check (3.1.0): a bounded regeneration loop around the raw
+# generation.  Both nodes are additive; the check only runs when it is switched
+# on for an instrumental cover.
+from .instrumental_check import (
+    NODE_CLASS_MAPPINGS as INSTRUMENTAL_CHECK_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as INSTRUMENTAL_CHECK_NODE_DISPLAY_NAME_MAPPINGS,
+)
+# Source-tag reader (3.1.0): copies an existing file's metadata and cover art onto
+# an enhanced export so both files look the same.
+from .audio_tag_copy import (
+    NODE_CLASS_MAPPINGS as TAG_COPY_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as TAG_COPY_NODE_DISPLAY_NAME_MAPPINGS,
+)
+# Style hint (3.1.0): the one place the Cover Studio can get the requested style
+# from, without a dependency cycle - the master node is downstream of the studio.
+from .style_hint import (
+    NODE_CLASS_MAPPINGS as STYLE_HINT_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as STYLE_HINT_NODE_DISPLAY_NAME_MAPPINGS,
+)
+# YuE2 Cover Studio (3.1.0): a separate, additive cover path.  Importing it only
+# adds three new node identifiers; it does not touch the existing cover, MiniMax
+# or plain YuE2 nodes, and it exposes no import-time work beyond a couple of
+# module-level constants.
+from .cover_studio import (
+    NODE_CLASS_MAPPINGS as COVER_STUDIO_NODE_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as COVER_STUDIO_NODE_DISPLAY_NAME_MAPPINGS,
+)
 
 NODE_CLASS_MAPPINGS = {
     **LOWPASS_NODE_CLASS_MAPPINGS,
@@ -133,6 +160,10 @@ NODE_CLASS_MAPPINGS = {
     **AUTODOWNLOAD_NODE_CLASS_MAPPINGS,
     **PROMPT_REPORT_NODE_CLASS_MAPPINGS,
     **AUDIO_BRANCH_NODE_CLASS_MAPPINGS,
+    **COVER_STUDIO_NODE_CLASS_MAPPINGS,
+    **INSTRUMENTAL_CHECK_NODE_CLASS_MAPPINGS,
+    **TAG_COPY_NODE_CLASS_MAPPINGS,
+    **STYLE_HINT_NODE_CLASS_MAPPINGS,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -158,6 +189,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     **AUTODOWNLOAD_NODE_DISPLAY_NAME_MAPPINGS,
     **PROMPT_REPORT_NODE_DISPLAY_NAME_MAPPINGS,
     **AUDIO_BRANCH_NODE_DISPLAY_NAME_MAPPINGS,
+    **COVER_STUDIO_NODE_DISPLAY_NAME_MAPPINGS,
+    **INSTRUMENTAL_CHECK_NODE_DISPLAY_NAME_MAPPINGS,
+    **TAG_COPY_NODE_DISPLAY_NAME_MAPPINGS,
+    **STYLE_HINT_NODE_DISPLAY_NAME_MAPPINGS,
 }
 
 from .audio_eq import MiniMaxParametricEQ
@@ -190,13 +225,21 @@ from .music_cover import NODE_CLASS_MAPPINGS as COVER_NODES, NODE_DISPLAY_NAME_M
 NODE_CLASS_MAPPINGS.update(COVER_NODES)
 NODE_DISPLAY_NAME_MAPPINGS.update(COVER_NAMES)
 
+from .whisper_lyrics import NODE_CLASS_MAPPINGS as COVER_LYRICS_NODES, NODE_DISPLAY_NAME_MAPPINGS as COVER_LYRICS_NAMES
+NODE_CLASS_MAPPINGS.update(COVER_LYRICS_NODES)
+NODE_DISPLAY_NAME_MAPPINGS.update(COVER_LYRICS_NAMES)
+
 from .audio_artifact_reduction import NODE_CLASS_MAPPINGS as ARTIFACT_NODES, NODE_DISPLAY_NAME_MAPPINGS as ARTIFACT_NAMES
 NODE_CLASS_MAPPINGS.update(ARTIFACT_NODES)
 NODE_DISPLAY_NAME_MAPPINGS.update(ARTIFACT_NAMES)
 
-from .ui_help import install_input_tooltips, NODE_INPUT_TOOLTIPS
+from .ui_help import install_input_tooltips, merge_input_tooltips, NODE_INPUT_TOOLTIPS
 from .audio_tools_help import AUDIO_TOOLTIPS
-NODE_INPUT_TOOLTIPS.update(AUDIO_TOOLTIPS)
+from .cover_studio import studio_input_tooltips as _cover_studio_tooltips
+_COVER_STUDIO_TOOLTIPS = _cover_studio_tooltips()
+merge_input_tooltips(AUDIO_TOOLTIPS,
+                     {node: _COVER_STUDIO_TOOLTIPS
+                      for node in ("YuE2CoverStudioPlan", "YuE2CoverStudioTransform", "YuE2CoverStudioApply")})
 install_input_tooltips(NODE_CLASS_MAPPINGS)
 
 # WEB_DIRECTORY must point to the directory containing both JavaScript files and
@@ -216,6 +259,21 @@ except Exception:  # pragma: no cover - an optional surface must not break the n
     LOGGER.exception("Model-manager route registration failed")
 
 LOGGER.info("Loaded %s %s (%d nodes)", PROJECT_NAME, VERSION, len(NODE_CLASS_MAPPINGS))
+
+try:
+    from .capabilities import capability_lines, missing_capabilities
+
+    _missing_required, _missing_optional = missing_capabilities()
+    for _line in capability_lines():
+        LOGGER.info(_line)
+    if _missing_required:
+        LOGGER.warning(
+            "Required dependencies are missing, so the toolkit will fail at run time. "
+            "Install them into the ComfyUI Python environment with: "
+            "python -m pip install -r requirements.txt"
+        )
+except Exception:  # pragma: no cover - a report must never break node loading
+    LOGGER.exception("Could not report the installation's capabilities")
 
 try:
     from .llm_provider_routes import register_routes as register_llm_provider_routes

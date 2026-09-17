@@ -3,7 +3,7 @@
 All twelve 2.x release notes (2.0.0–2.6.0) are collected here, newest first.
 These are historical descriptions: model choices, defaults, limits and verification
 results describe their respective releases. For current behavior, see
-[the README](README.md), [the YuE2 guide](YUE2.md) and [3.0.0 notes](RELEASE_NOTES_v3.0.0.md).
+[the README](README.md), [the YuE2 guide](docs/YUE2.md) and [3.0.0 notes](RELEASE_NOTES_v3.0.0.md).
 
 ## Releases
 
@@ -84,7 +84,7 @@ Audio Enhancement Lab workflows remain available, and legacy nodes stay register
 
 YuE2 requires ComfyUI's native `YuE2GenerateABC`, `YuE2GenerateMusic` and
 `EmptyYuE2LatentAudio` nodes. The default BF16 checkpoint is checked/downloaded
-into ComfyUI's configured checkpoints directory. See [setup and usage](YUE2.md).
+into ComfyUI's configured checkpoints directory. See [setup and usage](docs/YUE2.md).
 
 ### Validation scope
 
@@ -231,7 +231,7 @@ Audio Enhancement Lab.
   `MiniMaxModelAutodownload.flux2_models`. Switched off, no cover is rendered or
   saved, the FLUX preflight download is skipped, and the audio export continues
   with an empty artwork path. Previously written JPGs are not deleted.
-- **Documentation and tests.** New `LLM_PROVIDERS.md` setup guide (local apps,
+- **Documentation and tests.** New `docs/LLM_PROVIDERS.md` setup guide (local apps,
   cloud, keys, output length, optional cover, troubleshooting), updated node
   pages for the three LLM nodes and the cover switch, plus provider, transport,
   UI and cover regression tests including two frontend suites.
@@ -257,8 +257,8 @@ Audio Enhancement Lab.
 - **The cover-switch documentation matches the shipped layout.** The switch
   lives in `05 · ILLUSTRATE / Cover artwork` with the cover nodes it controls —
   its `cover_enabled` output feeds the image saver and the FLUX.2 preflight
-  download next to it. The node page, the README, `WORKFLOW_OPTIMIZED.md` and
-  `LLM_PROVIDERS.md` now all describe that placement, and the layout test pins
+  download next to it. The node page, the README, `docs/WORKFLOW_OPTIMIZED.md` and
+  `docs/LLM_PROVIDERS.md` now all describe that placement, and the layout test pins
   it together with both connections.
 - **`PreviewImage` and `PreviewAudio` are registered** as ComfyUI-core node types
   in the node-ownership test, so the preview nodes in the example workflow are
@@ -285,7 +285,7 @@ wires migrate automatically.
   the key into the node for the current session). Unattended and API runs should
   use the environment variable.
 - Keep the cover saver active even when the switch is off; some ComfyUI versions
-  validate missing model dropdowns before execution. See `LLM_PROVIDERS.md`.
+  validate missing model dropdowns before execution. See `docs/LLM_PROVIDERS.md`.
 
 ### Validation
 
@@ -463,7 +463,7 @@ The **time signature and world-library release**. The Structured Song Prompt gai
 - The key combo now follows the circle of fifths **starting with the minor keys** (`A minor … D minor`, then `C major … F major`); the node documentation and the bundled example workflow were updated to match.
 - Both public example workflows carry `workflow_version: 2.0.5`; the production workflow's Structured Song Prompt node includes the new `meter` widget (default `custom`, so existing behavior is unchanged).
 - Two new ambient templates gained the missing Meter metadata (`free time / rubato`), and every description that still repeated a selectable value (lyrics mode, voice gender, duration, time signature) was cleaned across the library.
-- `PROMPT_LIBRARY.md`, the node documentation and the UI help texts describe the new field and the expanded library.
+- `docs/PROMPT_LIBRARY.md`, the node documentation and the UI help texts describe the new field and the expanded library.
 
 ### Fixed
 
@@ -473,7 +473,7 @@ The **time signature and world-library release**. The Structured Song Prompt gai
 
 ### Breaking changes
 
-- None. The new `meter` widget defaults to `custom`, so saved workflows and headless/API runs behave exactly as before. Prompt files that were merely renamed in v2.0.3 remain consolidated as documented in `PROMPT_LIBRARY.md`.
+- None. The new `meter` widget defaults to `custom`, so saved workflows and headless/API runs behave exactly as before. Prompt files that were merely renamed in v2.0.3 remain consolidated as documented in `docs/PROMPT_LIBRARY.md`.
 
 ### Upgrade notes
 
@@ -522,7 +522,7 @@ The "fields that feel right" release. The Structured Song Prompt gets a **curate
 
 ### Breaking changes
 
-- Eight bundled prompt files were consolidated into their successors (merged, renamed or moved); saved workflows that referenced one of them should select the successor file (see `PROMPT_LIBRARY.md`). The node reports a clear error for a missing file instead of failing silently.
+- Eight bundled prompt files were consolidated into their successors (merged, renamed or moved); saved workflows that referenced one of them should select the successor file (see `docs/PROMPT_LIBRARY.md`). The node reports a clear error for a missing file instead of failing silently.
 
 ### Upgrade notes
 

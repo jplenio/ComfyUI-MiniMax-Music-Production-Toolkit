@@ -12,7 +12,7 @@ The preset sets Warm/Bright/Reference automatically; numerical controls remain
 editable. Custom explains the current target; select a preset to change it.
 Presets set existing controls and never change enabled or reference connections.
 Reference presets need reference audio. Editing values selects Custom; connected
-parameter inputs make preset selection read-only. See `EQ_PRESETS.md`.
+parameter inputs make preset selection read-only. See `docs/EQ_PRESETS.md`.
 
 Proposes conservative EQ settings; **does not process audio**. Feed the same
 source into this node and Parametric EQ, then connect the settings output to EQ.
@@ -34,4 +34,4 @@ does not guarantee better sound.
 One reference can serve all source batch items, or reference/source batch counts
 must match. Multiple source items produce a `minimax_eq_batch_v1` envelope that
 the Parametric EQ handles directly. Outputs are settings JSON, analysis JSON and
-status. No models/GPU required. Details: `AUDIO_MASTERING.md`.
+status. No models/GPU required. Details: `docs/AUDIO_MASTERING.md`.

@@ -7,7 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
+WORKFLOW = ROOT / "example_workflows" / "Music_Production_Toolkit.json"
 BUILDER = ROOT / "scripts" / "build_public_workflow.py"
 
 

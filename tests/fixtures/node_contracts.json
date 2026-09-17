@@ -859,6 +859,50 @@
     },
     "hidden": {}
   },
+  "MiniMaxAudioTagReader": {
+    "python_class": "MiniMaxAudioTagReader",
+    "category": "MiniMax Music Production Toolkit/audio",
+    "function": "read",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "audio_tags_json",
+      "cover_image_path",
+      "tag_report_json"
+    ],
+    "required": {
+      "audio_file": [
+        [
+          "<select audio>"
+        ],
+        {
+          "default": "<select audio>",
+          "audio_upload": true
+        }
+      ]
+    },
+    "optional": {
+      "copy_cover_art": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "overrides_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
   "MiniMaxAutoEQAnalyze": {
     "python_class": "MiniMaxAutoEQAnalyze",
     "category": "MiniMax Music Production Toolkit/mastering",
@@ -959,7 +1003,7 @@
       "BOOLEAN"
     ],
     "return_names": [
-      "cover_enabled"
+      "cover_artwork_enabled"
     ],
     "required": {
       "enabled": [
@@ -1018,6 +1062,250 @@
     "optional": {},
     "hidden": {}
   },
+  "MiniMaxInstrumentalPick": {
+    "python_class": "MiniMaxInstrumentalPick",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "pick",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "check_report_json"
+    ],
+    "required": {
+      "max_retries": [
+        "INT",
+        {
+          "default": 2,
+          "min": 0,
+          "max": 10,
+          "step": 1
+        }
+      ],
+      "word_tolerance": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        }
+      ]
+    },
+    "optional": {
+      "candidate_0": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_0": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_1": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_1": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_2": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_2": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_3": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_3": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_4": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_4": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_5": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_5": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_6": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_6": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_7": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_7": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_8": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_8": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_9": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_9": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ],
+      "candidate_10": [
+        "AUDIO",
+        {
+          "lazy": true
+        }
+      ],
+      "report_10": [
+        "STRING",
+        {
+          "lazy": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MiniMaxInstrumentalVocalCheck": {
+    "python_class": "MiniMaxInstrumentalVocalCheck",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "check",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "AUDIO",
+      "STRING"
+    ],
+    "return_names": [
+      "audio",
+      "check_report_json"
+    ],
+    "required": {
+      "audio": [
+        "AUDIO",
+        {}
+      ],
+      "word_tolerance": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        }
+      ]
+    },
+    "optional": {
+      "whisper_model": [
+        "STRING",
+        {
+          "default": "whisper-large-v3"
+        }
+      ],
+      "language": [
+        "STRING",
+        {
+          "default": "auto"
+        }
+      ],
+      "device": [
+        "STRING",
+        {
+          "default": "auto"
+        }
+      ],
+      "compute_type": [
+        "STRING",
+        {
+          "default": "auto"
+        }
+      ],
+      "beam_size": [
+        "INT",
+        {
+          "default": 1,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        }
+      ],
+      "candidate_label": [
+        "STRING",
+        {
+          "default": ""
+        }
+      ]
+    },
+    "hidden": {}
+  },
   "MiniMaxLLMChat": {
     "python_class": "MiniMaxLLMChat",
     "category": "MiniMax Music Production Toolkit/llm",
@@ -1067,7 +1355,7 @@
       "max_tokens": [
         "INT",
         {
-          "default": 16384,
+          "default": 24576,
           "min": 1,
           "max": 131072,
           "step": 1
@@ -1103,7 +1391,7 @@
       "n_ctx": [
         "INT",
         {
-          "default": 32768,
+          "default": 37376,
           "min": 512,
           "max": 262144,
           "step": 256
@@ -2057,6 +2345,18 @@
         {
           "default": true
         }
+      ],
+      "whisper_models": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "cover_source_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
       ]
     },
     "hidden": {}
@@ -2445,6 +2745,30 @@
         {
           "forceInput": true
         }
+      ],
+      "instrumental_check": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "instrumental_word_tolerance": [
+        "INT",
+        {
+          "default": 0,
+          "min": 0,
+          "max": 50,
+          "step": 1
+        }
+      ],
+      "instrumental_max_retries": [
+        "INT",
+        {
+          "default": 2,
+          "min": 0,
+          "max": 10,
+          "step": 1
+        }
       ]
     },
     "hidden": {}
@@ -2749,6 +3073,18 @@
         }
       ],
       "structured_summary_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_lyrics": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_lyrics_lock": [
         "STRING",
         {
           "forceInput": true
@@ -3402,7 +3738,7 @@
       "workflow_name": [
         "STRING",
         {
-          "default": "MiniMax Music Production Toolkit 3.0.1",
+          "default": "MiniMax Music Production Toolkit 3.1.0",
           "multiline": false
         }
       ],
@@ -3455,6 +3791,18 @@
         }
       ],
       "artifact_reduction_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_score_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_lyrics_json": [
         "STRING",
         {
           "forceInput": true
@@ -4720,8 +5068,464 @@
         {
           "forceInput": true
         }
+      ],
+      "cover_lyrics": [
+        "STRING",
+        {
+          "forceInput": true
+        }
       ]
     },
+    "hidden": {}
+  },
+  "MiniMaxStyleHint": {
+    "python_class": "MiniMaxStyleHint",
+    "category": "MiniMax Music Production Toolkit/prompts",
+    "function": "resolve",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING"
+    ],
+    "return_names": [
+      "style_hint"
+    ],
+    "required": {
+      "style_text": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {
+      "user_prompt_source": [
+        [
+          "bundled_library",
+          "external_directory",
+          "manual"
+        ],
+        {
+          "default": "bundled_library"
+        }
+      ],
+      "user_prompt_directory": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": false
+        }
+      ],
+      "user_prompt_file": [
+        [
+          "custom",
+          "<select a prompt>",
+          "african/afrobeat-classic-instrumental.txt",
+          "african/afrobeats-vocal.txt",
+          "african/amapiano-instrumental.txt",
+          "african/desert-blues-vocal.txt",
+          "african/ethio-jazz-instrumental.txt",
+          "african/gqom-instrumental.txt",
+          "african/highlife-instrumental.txt",
+          "african/soukous-instrumental.txt",
+          "alternative/alternative-rock-vocal.txt",
+          "alternative/britpop-vocal.txt",
+          "alternative/new-wave-vocal.txt",
+          "alternative/uk-garage-vocal.txt",
+          "ambient/ambient-choir-vocalise.txt",
+          "ambient/ambient-guitar.txt",
+          "ambient/chillout-pads-strings.txt",
+          "ambient/dark-ambient-drone.txt",
+          "asian/anime-opening-vocal.txt",
+          "asian/bollywood-vocal.txt",
+          "asian/chinese-traditional-instrumental.txt",
+          "asian/city-pop-vocal.txt",
+          "asian/enka-vocal.txt",
+          "asian/game-jrpg-orchestral.txt",
+          "asian/indian-classical-instrumental.txt",
+          "asian/kpop-vocal.txt",
+          "asian/mandopop-ballad-vocal.txt",
+          "blues/blues-ballad-vocal.txt",
+          "blues/boogie-woogie-instrumental.txt",
+          "blues/chicago-blues-vocal.txt",
+          "blues/delta-blues-vocal.txt",
+          "blues/electric-blues-instrumental.txt",
+          "cinematic/corporate-uplifting-instrumental.txt",
+          "cinematic/documentary-underscore-instrumental.txt",
+          "cinematic/emotional-piano-underscore.txt",
+          "cinematic/epic-trailer-instrumental.txt",
+          "cinematic/fantasy-adventure-orchestral.txt",
+          "cinematic/horror-suspense-instrumental.txt",
+          "cinematic/orchestral-action-instrumental.txt",
+          "cinematic/sports-stadium-anthem.txt",
+          "classical/baroque-concerto-instrumental.txt",
+          "classical/cello-and-piano.txt",
+          "classical/choral-sacred-vocal.txt",
+          "classical/cinematic-romance.txt",
+          "classical/gregorian-chant-vocal.txt",
+          "classical/impressionist-piano-instrumental.txt",
+          "classical/minimalism-instrumental.txt",
+          "classical/mystical-neoclassical.txt",
+          "classical/neoclassical-piano.txt",
+          "classical/opera-aria-vocal.txt",
+          "classical/piano-and-strings.txt",
+          "classical/romantic-string-ensemble.txt",
+          "classical/string-quartet-instrumental.txt",
+          "classical/symphonic-orchestral-instrumental.txt",
+          "comedy/comedy-rap-vocal.txt",
+          "comedy/english-parody-pop-vocal.txt",
+          "comedy/german-absurd-novelty.txt",
+          "country/americana-vocal.txt",
+          "country/bluegrass-instrumental.txt",
+          "country/country-ballad-vocal.txt",
+          "country/honky-tonk-vocal.txt",
+          "country/modern-country-pop-vocal.txt",
+          "country/outlaw-country-vocal.txt",
+          "disco/classic-disco-vocal.txt",
+          "disco/italo-disco-vocal.txt",
+          "edm/big-room-festival-instrumental.txt",
+          "edm/breakbeat-instrumental.txt",
+          "edm/dance-anthem-instrumental.txt",
+          "edm/drum-and-bass-instrumental.txt",
+          "edm/dubstep-instrumental.txt",
+          "edm/eurodance-vocal.txt",
+          "edm/future-bass-vocal.txt",
+          "edm/future-rave-sparse-vocals.txt",
+          "edm/goa-trance-instrumental.txt",
+          "edm/hardgroove-techno-instrumental.txt",
+          "edm/hardstyle-instrumental.txt",
+          "edm/jungle-instrumental.txt",
+          "edm/liquid-drum-and-bass-sparse-vocals.txt",
+          "edm/melodic-techno-instrumental.txt",
+          "edm/neurofunk-dnb-instrumental.txt",
+          "edm/progressive-trance-instrumental.txt",
+          "edm/psytrance-instrumental.txt",
+          "edm/uplifting-trance-instrumental.txt",
+          "electronic/analog-space-electronic.txt",
+          "electronic/berlin-school-sequencer.txt",
+          "electronic/chiptune-instrumental.txt",
+          "electronic/cinematic-electronica.txt",
+          "electronic/downtempo-electronica.txt",
+          "electronic/ebm-darkwave-vocal.txt",
+          "electronic/electro-swing-vocal.txt",
+          "electronic/idm-experimental-instrumental.txt",
+          "electronic/lofi-hiphop-instrumental.txt",
+          "electronic/minimal-electronic-german-vocals.txt",
+          "electronic/peak-time-techno-sparse-vocals.txt",
+          "electronic/synth-pop-vocal.txt",
+          "electronic/synthwave.txt",
+          "electronic/trip-hop.txt",
+          "electronic/vaporwave-instrumental.txt",
+          "european/alpine-volksmusik-instrumental.txt",
+          "european/balkan-brass-instrumental.txt",
+          "european/chanson-vocal.txt",
+          "european/fado-vocal.txt",
+          "european/flamenco-instrumental.txt",
+          "european/irish-pub-session-instrumental.txt",
+          "european/klezmer-instrumental.txt",
+          "european/polka-instrumental.txt",
+          "european/russian-folk-vocal.txt",
+          "european/schlager-vocal.txt",
+          "european/viennese-waltz-instrumental.txt",
+          "folk/appalachian-folk-instrumental.txt",
+          "folk/celtic-folk-vocal.txt",
+          "folk/dark-fairytale-folk-vocal.txt",
+          "folk/folk-punk-vocal.txt",
+          "folk/melancholic-folk-ballad-vocal.txt",
+          "folk/mystical-medieval-folk-vocal.txt",
+          "folk/nordic-folk-vocal.txt",
+          "folk/romantic-solo-guitar.txt",
+          "folk/sea-shanty-vocal.txt",
+          "funk/classic-funk-instrumental.txt",
+          "funk/nu-disco-funk.txt",
+          "gospel/contemporary-worship-vocal.txt",
+          "gospel/german-worship-vocal.txt",
+          "gospel/gospel-choir-vocal.txt",
+          "gospel/hymn-choir-vocal.txt",
+          "hiphop/boom-bap-hiphop-vocal.txt",
+          "hiphop/cloud-rap-vocal.txt",
+          "hiphop/drill-instrumental.txt",
+          "hiphop/german-rap-vocal.txt",
+          "hiphop/old-school-hiphop-vocal.txt",
+          "hiphop/phonk-instrumental.txt",
+          "hiphop/rnb-vocal.txt",
+          "hiphop/trap-instrumental.txt",
+          "house/acid-house-instrumental.txt",
+          "house/afro-house-vocal.txt",
+          "house/bass-house-instrumental.txt",
+          "house/deep-house.txt",
+          "house/disco-house-vocal.txt",
+          "house/electro-house-instrumental.txt",
+          "house/french-house-instrumental.txt",
+          "house/melodic-house.txt",
+          "house/organic-house.txt",
+          "house/progressive-house-dreamy-bittersweet.txt",
+          "house/progressive-house-melodic-trance.txt",
+          "house/progressive-house-sparse-vocals.txt",
+          "house/tech-house-instrumental.txt",
+          "jazz/bebop-instrumental.txt",
+          "jazz/cool-jazz-instrumental.txt",
+          "jazz/dixieland-instrumental.txt",
+          "jazz/gypsy-jazz-instrumental.txt",
+          "jazz/jazz-funk.txt",
+          "jazz/smooth-jazz-instrumental.txt",
+          "jazz/smooth-jazz-vocal-late-night.txt",
+          "jazz/smooth-jazz-vocal-positive-resolution.txt",
+          "jazz/swing-big-band-instrumental.txt",
+          "jazz/vocal-jazz-crooner.txt",
+          "kids/children-song-vocal.txt",
+          "kids/kids-adventure-song-vocal.txt",
+          "kids/lullaby-vocal.txt",
+          "kids/nursery-rhyme-german-vocal.txt",
+          "latin/bachata-vocal.txt",
+          "latin/bossa-nova-vocal.txt",
+          "latin/cumbia-instrumental.txt",
+          "latin/merengue-instrumental.txt",
+          "latin/norteno-corrido-vocal.txt",
+          "latin/reggaeton-vocal.txt",
+          "latin/salsa-vocal.txt",
+          "latin/samba-instrumental.txt",
+          "latin/son-cubano-vocal.txt",
+          "latin/tango-instrumental.txt",
+          "meditation/focus-study-instrumental.txt",
+          "meditation/meditation-healing-instrumental.txt",
+          "meditation/nature-soundscape-instrumental.txt",
+          "meditation/sleep-music-instrumental.txt",
+          "metal/black-metal-instrumental.txt",
+          "metal/death-metal-vocal.txt",
+          "metal/doom-metal-instrumental.txt",
+          "metal/folk-metal-vocal.txt",
+          "metal/grunge-vocal.txt",
+          "metal/heavy-metal-vocal.txt",
+          "metal/industrial-metal-vocal.txt",
+          "metal/melodic-metal-instrumental.txt",
+          "metal/metalcore-vocal.txt",
+          "metal/nu-metal-vocal.txt",
+          "metal/power-metal-vocal.txt",
+          "metal/progressive-djent-instrumental.txt",
+          "metal/sludge-post-metal-instrumental.txt",
+          "metal/symphonic-metal-vocal.txt",
+          "metal/thrash-metal-vocal.txt",
+          "musical/broadway-ballad-vocal.txt",
+          "musical/german-musical-vocal.txt",
+          "musical/musical-theatre-ensemble-vocal.txt",
+          "pop/art-pop-vocal.txt",
+          "pop/bedroom-pop-vocal.txt",
+          "pop/dance-pop-vocal.txt",
+          "pop/dream-pop-electronic-vocal.txt",
+          "pop/german-pop-vocal.txt",
+          "pop/hyperpop-vocal.txt",
+          "pop/indie-pop-vocal.txt",
+          "pop/power-ballad-vocal.txt",
+          "pop/singer-songwriter-acoustic-vocal.txt",
+          "punk/pop-punk-vocal.txt",
+          "punk/post-punk-vocal.txt",
+          "punk/punk-rock-vocal.txt",
+          "punk/ska-punk-vocal.txt",
+          "reggae/dancehall-vocal.txt",
+          "reggae/dub-instrumental.txt",
+          "reggae/rocksteady-vocal.txt",
+          "reggae/roots-reggae-vocal.txt",
+          "reggae/ska-jamaican-instrumental.txt",
+          "rock/blues-rock-instrumental.txt",
+          "rock/classic-rock-vocal.txt",
+          "rock/garage-rock-vocal.txt",
+          "rock/hard-rock-vocal.txt",
+          "rock/indie-rock-vocal.txt",
+          "rock/post-rock-instrumental.txt",
+          "rock/progressive-rock-instrumental.txt",
+          "rock/psychedelic-rock-instrumental.txt",
+          "rock/rockabilly-vocal.txt",
+          "rock/shoegaze-vocal.txt",
+          "rock/southern-rock-vocal.txt",
+          "rock/stoner-rock-instrumental.txt",
+          "rock/surf-rock-instrumental.txt",
+          "seasonal/christmas-carol-vocal.txt",
+          "seasonal/christmas-pop-vocal.txt",
+          "seasonal/german-christmas-vocal.txt",
+          "seasonal/wedding-ceremony-instrumental.txt",
+          "soul/doo-wop-vocal.txt",
+          "soul/motown-soul-vocal.txt",
+          "soul/neo-soul-vocal.txt",
+          "soul/soul-ballad-vocal.txt",
+          "world/andean-folk-instrumental.txt",
+          "world/arabic-pop-vocal.txt",
+          "world/bhangra-instrumental.txt",
+          "world/calypso-soca-vocal.txt",
+          "world/gamelan-instrumental.txt",
+          "world/gnawa-instrumental.txt",
+          "world/hawaiian-slack-key-instrumental.txt",
+          "world/mariachi-vocal.txt",
+          "world/mongolian-throat-singing-instrumental.txt",
+          "world/qawwali-vocal.txt",
+          "world/turkish-folk-instrumental.txt"
+        ],
+        {
+          "default": "custom"
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "MusicCoverLyrics": {
+    "python_class": "MusicCoverLyrics",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "transcribe_lyrics",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "cover_lyrics",
+      "lyrics_report_json"
+    ],
+    "required": {
+      "model_profile_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_source_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "model_check_report": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "whisper_model": [
+        [
+          "whisper-large-v3"
+        ],
+        {
+          "default": "whisper-large-v3"
+        }
+      ],
+      "language": [
+        [
+          "auto",
+          "en",
+          "de",
+          "fr",
+          "es",
+          "it",
+          "pt",
+          "nl",
+          "pl",
+          "sv",
+          "da",
+          "no",
+          "fi",
+          "cs",
+          "hu",
+          "ro",
+          "el",
+          "ru",
+          "uk",
+          "tr",
+          "ar",
+          "he",
+          "hi",
+          "id",
+          "th",
+          "vi",
+          "ja",
+          "ko",
+          "zh"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "device": [
+        [
+          "auto",
+          "cuda",
+          "cpu"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "compute_type": [
+        [
+          "auto",
+          "float16",
+          "int8_float16",
+          "int8",
+          "float32"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "vad_filter": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "beam_size": [
+        "INT",
+        {
+          "default": 5,
+          "min": 1,
+          "max": 10,
+          "step": 1
+        }
+      ],
+      "condition_on_previous_text": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ]
+    },
+    "optional": {},
+    "hidden": {}
+  },
+  "MusicCoverScore": {
+    "python_class": "MusicCoverScore",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "adapt",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "cover_abc",
+      "syllable_brief",
+      "score_report_json"
+    ],
+    "required": {
+      "cover_source_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_abc": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "optional": {},
     "hidden": {}
   },
   "MusicCoverSource": {
@@ -4768,6 +5572,35 @@
         "STRING",
         {
           "default": "sheetsage2_bf16.safetensors"
+        }
+      ],
+      "lyrics_mode": [
+        [
+          "new lyrics",
+          "original lyrics",
+          "instrumental"
+        ],
+        {
+          "default": "instrumental"
+        }
+      ],
+      "lead_instrument": [
+        [
+          "Lead synth",
+          "Electric piano",
+          "Piano",
+          "Electric guitar",
+          "Acoustic guitar",
+          "Strings",
+          "Saxophone",
+          "Trumpet",
+          "Flute",
+          "Organ",
+          "Vibraphone",
+          "Remove vocal line (accompaniment only)"
+        ],
+        {
+          "default": "Lead synth"
         }
       ]
     },
@@ -4942,6 +5775,12 @@
     },
     "optional": {
       "cover_source_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "instrumental_check_json": [
         "STRING",
         {
           "forceInput": true
@@ -5134,7 +5973,7 @@
       "max_duration",
       "duration_ceiling",
       "info",
-      "cover_enabled",
+      "cover_artwork_enabled",
       "refinement_enabled",
       "mastering_enabled",
       "artifact_reduction_enabled"
@@ -5150,7 +5989,7 @@
           "default": "YuE2"
         }
       ],
-      "cover_enabled": [
+      "cover_artwork_enabled": [
         "BOOLEAN",
         {
           "default": true
@@ -5513,6 +6352,338 @@
         ],
         {
           "default": "album - title"
+        }
+      ],
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "YuE2CoverStudioApply": {
+    "python_class": "CoverStudioApply",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "apply",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "cover_abc",
+      "studio_report_json",
+      "warnings",
+      "locked_lyrics"
+    ],
+    "required": {
+      "studio_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "optional": {
+      "transform_text": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "repair_text": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_abc": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "YuE2CoverStudioPlan": {
+    "python_class": "CoverStudioPlan",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "plan",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "system_prompt",
+      "user_prompt",
+      "studio_json"
+    ],
+    "required": {
+      "cover_source_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "cover_abc": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "interpretation_freedom": [
+        "INT",
+        {
+          "default": 30,
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ],
+      "target_style": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ]
+    },
+    "optional": {
+      "enabled": [
+        "BOOLEAN",
+        {
+          "default": true
+        }
+      ],
+      "advanced_mode": [
+        "BOOLEAN",
+        {
+          "default": false
+        }
+      ],
+      "cover_lyrics": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ],
+      "preserve_main_melody": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "preserve_chorus_hook": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "preserve_structure": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "preserve_harmony": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "preserve_tempo": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "preserve_key": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "melody_only": [
+        [
+          "auto",
+          "yes",
+          "no"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "melody_variation": [
+        [
+          "auto",
+          "none",
+          "low",
+          "moderate",
+          "high"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "rhythm_variation": [
+        [
+          "auto",
+          "none",
+          "low",
+          "moderate",
+          "high"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "harmony_freedom": [
+        [
+          "auto",
+          "none",
+          "low",
+          "moderate",
+          "high"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "structure_freedom": [
+        [
+          "auto",
+          "none",
+          "low",
+          "moderate",
+          "high"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "key_change": [
+        "INT",
+        {
+          "default": 0,
+          "min": -12,
+          "max": 12,
+          "step": 1
+        }
+      ],
+      "tempo_change": [
+        "INT",
+        {
+          "default": 0,
+          "min": -50,
+          "max": 50,
+          "step": 5
+        }
+      ],
+      "vocal_range": [
+        [
+          "auto",
+          "Low male (E2-E4)",
+          "Baritone (A2-A4)",
+          "Tenor (C3-C5)",
+          "Alto (F3-F5)",
+          "Mezzo-soprano (A3-A5)",
+          "Soprano (C4-C6)"
+        ],
+        {
+          "default": "auto"
+        }
+      ],
+      "lyrics_policy": [
+        [
+          "auto (mode decides)",
+          "keep source words",
+          "keep supplied words"
+        ],
+        {
+          "default": "auto (mode decides)"
+        }
+      ],
+      "supplied_lyrics": [
+        "STRING",
+        {
+          "default": "",
+          "multiline": true
+        }
+      ]
+    },
+    "hidden": {}
+  },
+  "YuE2CoverStudioTransform": {
+    "python_class": "CoverStudioTransform",
+    "category": "MiniMax Music Production Toolkit/generation",
+    "function": "transform",
+    "output_node": false,
+    "output_is_list": [],
+    "input_is_list": false,
+    "return_types": [
+      "STRING",
+      "STRING",
+      "STRING"
+    ],
+    "return_names": [
+      "system_prompt",
+      "user_prompt",
+      "studio_json"
+    ],
+    "required": {
+      "studio_json": [
+        "STRING",
+        {
+          "forceInput": true
+        }
+      ]
+    },
+    "optional": {
+      "plan_text": [
+        "STRING",
+        {
+          "forceInput": true
         }
       ],
       "enabled": [

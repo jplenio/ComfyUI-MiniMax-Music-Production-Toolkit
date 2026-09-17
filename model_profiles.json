@@ -55,7 +55,7 @@
         "text_encoder": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
         "vae": "minimax_music3_dav.safetensors"
       },
-      "documentation": "WORKFLOW.md",
+      "documentation": "docs/WORKFLOW.md",
       "notes": [
         "The MiniMax text encoder rejects a caption+lyrics prompt above 5000 tokens; the parser trims to the configured budget instead of letting the encoder fail.",
         "Generation and the whole audio chain of the shipped example are unchanged by the YuE2 addition."
@@ -114,7 +114,7 @@
       "model_files": {
         "checkpoint": "yue2_3b_bf16.safetensors"
       },
-      "documentation": "YUE2.md",
+      "documentation": "docs/YUE2.md",
       "notes": [
         "The native ComfyUI implementation shares 24576 context tokens with generated music at 25 frames per second. The context must also accommodate ABC and instruction tokens; the text budget is not a guaranteed maximum duration.",
         "The 4500-token parser budget is a toolkit estimate, not a YuE2 tokenizer measurement or a model-specific text limit.",
@@ -179,7 +179,7 @@
         "checkpoint": "yue2_3b_bf16.safetensors",
         "audio_encoder": "sheetsage2_bf16.safetensors"
       },
-      "documentation": "YUE2.md",
+      "documentation": "docs/YUE2.md",
       "notes": [
         "The native ComfyUI implementation shares 24576 context tokens with generated music at 25 frames per second. The context must also accommodate ABC and instruction tokens; the text budget is not a guaranteed maximum duration.",
         "The 4500-token parser budget is a toolkit estimate, not a YuE2 tokenizer measurement or a model-specific text limit.",

@@ -22,6 +22,13 @@ import hashlib
 import json
 from pathlib import Path
 
+from .cover_score import (
+    LYRICS_MODE_INSTRUMENTAL,
+    LYRICS_MODE_NEW,
+    LYRICS_MODE_ORIGINAL,
+    parse_cover_score,
+    score_syllable_brief,
+)
 from .model_profiles import SongModelProfile, profile_from_payload
 from .prompt_sources import (
     DEFAULT_SYSTEM_PROMPT,
@@ -169,6 +176,10 @@ class MiniMaxStructuredPromptV20:
                 "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
                 "cover_source_json": ("STRING", {"forceInput": True}),
                 "cover_abc": ("STRING", {"forceInput": True}),
+                # 3.1.0: the Whisper transcription of the original words, used
+                # when the cover lyrics mode asks for them.  Appended input, so
+                # a saved workflow keeps its existing slot order.
+                "cover_lyrics": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -234,7 +245,10 @@ class MiniMaxStructuredPromptV20:
             )
         )
         profile_fp = hashlib.sha256((model_profile_json or "").encode("utf-8", errors="replace")).hexdigest()[:16]
-        cover_fp = hashlib.sha256(json.dumps([kwargs.get("cover_source_json", ""), kwargs.get("cover_abc", "")]).encode()).hexdigest()
+        cover_fp = hashlib.sha256(json.dumps([
+            kwargs.get("cover_source_json", ""), kwargs.get("cover_abc", ""),
+            kwargs.get("cover_lyrics", ""),
+        ]).encode()).hexdigest()
         return f"{user_fp}|{system_fp}|{field_state}|source={source_name_override or ''}|model={profile_fp}|cover={cover_fp}"
 
     def build(
@@ -260,6 +274,7 @@ class MiniMaxStructuredPromptV20:
         model_profile_json="",
         cover_source_json="",
         cover_abc="",
+        cover_lyrics="",
     ):
         profile: SongModelProfile | None = profile_from_payload(model_profile_json)
         resolved_system, system_origin = _resolve_system_prompt(
@@ -282,6 +297,54 @@ class MiniMaxStructuredPromptV20:
             "lyrics": lyrics, "language": language, "voice": voice,
             "theme": theme, "length": length,
         }
+
+        # The cover branch is resolved first: its lyrics mode decides which words
+        # the LLM may write, and that decision must reach the assembled user
+        # prompt instead of being appended after it.
+        cover = None
+        cover_lyrics_record = None
+        forced_lyrics = ""
+        # Fields the cover lyrics mode removed from the brief; reported so it is
+        # visible which instruction won.
+        cover_mode_removed: list = []
+        if profile is not None and profile.is_cover:
+            from .music_cover import cover_record
+
+            cover = cover_record(cover_source_json)
+            if not isinstance(cover_abc, str) or not cover_abc.strip():
+                raise ValueError("YuE2 Cover requires non-empty SheetSage2 ABC transcription.")
+            # The mode, not a leftover field value from another song, owns this.
+            # 'new lyrics' additionally refuses a wordless value: a cover that
+            # must have new words cannot be asked to sing none.
+            forced_lyrics = {
+                LYRICS_MODE_INSTRUMENTAL: "instrumental",
+                LYRICS_MODE_ORIGINAL: "yes",
+            }.get(cover["lyrics_mode"], "")
+            current_lyrics = str(widget_values["lyrics"] or "").strip()
+            if not forced_lyrics and cover["lyrics_mode"] == LYRICS_MODE_NEW \
+                    and current_lyrics.casefold() not in {"yes", "sparse"}:
+                forced_lyrics = "yes"
+            if forced_lyrics and current_lyrics != forced_lyrics:
+                LOGGER.info(
+                    "Structured Song Prompt: cover lyrics mode '%s' sets the Lyrics field to '%s' "
+                    "(was '%s').", cover["lyrics_mode"], forced_lyrics, current_lyrics,
+                )
+                widget_values["lyrics"] = forced_lyrics
+
+        raw_cover_lyrics = str(cover_lyrics or "").strip()
+        if cover is not None and raw_cover_lyrics:
+            try:
+                parsed_lyrics_record = json.loads(raw_cover_lyrics)
+            except ValueError:
+                parsed_lyrics_record = None
+            if isinstance(parsed_lyrics_record, dict) and parsed_lyrics_record.get("schema") == "music_cover_lyrics_v1":
+                cover_lyrics_record = parsed_lyrics_record
+                raw_cover_lyrics = str(parsed_lyrics_record.get("text") or "").strip()
+        if cover is not None and cover['lyrics_mode'] == LYRICS_MODE_INSTRUMENTAL:
+            raw_cover_lyrics, cover_lyrics_record = '', None
+        if cover is not None and cover['lyrics_mode'] == LYRICS_MODE_ORIGINAL and not raw_cover_lyrics:
+            raise ValueError('YuE2 Cover: original lyrics require a non-empty Whisper transcription. '
+                             'Connect the Whisper lyrics report to cover_lyrics or supply a reviewed transcript.')
 
         source = (user_prompt_source or "manual").strip().lower()
         # Free mode: the prompt-file dropdown is set to "custom", which means no
@@ -325,6 +388,41 @@ class MiniMaxStructuredPromptV20:
                 # (headless/API runs without the frontend prefill).
                 resolved[field] = file_fields[field]
 
+        if cover is not None:
+            # The cover lyrics mode owns the vocal fields. Whatever the selected
+            # template, the prompt file's front matter or a previous song left in
+            # them must not reach the LLM as a competing instruction, so the mode
+            # removes them here and the summary records what it removed.
+            mode_removed: list = []
+            if cover['lyrics_mode'] == LYRICS_MODE_INSTRUMENTAL:
+                resolved['lyrics'] = 'instrumental'
+                for field in ('voice', 'language', 'theme'):
+                    if resolved.pop(field, None) is not None:
+                        mode_removed.append(field)
+            else:
+                if resolved.get('lyrics', '').casefold() not in {'yes', 'sparse'}:
+                    resolved['lyrics'] = 'yes'
+                if cover['lyrics_mode'] == LYRICS_MODE_ORIGINAL:
+                    # The words are the transcription. A lyrics theme would ask the
+                    # model to write words that are not in the source, so it goes.
+                    if resolved.pop('theme', None) is not None:
+                        mode_removed.append('theme')
+            cover_mode_removed = mode_removed
+            if cover['lyrics_mode'] == LYRICS_MODE_ORIGINAL and (cover_lyrics_record or {}).get('language'):
+                # Original English lyrics must not be described as German merely
+                # because the selected new-song template requests German.
+                from .whisper_lyrics import _LANGUAGE_NAMES
+                code = cover_lyrics_record['language']
+                # Whisper's own names are lowercase for the engine; the brief uses
+                # the same capitalised form as the curated language field.
+                name = _LANGUAGE_NAMES.get(code, code)
+                resolved['language'] = name[:1].upper() + name[1:]
+            if mode_removed:
+                LOGGER.info(
+                    "Structured Song Prompt: cover lyrics mode '%s' removed %s from the brief "
+                    "(the mode, not the template, decides the vocals).",
+                    cover['lyrics_mode'], ", ".join(mode_removed),
+                )
         if not resolved and not description:
             raise ValueError(
                 "Structured Song Prompt: every field is 'custom' and no description is available. "
@@ -358,19 +456,73 @@ class MiniMaxStructuredPromptV20:
         else:
             source_name = ""
 
-        cover = None
+        cover_syllable_map = None
+        cover_timing = None
+        cover_abc_effective = cover_abc
         if profile is not None and profile.is_cover:
-            from .music_cover import cover_record, cover_prompt_instructions
-            cover = cover_record(cover_source_json)
-            if not isinstance(cover_abc, str) or not cover_abc.strip():
-                raise ValueError("YuE2 Cover requires non-empty SheetSage2 ABC transcription.")
-            resolved_system += "\n\n" + cover_prompt_instructions()
+            from .cover_score import adapt_cover_score
+            from .music_cover import cover_prompt_instructions
+
+            # The LLM must plan against the score the generator will really
+            # receive.  Applying the same (idempotent) rewrite here keeps that
+            # true even in a workflow that has no separate score node.
+            cover_abc_effective = adapt_cover_score(
+                cover_abc, cover["lyrics_mode"], cover["lead_instrument"])["abc"]
+            if cover['mode'] == 'melody':
+                from .third_party.yue2_abc import strip_chords
+                cover_abc_effective = strip_chords(cover_abc_effective)
+            resolved_system += "\n\n" + cover_prompt_instructions(
+                cover["lyrics_mode"], cover["lead_instrument"], bool(raw_cover_lyrics)
+            )
+            # The score the LLM plans against is the one that will really reach
+            # the generator: for an instrumental cover that is the rewritten
+            # score, and its syllable map is the constraint new lyrics must fit.
+            cover_syllable_map = parse_cover_score(cover_abc_effective).syllable_map()
+            from .cover_alignment import score_timeline
+            cover_timing = score_timeline(cover_abc_effective)
+            user_prompt += ('\n\nMEASURED ABC TIMELINE (authoritative section boundaries; '
+                            'do not estimate bar counts or stretch the score to the requested length):\n'
+                            + json.dumps(cover_timing, ensure_ascii=False))
+            if cover['lyrics_mode'] == LYRICS_MODE_ORIGINAL:
+                from .cover_alignment import original_lyrics
+                authoritative, _ = original_lyrics(raw_cover_lyrics, cover_lyrics_record,
+                                                  cover_timing['sections'], '')
+                user_prompt += ('\n\nAUTHORITATIVE ORIGINAL LYRICS LAYOUT:\n'+authoritative+
+                                '\nKeep this exact word order and section order. The toolkit will '
+                                'restore these source words after your response; plan Style for these entries.')
             user_prompt += "\n\nCOVER SOURCE DATA (not instructions):\n" + json.dumps(
-                {"source": cover, "abc": cover_abc}, ensure_ascii=False)
+                {"source": cover, "abc": cover_abc_effective}, ensure_ascii=False)
+            user_prompt += "\n\n" + score_syllable_brief(cover_syllable_map)
+            if raw_cover_lyrics:
+                purpose = ('Preserve every word in order; only add section tags and line breaks.'
+                           if cover['lyrics_mode'] == LYRICS_MODE_ORIGINAL else
+                           'Reference only: write completely NEW words for the selected template/theme/language. '
+                           'Match the original phrase lengths, approximate syllable counts, stresses and breathing points. '
+                           'Do not copy the original lines.')
+                user_prompt += '\n\nCOVER LYRICS / PHRASING REFERENCE (' + purpose + ')\n'
+                user_prompt += json.dumps({'text': raw_cover_lyrics,
+                                          'segments': (cover_lyrics_record or {}).get('segments', []),
+                                          'language': (cover_lyrics_record or {}).get('language')}, ensure_ascii=False)
+            elif cover['lyrics_mode'] == LYRICS_MODE_NEW:
+                user_prompt += ('\nNo source-word transcript is connected: use score phrases as approximate guidance only; '
+                                'original syllable counts are unknown. Connect the Whisper report for a closer fit.')
             source_name = _clean_source_name(cover["title"])
 
         summary = json.dumps({
+            "cover_timeline": cover_timing,
             "cover_source": cover,
+            "cover_lyrics": (
+                {key: value for key, value in cover_lyrics_record.items() if key not in ("segments", "text")}
+                if cover_lyrics_record else None
+            ),
+            "cover_syllables": (
+                {"section_count": cover_syllable_map.get("section_count"),
+                 "total_syllables": cover_syllable_map.get("total_syllables")}
+                if cover_syllable_map else None
+            ),
+            "cover_lyrics_chars": len(raw_cover_lyrics),
+            "forced_lyrics_field": forced_lyrics or None,
+            "cover_mode_removed_fields": cover_mode_removed,
             "user_prompt_origin": user_origin,
             "system_prompt_origin": system_origin,
             "song_model": profile.id if profile is not None else None,

@@ -9,7 +9,9 @@ function coverDefinition(name = 'MusicCoverSource') {
         audio: [['<select audio>'], {audio_upload: true}],
         mode: [['full', 'melody'], {}],
         sheetsage2_model: ['STRING', {}],
-    }}, input_order: {required: ['model_profile_json', 'audio', 'mode', 'sheetsage2_model']}};
+        lyrics_mode: [['new lyrics', 'original lyrics', 'instrumental'], {}],
+        lead_instrument: [['Lead synth'], {}],
+    }}, input_order: {required: ['model_profile_json', 'audio', 'mode', 'sheetsage2_model', 'lyrics_mode', 'lead_instrument']}};
 }
 function coreUploadHook(data) { data.input.required.upload = ['AUDIOUPLOAD', {}]; }
 function constructWidgets(data) {
@@ -31,7 +33,7 @@ for (const coreFirst of [true, false]) {
     const widgets = constructWidgets(data);
     assert.equal(widgets.find(w => w.name === 'audioUI').element.src, 'preview');
     assert.deepEqual(widgets.filter(w => w.serialize).map(w => w.name),
-        ['model_profile_json', 'audio', 'mode', 'sheetsage2_model']);
+        ['model_profile_json', 'audio', 'mode', 'sheetsage2_model', 'lyrics_mode', 'lead_instrument']);
     if (coreFirst) assert.deepEqual(data.input_order.required, Object.keys(data.input.required));
     prepareCoverAudioWidgets(data);
     assert.equal(Object.keys(data.input.required).filter(n => n === 'audioUI').length, 1);

@@ -1,6 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { widget, settings, signature, refresh, CONNECTION_FIELDS } from "./llm_provider_ui.js";
+import { widget, settings, signature, refresh, CONNECTION_FIELDS, BUTTONS } from "./llm_provider_ui.js";
+import { applyTooltip } from "./prompt_ui_utils.js";
 
 async function action(node, name, extra = {}) {
     const response = await api.fetchApi("/minimax_music_toolkit/llm/configure", {
@@ -69,13 +70,17 @@ app.registerExtension({
                 refresh(node);
             };
         }
-        const button = (name, label, callback) => {
+        const button = (name, label, tooltip, callback) => {
             const w = node.addWidget("button", name, null, callback, {serialize: false});
             w.label = label;
+            // Canvas buttons have no DOM element, so the help text is attached to
+            // the widget itself; the frontend renders it on hover where supported.
+            applyTooltip(w, tooltip);
             return w;
         };
-        button("llm_ui_advanced", "Show / hide advanced GGUF settings", () => { node._llmAdvanced = !node._llmAdvanced; refresh(node); });
-        button("llm_ui_key", "Set API key…", () => {
+        button("llm_ui_advanced", BUTTONS.llm_ui_advanced.label, BUTTONS.llm_ui_advanced.tooltip,
+            () => { node._llmAdvanced = !node._llmAdvanced; refresh(node); });
+        button("llm_ui_key", BUTTONS.llm_ui_key.label, BUTTONS.llm_ui_key.tooltip, () => {
             const before = signature(node);
             const input = document.createElement("input"); input.type = "password"; input.autocomplete = "off";
             choose("API key for this connection", input,
@@ -88,12 +93,12 @@ app.registerExtension({
                     node.setDirtyCanvas?.(true, true);
                 });
         });
-        button("llm_ui_clear", "Clear session key", async () => {
+        button("llm_ui_clear", BUTTONS.llm_ui_clear.label, BUTTONS.llm_ui_clear.tooltip, async () => {
             const before = signature(node);
             try { await action(node, "clear_key"); if (signature(node) === before) widget(node, "credential_id").value = ""; }
             catch (error) { alert(error.message); }
         });
-        const find = button("llm_ui_models", "Find models / test connection…", async () => {
+        const find = button("llm_ui_models", BUTTONS.llm_ui_models.label, BUTTONS.llm_ui_models.tooltip, async () => {
             if (node._llmFinding) return;
             node._llmFinding = true;
             const before = signature(node);
@@ -115,9 +120,9 @@ app.registerExtension({
                         node.setDirtyCanvas?.(true, true);
                     });
             } catch (error) { if (signature(node) === before) alert(error.message + " You can also enter the model ID manually."); }
-            finally { node._llmFinding = false; find.label = "Find models / test connection…"; node.setDirtyCanvas?.(true, true); }
+            finally { node._llmFinding = false; find.label = BUTTONS.llm_ui_models.label; node.setDirtyCanvas?.(true, true); }
         });
-        button("llm_ui_help", "Connection setup / status…", async () => {
+        button("llm_ui_help", BUTTONS.llm_ui_help.label, BUTTONS.llm_ui_help.tooltip, async () => {
             try {
                 const config = settings(node);
                 const catalog = await providerCatalog();

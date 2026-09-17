@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
 
 from workflow_schema import (
     JSON_METADATA_INPUT,
@@ -22,8 +24,8 @@ from workflow_schema import (
 )
 
 WORKFLOWS = [
-    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json",
-    ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
+    ROOT / "example_workflows" / "Music_Production_Toolkit.json",
+    ROOT / "example_workflows" / "Music_Production_AudioEnhance.json",
 ]
 
 

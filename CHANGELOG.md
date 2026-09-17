@@ -2,7 +2,244 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
-## [Unreleased]
+## [3.1.0] - 2026-09-18
+
+- **Added the instrumental vocal check (opt-in).** YuE2 can add vocal-like material to an
+  instrumental even though the score carries no vocal notes, so the toolkit now transcribes its
+  own raw output with the Whisper engine it already ships and counts the words. A take that still
+  contains words is re-rendered, up to the configured number of retries (0-10); when no take reaches
+  the tolerance the take with the fewest recognised words is used, the words Whisper heard are
+  logged per take, and the losing candidate files are deleted, so an unattended run always ends with
+  the best audio it produced. Three new settings on the music settings node: `instrumental_check`,
+  `instrumental_word_tolerance` (words, not letters) and `instrumental_max_retries`. The check runs
+  on the freshly decoded song, before refinement, EQ, mastering and encoding, and only for a YuE2
+  instrumental cover. The retry loop is built into the generation expansion with lazy inputs, so a
+  clean first take costs one generation rather than eleven. The result is stored as
+  `instrumental_check_result` in the generation record.
+- **Added the source-tag reader.** `MiniMaxAudioTagReader` reads an existing audio file's title,
+  artist, album, album artist, year, track, genre, comment and composer, plus its embedded cover
+  art, so an enhanced export carries the same metadata as the original. The source file's own tags
+  win; the optional override input only fills the fields the source lacks.
+- **Consolidated the example workflows into two.** `Music_Production_Toolkit.json` (the former
+  Cover Studio workflow) is the main workflow and covers YuE2, YuE2 Cover and MiniMax Music 3.
+  `Music_Production_AudioEnhance.json` replaces the audio-enhancement example and now carries every
+  enhancement stage of the main workflow: the experimental artifact reduction, the refinement and
+  mastering bypass gates, the MP3 release saver and the source-tag reader. The Yue2 and MiniMax-only
+  workflows were strict subsets of the main workflow and were removed.
+- **Fixed the layout of the consolidated workflows.** Every node sits inside exactly one group and
+  no two nodes overlap, so the canvas stays readable; the rebuilt enhancement chain was also
+  verified acyclic.
+
+- **Fixed, from the real instrumental logs: the identity text fed the engine the
+  model's scheduling text instead of the musical identity.** The Style of a real
+  run starts with "Target duration: 270 seconds; requested range ... follow the
+  supplied ABC phrase order and tempo ... the source score may end earlier", and
+  the 400-character identity budget was spent before the sentence that actually
+  names the music. That is echoed instruction, not style, and it occupied the
+  most prominent position in the text the engine receives. Scheduling and
+  score-supervision sentences are now rejected, so the identity begins with the
+  music (verified against the user's own Style text).
+- **Fixed, from the same logs: instrumental covers handed the engine a lyrics
+  field that said `[Chorus]`.** The bundled instrumentals instruction explicitly
+  forbids vocal-oriented section tags and prescribes [Intro], [Instrumental],
+  [Bridge], [Solo] and [Outro]; the compiled text did the opposite. Verse,
+  Pre-Chorus and Chorus labels now become `[Instrumental]` in the Style arc and
+  in the Lyrics field alike, so the two stay one-to-one. The source labels remain
+  in `cover_conditioning.section_tag_map` and in the prompt report.
+- **Recorded the remaining structural lever.** All 17 instrumental runs in the
+  user's log used `full` conditioning, which asks the engine for melody and
+  harmony from a score whose vocal part is empty by design. `cover_conditioning`
+  now records `cot_mode` and a `mode_note` stating that the upstream cover guide
+  prescribes `melody` conditioning for a stylistic cover. The mode is the user's
+  choice on the source node, so it is reported, not overridden.
+- Verified in the same logs: the score that reached YuE2 carried **zero** vocal
+  notes in every case, so a voice that is still audible is model behaviour, not
+  unmuted score content.
+- **Fixed: more freedom used to reduce how much of the selected template reached the
+  result.** Two couplings caused it. (a) The studio applied the chord-free
+  `melody_only` reduction at every freedom above 20, including `full` covers -
+  which declare "melody and harmony" - so the engine was handed a score without
+  harmony and filled the gap with its own priors. `melody_only` now follows the
+  decode mode: a `melody` cover gets the chord-free score from the arrangement
+  band upward, a `full` cover always keeps its chords, the report explains which
+  applies, and an explicit override that would break the mode contract is refused
+  with a message. (b) An instrumental cover replaced the whole Style with a
+  bounded tag list, so most of the template's character words never reached the
+  model. The instrumental text channel now leads with the Style's own identity
+  sentence, hazard-filtered so no singer, language, duration instruction or
+  narrative can travel, followed by the tag list, the section arc and an explicit
+  "instrumental only" rule.
+- **Added the style-priority contract.** The freedom permissions are now stated
+  as applying to the source material only - in the cover instruction the prompt
+  node sends, in the planner brief and its JSON payload, and in the transformer
+  role file. A higher freedom value means that less of the source survives, never
+  that less of the requested style is delivered. A test runs the whole chain at
+  freedom 0/25/50/75/100 and asserts the style and lyrics that reach the engine
+  are identical while the score still changes.
+- **Fixed: the Cover Studio example could not be loaded in the browser.** The
+  added note node had no `properties` object, which the frontend's zod schema
+  rejects. A regression test now requires that key on every node in the file.
+- **Fixed: "faithful cover" was not faithful.** At the low end of the slider the
+  guard only checked the structure and the tempo, so a model score could still
+  rewrite every note and chord and be accepted. The comparison now reports each
+  element separately and the profile rejects a change to any element it pins: at
+  Interpretation Freedom 0 a rewritten note, chord, bar or tempo falls back to
+  the unchanged source score.
+- **Added a lyrics lock.** The words no longer follow the slider. The plan node
+  gains `lyrics_policy` (`auto` / `keep source words` / `keep supplied words`)
+  and `supplied_lyrics`; the apply node gains the `locked_lyrics` output. The
+  parser gains an appended optional `cover_lyrics_lock` input that uses the
+  block verbatim and marks it as an intentional user decision, so the
+  "new lyrics copied the source" guard does not fire on a deliberate lock.
+  Impossible combinations (a lock on an instrumental cover, supplied words in
+  original-lyrics mode, a missing transcription) are refused with a clear
+  message. The lyrics/melody fit is still reported, so locked words that no
+  longer fit a strongly reworked melody are visible.
+- **Fixed: a missing artwork file aborted the audio export.** A finished render
+  was lost with `cover image not found` when the image was no longer at the path
+  the artwork node reported. The saver now writes the audio without embedded
+  artwork and logs a warning; the small `_load_cover_bytes` helper still fails
+  closed for direct callers.
+- **Clarified `lead_instrument`.** It is implemented: the notes that carried the
+  vocals move into the native `Ins` part unchanged, `Vocal` keeps its harmony
+  and becomes rests, and the instrument name travels in the `Style` YuE2
+  receives. It is deliberately not written into the score header, because the
+  official checker requires the native `Vocal`/`Ins` definitions. New tests pin
+  both halves.
+- Added the **YuE2 Cover Studio** as a separate, additive cover path (three new
+  nodes). It is an optional stage, and existing saved workflows keep loading and
+  running: the nodes they use keep their inputs, their order and their defaults.
+- Added the **Interpretation Freedom** slider (0-100). It is a toolkit
+  abstraction, never a YuE2 parameter: it produces a structured profile that
+  drives what is preserved, what may be reworked, whether the score becomes a
+  chord-free melody line, an exact transposition and an exact tempo rewrite.
+  Explicit `auto`/`yes`/`no` (and `none`/`low`/`moderate`/`high`) user settings
+  always override the automatic value.
+- Added a cover plan stage: the planner lists what it preserves and what it
+  changes before any score edit, contradictions with the profile are recorded,
+  and the plan is stored with the debug report.
+- Added a validation layer for every model-produced score: ABC extraction from
+  chatty answers, header and structure checks against the bounded native
+  dialect, prose and fence rejection, empty-voice-block detection and an
+  invariant comparison with the score the model received. Invalid scores are
+  rejected, one optional repair is tried, then the validated deterministic
+  result is used. YuE2 never receives unvalidated model output.
+- Added an explicit local ABC reference
+  (`docs/references/YUE2_ABC_COVER_RULES.md`) that is injected into every
+  ABC-related prompt automatically, distilled from the verified upstream
+  snapshot already pinned in `docs/references/`.
+- Added a deterministic, verified transposition (key and every sounding pitch
+  shift together; accidentals are re-spelled against the target key with the
+  minimum the dialect allows) and a lyrics/melody fit report per section.
+- The parser's additive `cover_lyrics_lock` socket was appended to the workflows
+  and the link indexes were re-derived, so the frontend migration stays a no-op and
+  no stored slot moves.
+
+- **One install command now covers every documented feature.** `requirements.txt`
+  contains the Whisper engine, so a fresh environment has no missing dependency for
+  the cover lyrics modes or the instrumental vocal check. The installation guide lists
+  the minimal install without Whisper, and the toolkit prints one line per missing
+  engine at load time with the exact command that fixes it (a missing *required*
+  package is logged as a warning). A verified fresh-environment resolution installs
+  31 packages without touching the installed PyTorch stack.
+- **Cover instructions now have exactly one owner each**, audited end to end and
+  documented in the tooltips, the node descriptions and the cover guide:
+  `Song request · template & fields` is the master for the style and the musical
+  fields (resolution: explicit value > prompt-file metadata > omitted), the Cover
+  Studio owns only how the source material is reworked, and the cover lyrics mode
+  owns the words. An inherited **Lyrics theme** is now removed from the brief for
+  instrumental and original-lyrics covers - it used to stay in and invited the
+  model to write words that must not exist - and the Whisper-detected language is
+  written in the same capitalised form as the curated language field.
+  `structured_summary_json` reports `cover_mode_removed_fields`, and the studio's
+  `target_style` is documented (and worded in both prompts) as a hint for the
+  rework rather than a second style source.
+- **The standard cover lyrics mode is now `instrumental`.** It needs no Whisper engine
+  and no transcription, so a fresh installation produces a cover out of the box; the
+  node default, the fallback for payloads without a mode and the bundled workflow all
+  agree. A missing or legacy `lyrics_mode` therefore resolves to instrumental now.
+- **New node `Style hint · template or text`:** the supported way to give the Cover
+  Studio the requested style. The master node consumes the studio's rewritten score,
+  so it is downstream of the studio and can never feed it - that link is a dependency
+  cycle. This node reads the same prompt template (or typed text) from outside the
+  studio's chain and feeds `target_style`; the bundled workflow wires it that way. Its
+  cache key covers the resolved text, so an edited hint or a changed template re-runs
+  the studio.
+- The style hint now **behaves exactly like the structured prompt node**: its three
+  selection widgets carry the same names, the grouped/indented dropdown is built by
+  the same shared frontend code (moved to `prompt_ui_utils.js` so the two nodes cannot
+  drift apart again), and selecting a template copies its text into `style_text` -
+  only the body, without the front-matter block. Its output feeds `target_style` on the
+  studio, and only that: the master's `description_override` is filled from that node's
+  **own** template selection, so the two nodes keep separate dropdowns and a style hint
+  can never rewrite the description the LLM receives.
+- The "YuE2 Cover Studio" note now uses the same colours as every other note: the
+  heading in the colour of the group it sits in, the body on the shared dark
+  background.
+- **A cyclic workflow now fails the release gate instead of failing at run time.**
+  `validate_release.py` followed link endpoints but never dependencies, so a graph
+  that ComfyUI rejects with `Dependency cycle detected` could pass every check and
+  only break when someone queued it. The gate now reports the cycle with its path
+  (`80 -> 127 -> 128 -> 129 -> 130 -> 131 -> 80`), and the studio's `target_style`
+  tooltip plus the cover guide warn against the wiring that causes it: the master
+  node consumes the studio's rewritten score, so it is downstream of the studio and
+  cannot feed it.
+- Fixed a stricter-than-useful workflow check: a workflow saved from the ComfyUI
+  frontend carries the audio widget's `audioUI`/`upload` helper entries, which are
+  now accepted as optional extras instead of counting as a contract drift.
+- **Documentation layout:** topic guides live in `docs/` next to the GitHub Pages
+  site; only the conventional files (README, CHANGELOG, INSTALLATION, TROUBLESHOOTING,
+  DEVELOPMENT, PUBLISHING, contributing/conduct/security/licence, release notes) stay
+  at the root. `workflow_schema.py` moved to `scripts/` with the other dev tools.
+- **New tests** keep both guarantees mechanical: every relative documentation link and
+  anchor resolves, the root/documentation split cannot drift, every third-party import
+  is declared or has a documented fallback, and every optional engine is detected and
+  named in the installation guide.
+- The installation guide gained a "if something is missing, too small or too slow"
+  section: what to do when VRAM or RAM is short and which levers actually help speed
+  (non-local LLM, smaller model, shorter songs, no artwork, skipped stages, the cost of
+  the instrumental vocal check).
+
+- Fixed Whisper receiving display names such as English instead of language
+  codes: normalize common names/casing before loading and reject unknown inputs
+  early. Input errors no longer retry on CPU.
+- Fixed the reported cover runs: VAD defaults off for music; strongly filtered
+  sources retry without VAD, and obvious opening-only fragments stop generation.
+  Requested/effective settings and attempts are retained. Whisper runs in an
+  isolated cancellable worker with progress and time limits, Windows DLL discovery
+  and CPU fallback; auto avoids repeatedly using a failed GPU in the same session.
+  Instrumental covers compile prose to musical tags and empty lyric sections; exact native inputs are recorded.
+
+- Added YuE2 Cover lyrics modes: new lyrics, original lyrics and instrumental,
+  independent of full/melody conditioning, with mode-specific score/prompt rules.
+- Corrected instrumental score handling: preserve native Vocal/Ins format,
+  mute Vocal notes without losing harmony, transfer its melody into Ins and
+  report overlapping instrumental notes replaced. Preserve block boundaries,
+  key/meter fields and musical timing. Accompaniment-only keeps the old Ins part.
+- Replaced the false one-note/one-syllable constraint with a note/phrase map,
+  source words and Whisper word/segment timestamps. Both lyric-bearing cover
+  modes use Whisper; new lyrics treats the transcript as a phrasing reference.
+- Original lyrics uses deterministic timestamp-to-ABC placement of unchanged source
+  words, repairing LLM rewrites, then verifies their complete ordered sequence.
+  Native ABC validation supplies measured section boundaries; instrumental headers
+  retain native names and melody conditioning explicitly strips harmony. Instrumental strips words and positive vocal
+  instructions at parser/generator boundaries. Cover text is never auto-trimmed.
+- Raised the parser prompt budget in the shipped main workflow from 1200 to the
+  4500 default and pinned it in release validation: 35 real cover productions
+  (2026-09-17) measure 610-1707 tokens for Caption+Lyrics, so the old 1200 with
+  trimming off would have rejected 24 of them instead of generating a song.
+  `trim_long_prompt` stays off, as cover text must never be auto-trimmed.
+- Raised the example LLM budgets to `max_tokens = 24576`, `n_ctx = 37376` and
+  `remote_max_tokens = 65536` on every LLM node, and replaced the exact-value
+  release check with floors so they cannot shrink silently. The two values are
+  sized so that even a maximum-length answer fits beside the largest measured
+  prompt (36166 of 37376 tokens). The same defaults apply to a freshly added
+  LLM Chat node.
+- Fixed empty Whisper results and CUDA errors during lazy transcription;
+  retry on CPU/int8 and release models. Added the optional engine dependency,
+  pinned large-v3 catalog/autoload and production transcript/score reports.
+- Corrected workflow report connections so the LLM receives time information,
+  not only plain text. Updated docs, review plan and targeted regression tests.
 
 ## [3.0.1] - 2026-09-16
 
@@ -80,7 +317,7 @@ All notable changes to this project will be documented here. The project follows
 - Model-aware parsing, prompt reports and production records preserve Style,
   lyrics and generated ABC without using MiniMax's tokenizer for YuE2.
 - The classic MiniMax workflow remains fixed to MiniMax; legacy node interfaces
-  retain their widget order. See `YUE2.md` for setup and validation limits.
+  retain their widget order. See `docs/YUE2.md` for setup and validation limits.
 
 ## [2.5.2] - 2026-09-13
 
@@ -133,7 +370,7 @@ workflow through the `PreviewImage` and `PreviewAudio` nodes.
   remain compatible; obsolete session input wires migrate on load.
 - FLUX.2 cover switch, enabled by default, wired to image execution and preflight
   downloads. Audio export continues without generated artwork when switched off.
-- Provider/transport/UI/cover regression tests and `LLM_PROVIDERS.md` setup guide.
+- Provider/transport/UI/cover regression tests and `docs/LLM_PROVIDERS.md` setup guide.
 
 ### Changed
 - LLM execution now uses ComfyUI's native cache invalidation to generate fresh
@@ -316,7 +553,7 @@ This major release makes the example workflow self-contained, gives the prompt s
 - Add `DEVELOPMENT.md` with public contributor/maintainer rules for node compatibility, serialized workflow safety, validation and releases.
 - Add `scripts/update_demo_catalog.py` to safely extract public GitHub Pages demo metadata from production JSON while preserving existing SoundCloud URLs.
 - Add demo-catalog regression tests and release validation for unique track IDs/orders, cover availability and SoundCloud URL shape.
-- Local-only `KONTEXT.md` hand-off context is excluded from Git, the Comfy Registry and release ZIPs by validator-guarded rules.
+- Local-only `docs/KONTEXT.md` hand-off context is excluded from Git, the Comfy Registry and release ZIPs by validator-guarded rules.
 
 ### Changed
 - The bundled example workflow uses only toolkit and ComfyUI-core nodes (external LLM Session / Egregora nodes removed).

@@ -8,7 +8,7 @@ no GPU, model or download is required.
 Try **YuE2 - Smooth highs** for harsh highs, or **YuE2 - Smooth highs (strong)**
 for more reduction including a 14 kHz low-pass. These are static tonal starting
 points, not artifact removal. Presets set the editable curve and preamp, save
-in the existing JSON and support Undo. Edits show Custom. See `EQ_PRESETS.md`.
+in the existing JSON and support Undo. Edits show Custom. See `docs/EQ_PRESETS.md`.
 
 Connect AUDIO and edit the bands, or connect `MiniMaxAutoEQAnalyze.eq_settings_json`.
 Connected settings are read-only in the editor; the rendered first batch item is
@@ -21,5 +21,5 @@ or place Mastering Compressor afterward. Bypass/unity preserves the original
 AUDIO; active processing preserves its sample count, rate, batches and channels.
 
 Outputs: processed AUDIO, `eq_report_json`, `info`. Cyan is the current curve;
-gold is the last actual response. See `AUDIO_MASTERING.md` for JSON examples,
+gold is the last actual response. See `docs/AUDIO_MASTERING.md` for JSON examples,
 batch settings, technical details and workflow instructions.

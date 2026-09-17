@@ -172,5 +172,56 @@
         "timeout": 3600
       }
     ]
+  },
+  "whisper": {
+    "note": "Optional original-lyrics transcription for YuE2 covers. Only selected when the cover lyrics mode is 'original lyrics'. These are the CTranslate2 files consumed by the optional faster-whisper engine (requirements-whisper.txt); the target folder name is the value of the 'Whisper model' field. Verified via the public HF API on 2026-09-16: repository ungated, MIT licence, commit sha pinned below.",
+    "target": "models/audio_encoders/whisper-large-v3",
+    "files": [
+      {
+        "name": "model.bin",
+        "filename": "model.bin",
+        "repo_id": "Systran/faster-whisper-large-v3",
+        "repo_type": "model",
+        "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+        "bytes": 3087284237,
+        "timeout": 7200
+      },
+      {
+        "name": "config.json",
+        "filename": "config.json",
+        "repo_id": "Systran/faster-whisper-large-v3",
+        "repo_type": "model",
+        "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+        "bytes": 2394,
+        "timeout": 600
+      },
+      {
+        "name": "preprocessor_config.json",
+        "filename": "preprocessor_config.json",
+        "repo_id": "Systran/faster-whisper-large-v3",
+        "repo_type": "model",
+        "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+        "bytes": 340,
+        "timeout": 600
+      },
+      {
+        "name": "tokenizer.json",
+        "filename": "tokenizer.json",
+        "repo_id": "Systran/faster-whisper-large-v3",
+        "repo_type": "model",
+        "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+        "bytes": 2480617,
+        "timeout": 600
+      },
+      {
+        "name": "vocabulary.json",
+        "filename": "vocabulary.json",
+        "repo_id": "Systran/faster-whisper-large-v3",
+        "repo_type": "model",
+        "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+        "bytes": 1068114,
+        "timeout": 600
+      }
+    ]
   }
 }

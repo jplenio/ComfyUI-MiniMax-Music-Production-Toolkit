@@ -57,7 +57,7 @@ class ArchiveSelectionTests(unittest.TestCase):
     def test_generated_release_assets_are_excluded(self):
         for relative in (
             "dist/SHA256SUMS.txt",
-            "dist/MiniMax_Music3_Production_Toolkit_v2.1.1.json",
+            "dist/Music_Production_Toolkit_v2.1.1.json",
             "dist/ComfyUI-MiniMax-Music-Production-Toolkit-v2.1.1.zip",
         ):
             with self.subTest(relative=relative):
@@ -70,9 +70,9 @@ class ArchiveSelectionTests(unittest.TestCase):
             "scripts/__pycache__/x.pyc",
             ".scratch/native_stage_base/test.json",
             ".scratch/workflow_before_26.json",
-            "KONTEXT.md",
-            "PROJECT_STATE.md",
-            "REFACTOR-PLAN.md",
+            "docs/KONTEXT.md",
+            "docs/PROJECT_STATE.md",
+            "docs/REFACTOR-PLAN.md",
             "nested/thing.zip",
         ):
             with self.subTest(relative=relative):
@@ -82,14 +82,14 @@ class ArchiveSelectionTests(unittest.TestCase):
         for relative in (
             "__init__.py",
             "web/structured_prompt.js",
-            "example_workflows/MiniMax_Music3_Production_Toolkit.json",
+            "example_workflows/Music_Production_Toolkit.json",
             "prompts/system/minimax-music3-production.txt",
         ):
             with self.subTest(relative=relative):
                 self.assertTrue(release_common.archive_should_include(ROOT, ROOT / relative))
 
     def test_packager_uses_the_shared_rule(self):
-        self.assertFalse(PACKAGE.should_include(ROOT / "dist" / "MiniMax_Music3_Production_Toolkit_v2.1.1.json"))
+        self.assertFalse(PACKAGE.should_include(ROOT / "dist" / "Music_Production_Toolkit_v2.1.1.json"))
         self.assertTrue(PACKAGE.should_include(ROOT / "__init__.py"))
         self.assertIn("dist", PACKAGE.EXCLUDED_PARTS)
 
@@ -135,13 +135,17 @@ class PrivacyScanTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             leak = "D" + ":" + chr(92) + "Users" + chr(92) + "private"
-            (root / "KONTEXT.md").write_text(leak, encoding="utf-8")
+            # The handoff documents live in docs/ since the documentation tidy-up.
+            (root / "docs").mkdir(parents=True, exist_ok=True)
+            (root / "docs" / "KONTEXT.md").write_text(leak, encoding="utf-8")
             # published_only applies the archive rules, so the local-only handoff
             # file is out of scope entirely.
             self.assertEqual(release_common.privacy_hits(root, published_only=True), [])
             # Without that filter every file is scanned; the maintainer machine's
-            # own files are then in scope by design.
-            self.assertEqual([rel for rel, _p in release_common.privacy_hits(root)], ["KONTEXT.md"])
+            # own files are then in scope by design. privacy_hits reports native
+            # separators, so normalise before comparing.
+            self.assertEqual([rel.replace("\\", "/") for rel, _p in release_common.privacy_hits(root)],
+                             ["docs/KONTEXT.md"])
 
     def test_dist_is_not_scanned(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -155,6 +159,50 @@ class PrivacyScanTests(unittest.TestCase):
 
     def test_repository_is_clean_under_the_stricter_pattern(self):
         self.assertEqual(release_common.privacy_hits(ROOT, published_only=True), [])
+
+
+class WorkflowCycleGateTests(unittest.TestCase):
+    """A cyclic workflow passes every other check and then fails at run time.
+
+    The studio/master direction is easy to get wrong: the master node consumes the
+    studio's rewritten score and is therefore downstream, so a link from it into the
+    studio makes ComfyUI reject the whole prompt with "Dependency cycle detected".
+    """
+
+    def test_a_cycle_is_reported_with_its_path(self):
+        nodes = {1: {}, 2: {}, 3: {}}
+        links = [[10, 1, 0, 2, 0, "STRING"],
+                 [11, 2, 0, 3, 0, "STRING"],
+                 [12, 3, 0, 1, 0, "STRING"]]
+        errors = VALIDATE._cycle_errors(nodes, links, "example")
+        self.assertTrue(errors)
+        self.assertIn("dependency cycle", errors[0])
+        for node_id in ("1", "2", "3"):
+            self.assertIn(node_id, errors[0])
+
+    def test_a_diamond_is_not_a_cycle(self):
+        nodes = {1: {}, 2: {}, 3: {}, 4: {}}
+        links = [[10, 1, 0, 2, 0, "X"],
+                 [11, 1, 0, 3, 0, "X"],
+                 [12, 2, 0, 4, 0, "X"],
+                 [13, 3, 0, 4, 0, "X"]]
+        self.assertEqual(VALIDATE._cycle_errors(nodes, links, "example"), [])
+
+    def test_both_shipped_workflows_are_acyclic(self):
+        import json
+        for name in ("Music_Production_Toolkit", "Music_Production_AudioEnhance"):
+            with self.subTest(workflow=name):
+                data = json.loads((ROOT / "example_workflows" / f"{name}.json").read_text(encoding="utf-8"))
+                nodes = {node["id"]: node for node in data["nodes"]}
+                self.assertEqual(VALIDATE._cycle_errors(nodes, data["links"], name), [])
+
+    def test_the_studio_tooltip_warns_against_the_cycle_wiring(self):
+        studio = (ROOT / "cover_studio.py").read_text(encoding="utf-8")
+        self.assertIn("Do NOT wire the song request node into this", studio)
+        self.assertIn("Dependency cycle", studio)
+        guide = (ROOT / "docs" / "YUE2.md").read_text(encoding="utf-8")
+        self.assertIn("downstream of the studio", guide)
+        self.assertNotIn("connect the structured prompt node's `user_prompt` output", guide)
 
 
 class DemoSyncDryRunTests(unittest.TestCase):

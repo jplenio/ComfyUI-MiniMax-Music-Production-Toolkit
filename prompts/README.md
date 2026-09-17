@@ -24,7 +24,7 @@ including a natural ending. Section timings are approximate musical guidance;
 phrases and decay may run beyond the target. YuE2's configured maximum remains
 available in full, so Length never causes a target-time cut. The parser carries
 the numeric target into the final Style sent to ABC and music generation.
-See [the YuE2 guide](../YUE2.md) and the
+See [the YuE2 guide](../docs/YUE2.md) and the
 [full instrumental example](examples/yue2-instrumental-arrangement.txt).
 
 `YuE2-old/` preserves the previous twelve prompts outside the active system

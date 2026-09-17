@@ -27,6 +27,25 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("autodownload")
 
 
+def wants_original_lyrics(profile, cover_source_json="") -> bool:
+    """Whether this run needs the optional Whisper checkpoint at all.
+
+    YuE2 covers with new or original lyrics need source-word transcription.  An
+    unreadable or unconnected source is not a request, so the 3 GB checkpoint
+    is never pulled in because a widget happened to default to true.
+    """
+    if profile is None or not profile.is_cover:
+        return False
+    from .cover_score import LYRICS_MODE_ORIGINAL, normalize_lyrics_mode
+    from .music_cover import cover_source
+
+    try:
+        source = cover_source(cover_source_json)
+    except ValueError:
+        return False
+    return normalize_lyrics_mode(source.get("lyrics_mode")) in {LYRICS_MODE_ORIGINAL, "new lyrics"}
+
+
 class MiniMaxModelAutodownload:
     """Check and optionally download the models used by the example workflow."""
 
@@ -44,6 +63,12 @@ class MiniMaxModelAutodownload:
                 "yue2_models": ("BOOLEAN", {"default": True}),
                 "model_profile_json": ("STRING", {"forceInput": True}),
                 "sheetsage2_models": ("BOOLEAN", {"default": True}),
+                # Optional lyrics transcription for YuE2 covers; appended so a
+                # saved workflow's positional widget values keep their meaning.
+                "whisper_models": ("BOOLEAN", {"default": True}),
+                # The cover source carries the lyrics mode, so the check node
+                # asks for Whisper only when 'original lyrics' is selected.
+                "cover_source_json": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -53,7 +78,8 @@ class MiniMaxModelAutodownload:
     CATEGORY = "MiniMax Music Production Toolkit/utilities"
 
     def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True,
-              yue2_models=None, model_profile_json="", sheetsage2_models=True):
+              yue2_models=None, model_profile_json="", sheetsage2_models=True, whisper_models=True,
+              cover_source_json=""):
         from .model_profiles import profile_from_payload
         profile = profile_from_payload(model_profile_json)
         # Old API/workflow calls omit the additive flag and must not download
@@ -71,6 +97,9 @@ class MiniMaxModelAutodownload:
             flux2=bool(flux2_models),
             flashsr=bool(flashsr_models),
             llm=bool(llm_model),
+            # Whisper is only ever needed for one combination: a YuE2 cover
+            # whose lyrics mode asks for original words or source phrasing.
+            whisper=bool(whisper_models) and wants_original_lyrics(profile, cover_source_json),
         )
 
         # The preflight is the inventory/space report; it downloads only because

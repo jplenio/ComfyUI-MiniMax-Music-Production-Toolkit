@@ -13,7 +13,7 @@ native audio upload without creating its required preview widget. Clearing the
 cache alone cannot fix that version. A successful backend registration does
 not exclude an error while the browser constructs the node.
 
-**Version 3.0:** Open [Yue2_MM3_Production_Toolkit.json](example_workflows/Yue2_MM3_Production_Toolkit.json) for YuE2, YuE2 Cover or MiniMax. CHOOSE controls the song mode, artwork, refinement and mastering; SOURCE AUDIO supplies a cover track. See [the song and cover guide](YUE2.md). The classic MiniMax workflow below retains its existing processing chain.
+**Version 3.0:** Open [Music_Production_Toolkit.json](example_workflows/Music_Production_Toolkit.json) for YuE2, YuE2 Cover or MiniMax. CHOOSE controls the song mode, artwork, refinement and mastering; SOURCE AUDIO supplies a cover track. See [the song and cover guide](docs/YUE2.md). The classic MiniMax workflow below retains its existing processing chain.
 
 This document separates **toolkit requirements** from the model files used by the full example workflow. Since v2.0.0 the example workflow no longer needs any external custom nodes: FlashSR and the LLM chat are integrated into this toolkit.
 
@@ -39,20 +39,82 @@ If you use ComfyUI Portable, use its embedded Python. `install_requirements.bat`
 
 ### Toolkit Python dependencies
 
-- **SciPy** — filtering and high-quality polyphase resampling.
-- **SoundFile** — FLAC/WAV audio I/O.
-- **imageio-ffmpeg** — FFmpeg fallback for MP3 encoding and loudness/true-peak measurement.
-- **Mutagen** — FLAC/MP3/WAV metadata and cover embedding.
-- **Pillow** — cover-art resizing and JPEG encoding.
+One command installs everything the toolkit can use:
 
-PyTorch and NumPy are expected from ComfyUI and are deliberately not replaced by this package.
+```bash
+python -m pip install -r requirements.txt
+```
 
-### Optional: integrated LLM chat
+- **NumPy** (`>=1.26`) - array and DSP math.
+- **SciPy** - filtering and high-quality polyphase resampling.
+- **SoundFile** - FLAC/WAV audio I/O.
+- **imageio-ffmpeg** - FFmpeg fallback for MP3 encoding and loudness/true-peak measurement.
+- **Mutagen** - FLAC/MP3/WAV metadata and cover embedding.
+- **Pillow** - cover-art resizing and JPEG encoding.
+- **faster-whisper** - the Whisper engine for cover lyrics and the instrumental vocal
+  check. It pulls CTranslate2, PyAV, ONNX Runtime and Tokenizers.
+
+PyTorch is expected from ComfyUI and is deliberately never replaced by this package.
+A fresh environment resolves this list into 31 packages without a conflict and without
+touching the installed PyTorch stack (verified with `pip install --dry-run --ignore-installed`).
+
+**Optional extras that each improve one thing** (safe to omit, both are reported at startup
+when missing):
+
+```bash
+python -m pip install psutil soxr
+```
+
+- **psutil** - real free-RAM figures in the resource report; without it the toolkit falls
+  back to a Windows-only RAM query and reports no VRAM figures.
+- **soxr** - high-quality resampling inside the FlashSR chain; without it SciPy's
+  polyphase resampling is used instead.
+
+**Minimal install, without the Whisper engine.** If you never use the `original lyrics`
+cover mode and never use the instrumental vocal check, install only the core:
+
+```bash
+python -m pip install numpy scipy soundfile imageio-ffmpeg mutagen Pillow
+```
+
+Nothing else changes: the toolkit logs which engine is missing and how to add it later
+(`python -m pip install -r requirements-whisper.txt`).
+
+**Check the installation before the first run.** When the toolkit loads, the ComfyUI
+console gets one line per missing engine:
+
+```text
+Optional engine not installed: faster-whisper (Whisper engine). Without it, cover lyrics
+mode 'original lyrics' and the instrumental vocal check is unavailable (the other cover
+modes and every non-cover path still work). Install with: python -m pip install -r requirements.txt
+```
+
+A complete installation logs `All optional engines are installed; every feature is available.`
+A missing *required* package is logged as a warning naming `requirements.txt`, because the
+toolkit cannot run correctly without it. If you see that, install with the same Python
+that runs ComfyUI - `install_requirements.bat` finds a nearby venv or portable Python for you.
+
+### Cover lyrics transcription (Whisper)
+
+Bundled with `requirements.txt`. The YuE2 Cover workflow uses Whisper for **new lyrics**
+(source phrasing), **original lyrics** (source words) and the optional **instrumental
+vocal check**. Instrumental-only and other song models do not need it.
+
+```bash
+python -m pip install -r requirements-whisper.txt   # only needed on an older install
+```
+
+Enable `whisper_models` and `auto_download` in the model check for a text-bearing
+cover to obtain the pinned large-v3 files in `models/audio_encoders/whisper-large-v3`
+(about 2.9 GB). For custom graphs, a reviewed transcript can instead be wired to
+the prompt/parser's `cover_lyrics` inputs; see [cover modes](docs/YUE2.md#cover-lyrics-modes).
+
+### Integrated LLM chat
 
 The LLM node also supports **Local app / server** and **Cloud service** modes.
 Those modes do not require llama-cpp-python or a GGUF in ComfyUI. Start your local
 app's API server or configure a cloud API key, then select a model on the node.
-See [LLM_PROVIDERS.md](LLM_PROVIDERS.md) for supported apps, addresses and setup.
+See [docs/LLM_PROVIDERS.md](docs/LLM_PROVIDERS.md) for supported apps, addresses and setup.
 The GGUF requirements below apply only to **In ComfyUI (GGUF)**.
 
 `MiniMaxLLMChat` uses the public `llama-cpp-python` API:
@@ -61,7 +123,70 @@ The GGUF requirements below apply only to **In ComfyUI (GGUF)**.
 python -m pip install llama-cpp-python
 ```
 
-When it is missing, the node still registers and explains the dependency at execution time. Provide a llama.cpp-compatible GGUF in `ComfyUI/models/llm/` (or configure a download URL in `models_config.json`).
+It is not in `requirements.txt` on purpose: there is no single wheel that fits every
+CUDA/ROCm/CPU setup, and the two other LLM modes need no local runtime at all. When it is
+missing, the node still registers, the startup report names it, and the execution error
+repeats the command. Provide a llama.cpp-compatible GGUF in `ComfyUI/models/llm/` (or
+configure a download URL in `models_config.json`).
+
+### If something is missing, too small or too slow
+
+The bundled example is deliberately demanding. Every item below is a supported change,
+not a workaround.
+
+**A dependency is missing**
+
+- The startup line names the engine and the command. Install into the environment that
+  runs ComfyUI (**not** a system Python) and restart ComfyUI.
+- `python -m pip list` in that environment shows what is actually installed.
+- Nothing is downloaded by `pip` for the models; those go to `ComfyUI/models/…` and are
+  handled by the model check (section 2).
+
+**Not enough VRAM**
+
+- **Use a non-local LLM.** `Local app / server` or `Cloud service` needs no local LLM
+  VRAM at all, and the text stage is where a big model sits idle most of the time.
+- **Smaller LLM.** Section 5 lists candidates per card size. Keep the context at
+  `n_ctx = 37376` or at least above ~16000: the production system prompt alone is about
+  11.6k tokens, so a smaller window truncates the request instead of saving memory.
+  A smaller *model* or a lower quantization is the lever, not the context.
+- **YuE2 instead of MiniMax Music 3.** YuE2 3B bf16 is far lighter than the MiniMax
+  DiT + text encoder pair.
+- **Shorter songs.** `Length` in the prompt and `max_duration` / `yue2_max_duration` in
+  Music settings shrink the latent the model has to hold.
+- **No artwork.** Turn cover artwork off: FLUX.2 at 1536 px is one of the heaviest steps,
+  and the audio export continues without it.
+- **Skip the restoration chain.** The PRE low-pass, FlashSR, crossover and HF repair
+  stages are optional; de-clip and mastering work without them.
+- **Tiled VAE decode is already on.** It keeps the decode step's peak memory low; a
+  smaller `tile_size` lowers it further.
+
+**Not enough system RAM**
+
+- Audio buffers scale with song length and sample rate: shorter songs, and the
+  enhancement workflow instead of a full generation.
+- The resource report logs the free RAM it measured; close other applications that hold
+  several GB before a long run.
+- Mastering, EQ and analysis run on the CPU and need RAM, not VRAM - with little memory,
+  skip the manual EQ editor and the artifact reduction, which both hold extra buffers.
+
+**It runs, but too slowly**
+
+- **The instrumental vocal check is the most expensive optional stage**: one Whisper pass
+  per take, and every retry is a full re-render. `instrumental_max_retries = 0` keeps a
+  single check, switching `instrumental_check` off removes it entirely.
+- **Fewer steps.** `yue2_steps` (32) and `minimax_steps` (40) trade time for detail.
+- **Shorter songs** help more than any sampling tweak.
+- **Skip stages you do not need:** FlashSR and HF repair, refinement, Artifact Reduction,
+  Auto-EQ analysis, the artwork branch.
+- **A smaller Whisper model** for the check or the lyrics, when the pinned large-v3 is the
+  bottleneck: set `whisper_model` on the check, or the matching field on the transcription
+  node. Quality of the word check drops with the model size.
+- **Cloud LLM for the text**, local models for audio: the LLM stage is a large part of the
+  wall time on a single GPU and does not need the GPU at all in the other two modes.
+
+**A model file is missing** (not a Python package): section 2 covers the preflight, the
+commit-pinned catalog and manual placement.
 
 ## 2. Model files and auto-download
 
@@ -128,11 +253,19 @@ Install a GGUF model supported by your LLM node. The workflow includes one examp
 The bundled production workflows' integrated GGUF settings use:
 
 ```text
-max_tokens = 16384
-n_ctx      = 32768
+max_tokens        = 24576   # response cap, not a reservation
+n_ctx             = 37376   # prompt + response + thinking
+remote_max_tokens = 65536   # cap for "Local app / server" and "Cloud service"
+max_prompt_tokens = 4500    # parser guard, Caption+Lyrics (widget default)
 ```
 
 The detailed bundled system prompt consumes a meaningful part of the context, so very small context windows are not recommended. If your chosen LLM needs more context, increase `n_ctx` only if your hardware/runtime can support it.
+
+Measured demand on real productions (YuE2 Cover, 35 runs, 2026-09-17): parser prompt (Caption+Lyrics) 610-1707 tokens, LLM prompt (system+user) up to ~11.6k tokens, LLM response up to ~2k tokens. `max_tokens` stays a cap: it does not reserve context and cannot shorten a finished answer.
+
+`n_ctx` and `max_tokens` belong together. The context holds the prompt, the response and any thinking, so a response cap larger than `n_ctx` minus the prompt is ended by the runtime rather than by the node - and that would be silent. These two values are therefore chosen so that even the worst case fits: the largest measured prompt (~11.6k tokens) plus a maximum-length answer (24576) is 36166 tokens, still inside `n_ctx = 37376`. A normal answer (up to ~2k tokens) leaves more than 23k tokens unused. If you raise `max_tokens`, raise `n_ctx` by at least the same amount (multiples of the widget step of 256).
+
+Keep `trim_long_prompt` off for covers. With trimming off an oversized prompt is reported as an error naming the budget instead of being cut; with `max_prompt_tokens` too low (below ~1700 for covers) that error fires on normal production prompts.
 
 ### Which model for which machine
 
@@ -166,7 +299,7 @@ or reinstall the toolkit requirements.
 1. Completely stop and restart ComfyUI.
 2. Hard-refresh the browser once (`Ctrl+F5`) so frontend JavaScript is reloaded.
 3. Check the console for `IMPORT FAILED` messages.
-4. Load `example_workflows/Yue2_MM3_Production_Toolkit.json` for YuE2, YuE2 Cover or MiniMax. The classic `MiniMax_Music3_Production_Toolkit.json` is also available for fixed MiniMax generation.
+4. Load `example_workflows/Music_Production_Toolkit.json` for YuE2, YuE2 Cover or MiniMax. The classic `Music_Production_Toolkit.json` is also available for fixed MiniMax generation.
 5. Select the model files that exist on your system.
 6. Run a short test generation before starting a large batch.
 
@@ -209,7 +342,7 @@ Then restart ComfyUI and hard-refresh the browser.
 
 ## YuE2 and model selection
 
-The main `example_workflows/Yue2_MM3_Production_Toolkit.json` offers YuE2,
+The main `example_workflows/Music_Production_Toolkit.json` offers YuE2,
 YuE2 Cover and MiniMax Music 3 in CHOOSE. New YuE2 songs use native ABC planning;
-cover songs use the source's SheetSage2 ABC. See [YUE2.md](YUE2.md) for required
+cover songs use the source's SheetSage2 ABC. See [docs/YUE2.md](docs/YUE2.md) for required
 native nodes, checkpoint/encoder folders, prompts and verification scope.

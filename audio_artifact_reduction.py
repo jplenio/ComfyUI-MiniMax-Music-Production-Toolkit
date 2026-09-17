@@ -1,7 +1,7 @@
 """Conservative, reference-free spectral outlier attenuation (not an AI detector).
 
 Original DSP implementation: joint frequency/time contrast, smoothed bounded
-attenuation and one mask shared by all channels. See ARTIFACT_REDUCTION.md.
+attenuation and one mask shared by all channels. See docs/ARTIFACT_REDUCTION.md.
 """
 from __future__ import annotations
 

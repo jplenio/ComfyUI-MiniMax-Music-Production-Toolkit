@@ -30,7 +30,11 @@ from .toolkit_logging import get_logger
 LOGGER = get_logger("model_manager")
 
 PREFLIGHT_PATH = "/minimax_music_toolkit/model_preflight"
-GROUP_FLAGS = ("minimax", "yue2", "flux2", "flashsr", "llm", "sheetsage2")
+GROUP_FLAGS = ("minimax", "yue2", "flux2", "flashsr", "llm", "sheetsage2", "whisper")
+# Weights that belong to one optional branch only.  They are off unless the
+# caller asks for them explicitly, so a plain "check everything" never pulls in
+# several gigabytes for a feature the run does not use.
+DEFAULT_OFF_GROUPS = ("sheetsage2", "whisper")
 _ROUTES_REGISTERED = False
 
 
@@ -44,6 +48,7 @@ def selected_entries(flags: dict):
         flux2=bool(flags.get("flux2", True)),
         flashsr=bool(flags.get("flashsr", True)),
         llm=bool(flags.get("llm", True)),
+        whisper=bool(flags.get("whisper", False)),
     )
 
 
@@ -55,7 +60,7 @@ def build_preflight(flags: dict, auto_download: bool) -> dict:
 def _parse_flags(source) -> dict:
     flags = {}
     for name in GROUP_FLAGS:
-        value = source.get(name, name != "sheetsage2")
+        value = source.get(name, name not in DEFAULT_OFF_GROUPS)
         if isinstance(value, str):
             flags[name] = value.strip().lower() not in ("0", "false", "no", "off", "")
         else:

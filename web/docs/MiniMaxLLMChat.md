@@ -24,7 +24,7 @@ Cloud sends both prompts to the provider and may incur charges. Generation is
 not automatically retried after failure. Stopping ComfyUI may not cancel remote
 work immediately; a blocking call can take until its network timeout to return.
 
-For addresses, keys, memory advice and troubleshooting, see **LLM_PROVIDERS.md**
+For addresses, keys, memory advice and troubleshooting, see **docs/LLM_PROVIDERS.md**
 in the repository.
 
 **Node ID:** `MiniMaxLLMChat`  
@@ -39,12 +39,12 @@ in the repository.
   Each cloud run may incur another API charge. Old session input wires are removed
   on workflow load; the helper remains registered for other legacy uses.
 - **`model`** — llama.cpp-compatible GGUF from `models/llm`. The bundled workflow's example model name is always offered so existing workflows keep loading.
-- **`max_tokens`** — response token budget (example: `16384`).
+- **`max_tokens`** — response cap (example: `24576`). It is not reserved up front and cannot shorten a finished answer.
 - **`temperature`** / **`top_p`** / **`top_k`** / **`min_p`** — sampling controls (LM Studio defaults: `0.7` / `0.8` / `40` / `0.0`).
 - **`repeat_penalty`** / **`presence_penalty`** / **`frequency_penalty`** — repetition controls (defaults `1.1` / `0.0` / `0.0`).
 - **`seed`** — sampling seed (`-1` = random per run).
 - **`n_gpu_layers`** — GPU offload (`-1` = as many as possible).
-- **`n_ctx`** — context window (example: `32768`).
+- **`n_ctx`** — context window shared by prompt, response and thinking (example: `37376`), sized so that a maximum-length answer still fits next to the production prompt. A response cap larger than `n_ctx` minus the prompt is ended by the runtime instead of by the node.
 - **`chat_format`** — chat template: `auto` picks the verified template for the model family (chatml for Qwen-style models, the model's own embedded template for Gemma), `none` uses the GGUF's own template, or choose `chatml` / `qwen` / `gemma` / `llama-3` explicitly.
 - **`thinking`** — `off` asks the backend to disable reasoning and always splits any remaining thinking blocks off the answer; `on` / `auto` keep them. Reasoning is logged and recorded separately either way.
 - **`split_mode`** — multi-GPU distribution: `layer` (sequential layer split) or `row` (split parallel); `none` disables it.

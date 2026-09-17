@@ -25,3 +25,23 @@ configured limit are recorded in `settings_json`, with
 For **YuE2 Cover**, connect `cover_source_json`. The source node's full/melody
 choice controls both transcription and generation and is recorded as the
 effective mode here. All other YuE2 settings also apply to cover songs.
+
+## The two value groups
+
+Only the group of the active profile takes effect. The other group is still stored, so
+switching the song model keeps your values instead of resetting them.
+
+- **MiniMax Music 3** - `minimax_steps` (40), `minimax_cfg` (1.7), `minimax_sampler_name`
+  (euler), `minimax_scheduler` (simple), `minimax_text_cfg_scale` (1.7), `minimax_text_top_k` (50).
+- **YuE2** - `yue2_steps` (32), `yue2_cfg` (1.0), `yue2_sampler_name` (dpm_2),
+  `yue2_scheduler` (sgm_uniform), `yue2_mode` (full), `yue2_temperature` (1.0),
+  `yue2_top_p` (0.95), `yue2_top_k` (100), `yue2_repetition_penalty` (1.2),
+  `yue2_max_duration` (360 s ceiling).
+- **Shared** - `generation_seed`, `max_duration` (clamped to the model's window),
+  `denoise`, `ksampler_seed_offset`, and the optional instrumental vocal check
+  (`instrumental_check`, `instrumental_word_tolerance`, `instrumental_max_retries`).
+- **Wires in** - `profile_json` selects the active group; `cover_source_json` and
+  `prompt_provenance_json` let a cover run carry its source and provenance.
+
+Every field carries its own tooltip with meaning and default. `settings_json` records both
+groups plus the values that were actually used.

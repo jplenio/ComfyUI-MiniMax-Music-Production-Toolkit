@@ -1,6 +1,18 @@
+"""Toolkit dependencies: one complete install, one optional engine file."""
+
+# Core toolkit: required for the documented audio, artwork, tag and export paths.
 numpy>=1.26
 scipy>=1.10
 soundfile>=0.12
 imageio-ffmpeg>=0.5
 mutagen>=1.47
 Pillow>=10.0
+
+# Whisper engine: needed by the cover lyrics mode "original lyrics" and by the
+# instrumental vocal check (both ship in 3.1). It pulls CTranslate2, PyAV, ONNX
+# Runtime and Tokenizers; a verified fresh-environment resolution installs 31
+# packages and never touches the installed PyTorch stack. Install it with the
+# rest, or leave it out if you never use those two features - the toolkit
+# reports in its startup log which engines are missing, and
+# "requirements-whisper.txt" adds it to an existing installation later.
+faster-whisper>=1.0

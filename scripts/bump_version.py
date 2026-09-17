@@ -30,7 +30,7 @@ VERSION_FILES = (
     ("pyproject.toml", ROOT / "pyproject.toml", "toml"),
     ("CITATION.cff", ROOT / "CITATION.cff", "cff"),
 )
-WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
+WORKFLOW = ROOT / "example_workflows" / "Music_Production_Toolkit.json"
 
 _VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
@@ -96,9 +96,9 @@ def create_release_notes(new: str, today: str) -> Path:
         "## Added\n\n- \n\n## Changed\n\n- \n\n## Fixed\n\n- \n\n"
         "## Breaking changes\n\n- None.\n\n"
         "## Upgrade notes\n\n- Existing workflows keep working; reload "
-        "`example_workflows/MiniMax_Music3_Production_Toolkit.json` to pick up serialized fixes.\n\n"
+        "`example_workflows/Music_Production_Toolkit.json` to pick up serialized fixes.\n\n"
         "## Assets\n\n- `ComfyUI-MiniMax-Music-Production-Toolkit-vX.Y.Z.zip`\n"
-        "- `MiniMax_Music3_Production_Toolkit_vX.Y.Z.json`\n- `SHA256SUMS.txt`\n"
+        "- `Music_Production_Toolkit_vX.Y.Z.json`\n- `SHA256SUMS.txt`\n"
     )
     path.write_text(skeleton, encoding="utf-8", newline="\n")
     return path

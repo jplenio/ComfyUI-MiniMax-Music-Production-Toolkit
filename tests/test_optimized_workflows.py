@@ -20,39 +20,44 @@ class OptimizedWorkflowTests(unittest.TestCase):
         This pins that placement, the ON default and the two connections that
         make the switch effective.
         """
-        wf = read("MiniMax_Music3_Production_Toolkit")
-        control = next(n for n in wf["nodes"] if n["type"] == "MiniMaxCoverControl")
-        cover = next(g for g in wf["groups"] if g["title"].startswith("05"))
+        wf = read("Music_Production_Toolkit")
+        # Since the consolidation one production control owns the cover choice and
+        # feeds the artwork, the preview and the FLUX.2 download group.
+        control = next(n for n in wf["nodes"] if n["type"] == "MusicProductionControl")
+        choose = next(g for g in wf["groups"] if g["title"].startswith("00"))
         x, y = control["pos"]
         w, h = control["size"]
-        bx, by, bw, bh = cover["bounding"]
+        bx, by, bw, bh = choose["bounding"]
         self.assertTrue(bx <= x and by <= y - 30 and bx + bw >= x + w and by + bh >= y + h,
-                        "the switch must sit inside the cover-artwork group")
-        self.assertTrue(control["widgets_values_named"]["enabled"],
-                        "the cover switch is ON by default")
+                        "the production control must sit inside its own group")
         nodes = {n["id"]: n for n in wf["nodes"]}
         connected = {(nodes[l[3]]["type"], nodes[l[3]]["inputs"][l[4]]["name"])
                      for l in wf["links"] if l[1] == control["id"]}
         self.assertIn(("SaveImageSmartPrefix", "enabled"), connected)
+        self.assertIn(("MusicOptionalCoverPreview", "enabled"), connected)
         self.assertIn(("MiniMaxModelAutodownload", "flux2_models"), connected)
 
     def test_only_canonical_examples_are_shipped(self):
         files = {p.name for p in (ROOT / "example_workflows").glob("*.json")}
-        self.assertEqual(files, {"MiniMax_Music3_Production_Toolkit.json",
-                                 "MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
-                                 "Yue2_MM3_Production_Toolkit.json"})
+        # Consolidated in 3.1.0: one main workflow and one enhancement workflow.
+        self.assertEqual(files, {"Music_Production_Toolkit.json",
+                                 "Music_Production_AudioEnhance.json"})
 
     def test_enhancement_has_no_processing_after_final_mastering(self):
-        result = read("MiniMax_Music3_Production_Toolkit_AudioEnhance")
+        result = read("Music_Production_AudioEnhance")
         nodes = {n["id"]: n for n in result["nodes"]}
         audio = {(s,d) for _,s,_,d,_,typ in result["links"] if typ == "AUDIO"}
-        self.assertTrue({(13,15),(14,26),(26,16)} <= audio)
+        # The restoration chain, the artifact reduction and both bypass gates sit
+        # inside the path: POST low-pass -> refinement gate -> artifact reduction,
+        # then manual EQ -> mastering gate -> release prep -> dynamics -> savers.
+        self.assertTrue({(13, 15), (15, 30), (30, 31), (31, 27), (31, 25),
+                         (28, 14), (28, 33), (14, 26), (26, 33)} <= audio)
+        self.assertEqual({d for s, d in audio if s == 33}, {16, 34})
         self.assertEqual(nodes[14]["widgets_values_named"]["processing"], "Resample only")
         self.assertEqual(nodes[14]["widgets_values"][1], "Resample only")
-        self.assertEqual({d for s,d in audio if s == 26}, {16})
 
     def test_independent_eq_controls_and_final_rates(self):
-        for name in ("MiniMax_Music3_Production_Toolkit", "MiniMax_Music3_Production_Toolkit_AudioEnhance"):
+        for name in ("Music_Production_Toolkit", "Music_Production_AudioEnhance"):
             wf = read(name)
             eqs = [n for n in wf["nodes"] if n["type"] == "MiniMaxParametricEQ"]
             self.assertEqual(len(eqs),2)
@@ -68,9 +73,46 @@ class OptimizedWorkflowTests(unittest.TestCase):
             master = next(n for n in wf["nodes"] if n["type"] == "MiniMaxMasteringCompressor")
             self.assertEqual(master["widgets_values_named"]["target_sample_rate"],"keep")
 
+    def test_no_shipped_budget_can_truncate_a_prompt_or_a_response(self):
+        """Pin the token budgets against the measured real demand.
+
+        On 2026-09-17, 35 production JSONs of a YuE2 Cover album measured: parser
+        prompt (caption+lyrics) up to 1707 tokens, LLM prompt up to ~11.6k tokens,
+        LLM response up to ~2k tokens. A parser budget of 1200 with trimming off
+        would therefore fail 24 of those 35 runs with a ValueError instead of
+        producing a song, and trim_long_prompt=True would silently drop lyrics.
+        """
+        wf = read("Music_Production_Toolkit")
+        measured_parser_max = 1707
+        measured_prompt_max = 11590
+        parser = [n for n in wf["nodes"] if n["type"] == "MiniMaxParseExternalLLMOutputV16"]
+        self.assertTrue(parser, "the main workflow must keep its parser node")
+        for node in parser:
+            named = node["widgets_values_named"]
+            self.assertGreater(named["max_prompt_tokens"], measured_parser_max,
+                               "parser budget below the measured prompt size fails every cover")
+            self.assertFalse(named["trim_long_prompt"],
+                             "trimming would drop cover lyrics or ABC sections silently")
+            widget_inputs = [i["name"] for i in node["inputs"] if "widget" in i]
+            self.assertEqual(node["widgets_values"][widget_inputs.index("max_prompt_tokens")],
+                             named["max_prompt_tokens"],
+                             "positional and named budgets must agree")
+
+        for node in [n for n in wf["nodes"] if n["type"] == "MiniMaxLLMChat"]:
+            named = node.get("widgets_values_named")
+            self.assertIsInstance(named, dict,
+                                  f"LLM node {node['id']} must carry named widget values")
+            self.assertGreaterEqual(named["max_tokens"], 24576, node["id"])
+            self.assertGreaterEqual(named["remote_max_tokens"], 65536, node["id"])
+            self.assertGreaterEqual(named["n_ctx"], 37376, node["id"])
+            # The whole point of the 2026-09-17 budget: even a maximum-length
+            # answer must fit into the context next to the largest measured
+            # prompt, so the runtime never ends an answer instead of the node.
+            self.assertLessEqual(measured_prompt_max + named["max_tokens"], named["n_ctx"],
+                                 f"LLM node {node['id']} could truncate a maximum-length answer")
+
     def test_generated_files_links_groups_and_no_overlap(self):
-        for suffix in ("", "_AudioEnhance"):
-            name = "MiniMax_Music3_Production_Toolkit"+suffix
+        for name in ("Music_Production_Toolkit", "Music_Production_AudioEnhance"):
             source = read(name)
             wf = source
             nodes = {n["id"]: n for n in wf["nodes"]}

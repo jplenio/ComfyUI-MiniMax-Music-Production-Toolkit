@@ -13,15 +13,15 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 REQUIRED = [
-    "README.md", "INSTALLATION.md", "WORKFLOW.md", "PROMPT_LIBRARY.md",
-    "AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
+    "README.md", "INSTALLATION.md", "docs/WORKFLOW.md", "docs/PROMPT_LIBRARY.md",
+    "docs/AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
     "NOTICE.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md",
-    "AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "CITATION.cff", "VERSION",
-    "pyproject.toml", "requirements.txt", "__init__.py", "scripts/package_release.py", "scripts/update_demo_catalog.py",
-    "example_workflows/MiniMax_Music3_Production_Toolkit.json",
-    "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json",
+    "docs/AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "CITATION.cff", "VERSION",
+    "pyproject.toml", "requirements.txt", "requirements-whisper.txt", "__init__.py", "scripts/package_release.py", "scripts/update_demo_catalog.py", "scripts/workflow_schema.py",
+    "example_workflows/Music_Production_Toolkit.json",
+    "example_workflows/Music_Production_AudioEnhance.json",
     "prompts/system/minimax-music3-production.txt",
-    "example_workflows/Yue2_MM3_Production_Toolkit.json", "YUE2.md", "model_profiles.json",
+    "example_workflows/Music_Production_Toolkit.json", "docs/YUE2.md", "model_profiles.json",
 ]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_common import (  # noqa: E402  (script-local tooling module)
@@ -32,6 +32,16 @@ from release_common import (  # noqa: E402  (script-local tooling module)
 )
 
 TEXT_EXTENSIONS = {".py", ".js", ".md", ".txt", ".toml", ".json", ".yml", ".yaml", ".bat"}
+
+# Token floors the shipped example workflows must keep.  Measured real demand on
+# 2026-09-17 (35 production JSONs): parser prompt <= 1707 tokens, LLM prompt
+# <= ~11.6k tokens, LLM response <= ~2k tokens.  The values below are the
+# maintainer's chosen settings from the same day; the context floor is high
+# enough that even a maximum-length answer still fits (11590 + 24576 <= 37376).
+MIN_LLM_OUTPUT_TOKENS = 24576
+MIN_LLM_REMOTE_TOKENS = 65536
+MIN_LLM_CONTEXT_TOKENS = 37376
+MIN_PARSER_TOKEN_BUDGET = 2000
 
 
 def fail(message: str) -> None:
@@ -67,6 +77,46 @@ def check_pyproject() -> None:
         fail("[tool.comfy].PublisherId must be jplenio for this release")
     if project.get("version") != (ROOT / "VERSION").read_text(encoding="utf-8").strip():
         fail("VERSION and pyproject.toml version differ")
+
+
+def _cycle_errors(nodes: dict, links, label: str) -> list:
+    """Dependency cycles among *nodes*, following *links* (ComfyUI refuses to run those).
+
+    A cycle is the one graph error that only shows up at run time: validation,
+    dangling-link and node-contract checks all pass, and then the queue rejects the
+    prompt with ``Dependency cycle detected``. The studio/master direction is easy to
+    get wrong, because the master node consumes the studio's rewritten score and is
+    therefore downstream of it.
+    """
+    edges: dict = {node_id: [] for node_id in nodes}
+    for link in links or []:
+        if isinstance(link, dict):
+            src, dst = link.get("origin_id"), link.get("target_id")
+        else:
+            if len(link) < 4:
+                continue
+            src, dst = link[1], link[3]
+        if src in edges and dst in edges:
+            edges[src].append(dst)
+
+    state: dict = {}
+    errors: list = []
+
+    def walk(node_id, trail):
+        if state.get(node_id) == 1:
+            chain = " -> ".join(str(part) for part in [*trail, node_id])
+            errors.append(f"{label}: dependency cycle {chain}")
+            return
+        if state.get(node_id) == 2:
+            return
+        state[node_id] = 1
+        for nxt in edges[node_id]:
+            walk(nxt, [*trail, node_id])
+        state[node_id] = 2
+
+    for node_id in edges:
+        walk(node_id, [])
+    return errors
 
 
 def _validate_subgraph(subgraph: dict, errors: list[str], label: str) -> None:
@@ -119,10 +169,10 @@ def _validate_subgraph(subgraph: dict, errors: list[str], label: str) -> None:
 
 def _check_workflow_graph(wf: dict, label: str) -> None:
     """Validate the generic graph structure of one public workflow: link
-    endpoints, dangling links and embedded subgraphs."""
+    endpoints, dangling links, dependency cycles and embedded subgraphs."""
     node_map = {n["id"]: n for n in wf.get("nodes", [])}
     links = {l[0]: l for l in wf.get("links", [])}
-    errors: list[str] = []
+    errors: list[str] = list(_cycle_errors(node_map, wf.get("links"), label))
     for link_id, src, src_slot, dst, dst_slot, _type in wf.get("links", []):
         if src not in node_map or dst not in node_map:
             errors.append(f"link {link_id}: missing node")
@@ -161,7 +211,7 @@ def check_audio_enhance_workflow() -> None:
     must stay self-contained (toolkit + ComfyUI core nodes only) and generic
     (no personal audio file pre-selected).
     """
-    path = ROOT / "example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
+    path = ROOT / "example_workflows/Music_Production_AudioEnhance.json"
     wf = json.loads(path.read_text(encoding="utf-8"))
     _check_workflow_graph(wf, "audio-enhancement example")
 
@@ -197,7 +247,7 @@ def check_audio_enhance_workflow() -> None:
 
 
 def check_workflow() -> None:
-    path = ROOT / "example_workflows/MiniMax_Music3_Production_Toolkit.json"
+    path = ROOT / "example_workflows/Music_Production_Toolkit.json"
     wf = json.loads(path.read_text(encoding="utf-8"))
     _check_workflow_graph(wf, "example")
     node_map = {n["id"]: n for n in wf.get("nodes", [])}
@@ -231,10 +281,35 @@ def check_workflow() -> None:
             fail(f"Public workflow is missing integrated node {required_type}")
 
     llm_nodes = nodes_by_type.get("MiniMaxLLMChat", [])
-    if llm_nodes:
-        llm_values = llm_nodes[0].get("widgets_values_named", {})
-        if llm_values.get("max_tokens") != 16384 or llm_values.get("n_ctx") != 32768:
-            fail("Public workflow LLM example must use max_tokens=16384 and n_ctx=32768")
+
+    # Nothing in the shipped example may cut a prompt or a response short.
+    # Measured real demand (2026-09-17, 35 production JSONs of a YuE2 Cover
+    # album): parser prompt <= 1707 tokens, LLM prompt <= ~11.6k tokens, LLM
+    # response <= ~2k tokens.  The floors below are the values the maintainer
+    # chose (2026-09-17) and sit well above that demand, so a later edit cannot
+    # quietly reintroduce a truncating budget.
+    for node in llm_nodes:
+        values = node.get("widgets_values_named") or {}
+        if not values:
+            fail(f"Public workflow LLM node {node['id']} is missing widgets_values_named")
+        if int(values.get("max_tokens") or 0) < MIN_LLM_OUTPUT_TOKENS:
+            fail(f"Public workflow LLM node {node['id']} must keep max_tokens >= {MIN_LLM_OUTPUT_TOKENS}")
+        if int(values.get("remote_max_tokens") or 0) < MIN_LLM_REMOTE_TOKENS:
+            fail(f"Public workflow LLM node {node['id']} must keep remote_max_tokens >= {MIN_LLM_REMOTE_TOKENS}")
+        if int(values.get("n_ctx") or 0) < MIN_LLM_CONTEXT_TOKENS:
+            fail(f"Public workflow LLM node {node['id']} must keep n_ctx >= {MIN_LLM_CONTEXT_TOKENS}")
+    for node in nodes_by_type.get("MiniMaxParseExternalLLMOutputV16", []):
+        values = node.get("widgets_values_named") or {}
+        if int(values.get("max_prompt_tokens") or 0) < MIN_PARSER_TOKEN_BUDGET:
+            fail(
+                f"Public workflow parser node {node['id']} must keep max_prompt_tokens "
+                f">= {MIN_PARSER_TOKEN_BUDGET}; a smaller budget rejects real cover prompts"
+            )
+        if values.get("trim_long_prompt"):
+            fail(
+                f"Public workflow parser node {node['id']} must keep trim_long_prompt off; "
+                "silent trimming would drop cover lyrics or ABC sections"
+            )
     path_nodes = nodes_by_type.get("MiniMaxOutputPaths", [])
     if not path_nodes or path_nodes[0].get("widgets_values_named", {}).get("configuration_subdir") != "log/":
         fail("Public workflow configuration_subdir must default to log/")
@@ -448,13 +523,59 @@ def main() -> None:
     check_pyproject()
     check_workflow()
     check_audio_enhance_workflow()
-    _check_workflow_graph(json.loads((ROOT / "example_workflows/Yue2_MM3_Production_Toolkit.json").read_text(encoding="utf-8")), "YuE2")
+    _check_workflow_graph(json.loads((ROOT / "example_workflows/Music_Production_Toolkit.json").read_text(encoding="utf-8")), "YuE2")
+    check_cover_studio_workflow()
     check_prompt_library()
     check_privacy_and_placeholders()
     check_demo_catalog()
     check_node_docs()
     check_migration_logic()
     print("Release validation OK")
+
+
+def check_cover_studio_workflow() -> None:
+    """The additive Cover Studio example workflow.
+
+    It is the YuE2 workflow plus a separate studio path in front of the cover
+    chain.  It must stay self-contained and the score the studio validated must
+    be the one that reaches both prompt building and music generation.
+    """
+    path = ROOT / "example_workflows/Music_Production_Toolkit.json"
+    wf = json.loads(path.read_text(encoding="utf-8"))
+    _check_workflow_graph(wf, "YuE2 Cover Studio example")
+
+    nodes_by_type: dict = {}
+    for node in wf.get("nodes", []):
+        nodes_by_type.setdefault(node.get("type"), []).append(node)
+    for required_type in (
+        "YuE2CoverStudioPlan", "YuE2CoverStudioTransform", "YuE2CoverStudioApply",
+        "MusicCoverSource", "MusicCoverTranscription", "MusicCoverScore",
+        "MiniMaxStructuredPromptV20", "MusicGeneration",
+    ):
+        if required_type not in nodes_by_type:
+            fail(f"Cover Studio workflow is missing node {required_type}")
+
+    from workflow_schema import find_external_node_dependencies
+    external = find_external_node_dependencies(wf)
+    if external:
+        fail(
+            "Cover Studio workflow depends on external custom nodes: "
+            + "; ".join(f"node {node_id} ({node_type})" for node_id, node_type in external)
+        )
+
+    by_id = {node["id"]: node for node in wf.get("nodes", [])}
+    apply_id = nodes_by_type["YuE2CoverStudioApply"][0]["id"]
+    fed_types = {by_id[link[3]]["type"] for link in wf.get("links", [])
+                 if link[1] == apply_id and link[3] in by_id}
+    for consumer in ("MusicGeneration", "MiniMaxStructuredPromptV20"):
+        if consumer not in fed_types:
+            fail(f"Cover Studio workflow: the validated score does not reach {consumer}")
+
+    source_id = nodes_by_type["MusicCoverSource"][0]["id"]
+    consumers = {by_id[link[3]]["type"] for link in wf.get("links", [])
+                 if link[1] == source_id and link[3] in by_id}
+    if "YuE2CoverStudioPlan" not in consumers:
+        fail("Cover Studio workflow: the studio is not connected to the cover source")
 
 
 if __name__ == "__main__":

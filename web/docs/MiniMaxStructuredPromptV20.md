@@ -116,4 +116,56 @@ When every field is `custom` and no description exists, the node raises a clear 
 - The bundled example workflow uses this node instead of the legacy `LLM Prompt Library / Template` node for the user prompt; the legacy node remains available for backwards compatibility.
 - In `manual` mode, use the structured fields and `description_override` to compose the prompt directly; for the system prompt, type the text directly into `system_prompt`.
 
-For YuE2 Cover, connect source JSON and SheetSage2 `cover_abc`. A cover-specific system instruction is appended to the selected YuE2 template; the source score and fixed filename title accompany the brief. Arrange the score without regenerating it, and keep Style/Lyrics sections synchronized. This is music transcription, not lyric recognition.
+For YuE2 Cover, connect source JSON and `cover_abc`. A cover-specific system instruction is appended to the selected YuE2 template; the source score and fixed filename title accompany the brief. Arrange the score without regenerating it, and keep Style/Lyrics sections synchronized. SheetSage2 transcribes music, not words.
+
+### This node is the master for the style
+
+What the track sounds like is decided here, not in the Cover Studio: this node's
+template, its fields and its description are what the LLM is told to produce, and
+the style rules it forwards (including `STYLE PRIORITY` for covers) are what the
+model must follow. The fields resolve with the precedence **your explicit value >
+the prompt file's metadata block > left out of the prompt**, and `custom` means
+"no specification for this field", never "use the file's value".
+
+For a cover, the selected **cover lyrics mode** overrides the vocal fields, so a
+value left over from a template cannot bring vocals back:
+
+- `instrumental` - Voice, Language and Lyrics theme are removed from the brief and
+  Lyrics is pinned to `instrumental`.
+- `original lyrics` - the Lyrics theme is removed (the words are the transcription)
+  and the language is taken from the Whisper transcript.
+- `new lyrics` - theme, language and voice stay, because the new words are written
+  from them.
+
+Where the rework of the source *material* happens instead - the Interpretation
+Freedom slider and its own optional hint - is described in
+[Cover Studio · 1 plan](YuE2CoverStudioPlan.md).
+
+### Cover lyrics modes (3.1.0)
+
+The cover source's **Cover lyrics** choice selects which instruction block is
+appended and pins the Lyrics field:
+
+- `new lyrics` - write words that fit the score. The prompt carries a
+  `MELODY PHRASING MAP` of vocal note onsets, durations and rests. Source
+  Whisper words/timestamps guide approximate phrase syllables and stress;
+  one syllable may span multiple notes. The selected template governs new words.
+- `original lyrics` - the optional `cover_lyrics` input carries the Whisper
+  transcription; the prompt adds it as a `COVER LYRICS` block that the LLM may
+  only distribute across the score's sections. Lyrics is pinned to `yes`.
+  Without a transcription the run stops with a clear connection/error message.
+- `instrumental` - the instrumental instruction block; Lyrics is pinned to
+  `instrumental`. The score shown here is the rewritten one from
+  *Cover song · instrumental score / phrase map*, so the prompt and the generator agree.
+
+The forced field and the cover metadata are recorded in
+`structured_summary_json`: `forced_lyrics_field` names a pinned Lyrics value,
+`cover_mode_removed_fields` lists the fields the mode took out of the brief,
+`cover_lyrics` and `cover_syllables` describe the transcription, and `overrides`
+lists the field values that came from your explicit choices.
+
+The section the LLM writes is what reaches the engine: the parser extracts the
+`[Lyrics]` section of the answer into the lyrics `Generate song` receives, so
+every instruction above names that section explicitly. `new lyrics` also
+corrects a wordless Lyrics field (`instrumental`, `only voice - no words`) to
+`yes`, because that mode means new words.

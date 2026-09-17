@@ -21,7 +21,7 @@ compressor release is an exponential time constant.
 Output TP is independently measured and residual overshoots corrected/rechecked.
 Future MP3 encoding can create new peaks and is not covered by that measurement.
 Outputs: AUDIO, `mastering_json`, `info`. Full workflow/algorithm details and
-limits are documented in `AUDIO_MASTERING.md`.
+limits are documented in `docs/AUDIO_MASTERING.md`.
 
 ## Presets
 

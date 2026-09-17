@@ -27,7 +27,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PACKAGES = ("numpy", "scipy", "soundfile", "mutagen", "PIL", "torch", "safetensors", "tokenizers", "llama_cpp")
+PACKAGES = ("numpy", "scipy", "soundfile", "mutagen", "PIL", "torch", "safetensors", "tokenizers", "llama_cpp",
+            # Optional: only the "original lyrics" cover mode needs it.
+            "faster_whisper")
 
 PROMPT_LIBRARY_HINT = "Loads prompts from prompts/user and prompts/system."
 

@@ -3,9 +3,23 @@
 ComfyUI displays the ``tooltip`` option from INPUT_TYPES when the user hovers
 an input label/widget.  Keeping the help text in one file makes it possible to
 add detailed help to every input without duplicating processing code.
+
+Resolution order for every input (first hit wins):
+
+1. the node's own inline ``tooltip`` written next to the field declaration -
+   the most local and usually the most specific text;
+2. :data:`NODE_INPUT_TOOLTIPS` for that node, exact name first, then ``re:``
+   pattern keys;
+3. :data:`GENERIC_INPUT_TOOLTIPS`, for fields with the same meaning everywhere;
+4. :data:`GENERIC_PATTERN_TOOLTIPS`, for indexed families such as
+   ``candidate_3``;
+5. :func:`_fallback_tooltip`, which exists only so no input is ever left
+   without help - ``tests/test_node_documentation.py`` fails as soon as an input
+   would need it.
 """
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 
 # Tooltips shared by fields with the same semantics across nodes.
@@ -75,12 +89,12 @@ GENERIC_INPUT_TOOLTIPS = {
     "embedded_cover_size": "Target square resolution in pixels for the cover image embedded inside FLAC/MP3 metadata. In the supplied workflow this is linked directly to MiniMax Square Image Size, so a 1024x1024 JPG also embeds as 1024x1024. Larger embedded art increases audio-file size and some older players may prefer 512 or 1024.",
     "absolute_directory": "Absolute filesystem directory for the audio output, for example D:\\Music\\Masters. Unlike the smart-prefix saver this destination is not relative to ComfyUI's output folder.",
     "filename": "Base filename without extension for Save Audio Absolute Path. Collision handling may add a numeric suffix depending on collision_mode.",
-    "image": "ComfyUI IMAGE tensor to save as the cover JPG.",
+    "image": "ComfyUI IMAGE tensor to save as cover artwork: a JPEG named like the audio export (Album - Title).",
     "jpeg_quality": "JPEG encoding quality from 50 to 100. Higher values preserve more detail at larger file size; around 90–95 is normally visually transparent for album artwork.",
     "size_preset": "Square artwork resolution preset (256 up to 3096). Larger images cost more VRAM/time. Choose custom to use custom_size instead of a fixed preset. Note: the FLUX.2 latent stage quantizes to multiples of 16, so 3096 is effectively rendered as 3088 - prefer 3072x3072 for an exact size.",
     "custom_size": "Square width/height in pixels used only when size_preset is custom. Values are kept equal to guarantee a 1:1 cover image.",
     "artist": "Primary performing artist tag embedded in the final audio files.",
-    "album": "Album/release title tag embedded in the final audio files.",
+    "album": "Album or release title embedded into the final audio files, and used by path templates with %album%.",
     "year": "Release/copyright year tag. Use a four-digit year when possible for broad player compatibility.",
     "track": "Track-number tag, for example 01 or 3/12. This value is metadata only and does not change filename ordering unless you include it separately in the filename.",
     "genre": "Genre tag embedded in compatible audio files. Keep it reasonably concise for broad media-player compatibility.",
@@ -111,11 +125,29 @@ NODE_INPUT_TOOLTIPS = {
         "audio": "Upload or select the source audio. Only read in YuE2 Cover mode. The filename without its last extension plus -cover becomes the song title.",
         "mode": "Full (default) retains melody and harmony; melody keeps the tune with greater freedom for new accompaniment. Drives both SheetSage2 and YuE2.",
         "sheetsage2_model": "Audio encoder filename in models/audio_encoders. Autoload provides sheetsage2_bf16.safetensors; custom filenames must already be installed or configured in the model catalog.",
+        "lyrics_mode": "What happens to the vocals. New lyrics: the LLM writes words that fit timed source phrases and the transcribed melody; note counts are not syllable counts. Original lyrics: Whisper transcribes the source words and the LLM only distributes them across the score's sections. Instrumental: the score is rewritten so the melodic line that carried the vocals is played by an instrument and Lyrics carries section tags only.",
+        "lead_instrument": "Instrumental mode only: which instrument takes over the former vocal melody, or 'Remove vocal line' to keep the accompaniment alone. The rewritten score moves the melody into Ins; overlapping Ins notes in those blocks are replaced and reported.",
+    },
+    "MusicCoverScore": {
+        "cover_source_json": "Connect Cover song / source audio. The lyrics mode decides whether the score is rewritten.",
+        "cover_abc": "Connect Cover song / SheetSage2 transcription. An empty transcription stops the cover run.",
+    },
+    "MusicCoverLyrics": {
+        "model_profile_json": "Connect 00 - Song model / Production choices. Whisper runs for YuE2 Cover with new or original lyrics; instrumental and other models skip it.",
+        "cover_source_json": "Connect Cover song / source audio; it carries the lyrics mode and the audio file.",
+        "model_check_report": "Connect the model check node so configured downloads finish before Whisper loads.",
+        "whisper_model": "CTranslate2 Whisper checkpoint from models_config.json. The bundled default is whisper-large-v3; no singing-specific quality optimum is claimed. Extend the catalog for another checkpoint.",
+        "language": "Auto detects the language; forcing it improves accuracy and is the documented remedy for wrong-language or repeated output. Use the language actually sung.",
+        "device": "Auto prefers CUDA and falls back to CPU with int8 precision when the GPU cannot run the checkpoint.",
+        "compute_type": "Precision for the checkpoint. Auto uses float16 on CUDA and int8 on CPU, which is the recommended default on a 16 GB card.",
+        "vad_filter": "Off by default for songs. Speech detection may miss singing. If enabled and it retains less than half the audio or no segments, retry the full audio without VAD and record both attempts. Review recognition errors/hallucinations either way.",
+        "beam_size": "Beam width for decoding; 5 is the accuracy/speed default. Higher values are slower and hear slightly more.",
+        "condition_on_previous_text": "Off is the documented default for music: carrying text between chunks can repeat a line into the next section.",
     },
     "MusicProductionControl": {
         "artifact_reduction_enabled": "Independent experimental spectral outlier reduction after Refinement and before Mastering. On by default with Balanced sensitivity; audition removed_audio to judge the effect on a song. Works with every song model.",
         "model": "Select the actual song generator and matching prompt family. YuE2 is the default in the dual-model workflow.",
-        "cover_enabled": "On creates and previews cover artwork. Off skips the image branch and its FLUX.2 model check/download.",
+        "cover_artwork_enabled": "On creates and previews the FLUX.2 cover artwork and enables its model check/download. Off skips the whole image branch; the audio export continues without artwork. This switch is not the 'YuE2 Cover' song mode: it only decides whether artwork is generated.",
         "refinement": "Model default means OFF for YuE2 and ON for MiniMax. On/Off override that choice. Controls declipping, filtering, FlashSR, crossover and HF repair, including FlashSR model downloads.",
         "mastering_enabled": "On runs Auto-EQ, manual EQ, sample-rate preparation and mastering compression. Off passes incoming audio through at its existing sample rate. Independent of Refinement.",
     },
@@ -123,7 +155,7 @@ NODE_INPUT_TOOLTIPS = {
         "enabled": "Connect the central refinement or mastering Boolean. Off skips both audio processing and report dependencies.",
         "stage": "Labels bypass records. Refinement slots 2 and 4 carry preset names; other report slots carry JSON.",
         "original_audio": "Audio before this stage. Requested only when the stage is disabled.",
-        "processed_audio": "Audio after this stage. Requested only when enabled.",
+        "processed_audio": "Audio after this stage. Lazy: requested only while the gate is enabled.",
     },
     "MusicOptionalCoverPreview": {
         "images": "Generated artwork. Requested only while cover creation is enabled.",
@@ -241,50 +273,53 @@ NODE_INPUT_TOOLTIPS = {
         "create_directories": "Create the configured JSON directory automatically when it does not yet exist. Recommended: ON.",
         "llm_system_prompt": "The system prompt that was sent to the LLM; recorded in the canonical JSON so the exact prompt is reproducible.",
         "llm_user_prompt": "The assembled user prompt that was sent to the LLM (structured brief + description).",
-        "llm_output": "The raw assistant text returned by the LLM, before parsing.",
+        "llm_output": "Raw assistant text the LLM returned, before parsing, recorded in the JSON.",
         "llm_status": "Status line from the LLM chat node (model, session, character count) for diagnostics.",
         "structured_summary_json": "Summary of the structured prompt resolution (origin, resolved fields, overrides).",
-        "caption": "Generated Caption sent to MiniMax Music 3.",
+        "caption": "Generated Caption that was sent to the music model, recorded in the production JSON.",
         "lyrics": "Generated Lyrics / structural section map sent to MiniMax Music 3.",
-        "image_prompt": "Generated artwork prompt used by the FLUX.2 cover branch.",
+        "image_prompt": "Artwork prompt used by the FLUX.2 cover branch, recorded in the production JSON.",
         "source_name": "Stable source name derived from the prompt selection or title.",
         "source_path": "Where the prompt came from (prompt file path, <manual> or the LLM marker).",
         "prompt_origin": "Origin marker: folder / manual / external_comfyui_llm / manual_override.",
         "prompt_provenance_json": "Parser provenance record (source mode, user prompt, budget/trim info, manual-field usage).",
-        "generation_seed": "Seed used for the song generation.",
-        "run_index": "Variant index of this song within the batch.",
-        "variant_count": "Total number of variants generated for this prompt.",
+        "generation_seed": "Seed of this song's generation, recorded in the production JSON.",
+        "run_index": "1-based variant index of this song within the batch, recorded in the JSON.",
+        "variant_count": "Total number of variants generated for this prompt, recorded in the JSON.",
         "max_duration": "MiniMax Music 3 maximum duration in seconds (300 = 5 minutes).",
-        "text_seed": "Seed for the MiniMax text encoder.",
-        "text_cfg_scale": "CFG scale for the MiniMax text encoder.",
-        "text_top_k": "Top-k for the MiniMax text encoder.",
-        "ksampler_seed": "Seed for the MiniMax sampler.",
-        "ksampler_steps": "Sampler step count.",
-        "ksampler_cfg": "Sampler CFG.",
-        "denoise": "Sampler denoise strength.",
+        "text_seed": "Seed the text encoder ran with, recorded in the production JSON.",
+        "text_cfg_scale": "CFG scale of the text encoder, recorded in the production JSON.",
+        "text_top_k": "Top-k of the text encoder, recorded in the production JSON.",
+        "ksampler_seed": "Seed the music sampler ran with, recorded so the take can be reproduced.",
+        "ksampler_steps": "Sampler step count this song ran with, recorded in the production JSON.",
+        "ksampler_cfg": "Sampler CFG this song ran with, recorded in the production JSON.",
+        "denoise": "Sampler denoise strength, recorded in the production JSON.",
         "flashsr_settings_json": "FlashSR settings report (inference rate, chunk/overlap sizes, low-pass flag, output rate, device).",
-        "pre_preset": "PRE low-pass preset name.",
-        "pre_settings_json": "PRE low-pass effective settings report.",
-        "post_preset": "POST low-pass preset name.",
-        "post_settings_json": "POST low-pass effective settings report.",
+        "pre_preset": "Name of the PRE low-pass preset that was used, recorded in the JSON.",
+        "pre_settings_json": "Effective PRE low-pass settings report, recorded in the production JSON.",
+        "post_preset": "Name of the POST low-pass preset that was used, recorded in the JSON.",
+        "post_settings_json": "Effective POST low-pass settings report, recorded in the production JSON.",
         "hybrid_crossover_json": "FlashSR Hybrid Crossover report (sample rates, crossover, HF mix, mode).",
-        "hf_repair_json": "HF Cymbal / Shimmer Repair report.",
-        "declip_json": "Audio Declip / Overload Repair report.",
+        "hf_repair_json": "High-frequency cymbal/shimmer repair report, recorded in the production JSON.",
+        "declip_json": "De-clipping / overload repair report, recorded under the restoration section.",
         "release_prep_json": "Release Prep report (sample rate, measured/effective loudness, true peak, gain).",
-        "workflow_name": "Workflow name recorded in the canonical JSON.",
+        "workflow_name": "Name of the workflow that produced this run, recorded in the canonical JSON.",
+        "cover_score_json": "Cover-only: the score adaptation record (lyrics mode, lead instrument, whether and how the vocal line was rewritten, and the vocal note counts and phrase grids). Omitted for normal songs.",
+        "cover_lyrics_json": "Cover-only: the Whisper transcription and timestamp record for new/original-lyrics covers (checkpoint, device, precision, detected language and confidence, segment count, transcript). Omitted when the mode does not use Whisper.",
     },
     "MiniMaxStructuredPromptV20": {
+        "cover_lyrics": "Cover-only: the original sung words transcribed from the source audio with Whisper. Used as the authoritative lyrics text when the cover lyrics mode is 'original lyrics'. Connect the report output to retain timestamps. Original mode verifies the complete word order; new mode uses source phrasing as guidance.",
         "user_prompt_source": "Where the structured song prompt comes from. manual uses only the fields and description below; bundled_library loads a bundled prompt file; external_directory loads from a folder on the machine running ComfyUI.",
         "user_prompt_directory": "Folder containing prompt files when user_prompt_source is external_directory. Environment variables and ~ are expanded. Files stay inside this folder.",
-        "user_prompt_file": "Selected prompt file. 'custom' (the first choice) is the free mode: no file is loaded and the fields stay exactly as you set them, so you compose the prompt yourself. The dropdown lists the categories alphabetically as directory labels first, with the files of each directory indented beneath them. Files may optionally start with a metadata block that prefills Genre/Tempo/Time signature/Key/Lyrics/Language/Voice/Theme/Length; the file's body text is copied into description_override on selection.",
-        "genre": "Music genre. Select 'custom' to leave this part out of the LLM prompt. Selecting a prompt file prefills this field, but you can override it.",
+        "user_prompt_file": "Selected prompt file. 'custom' (the first choice) is the free mode: no file is loaded and the fields stay exactly as you set them, so you compose the prompt yourself. The dropdown lists the categories alphabetically as directory labels first, with the files of each directory indented beneath them. Files may optionally start with a metadata block that prefills Genre/Tempo/Time signature/Key/Lyrics/Language/Voice/Theme/Length; your explicit field values always win over that block. The file's body text is copied into description_override on selection.",
+        "genre": "Music genre, and part of the style this node owns: the template, the fields and the description are the master for the song's sound. Select 'custom' to leave this part out of the LLM prompt. Selecting a prompt file prefills this field, but you can override it.",
         "tempo": "Tempo as a curated BPM range (Slow to Very fast), so a selection always leaves the LLM a comfortable musical window. Select 'custom' to leave this part out of the LLM prompt. Selecting a prompt file with a Tempo metadata value prefills this field.",
     "meter": "Time signature as a curated list (4/4 (common time), 3/4 (waltz), 6/8, odd meters, changing time signatures, free time / rubato). Select 'custom' to leave this part out of the LLM prompt. Selecting a prompt file with a Meter metadata value prefills this field.",
         "key": "Musical key / scale, ordered along the circle of fifths (majors first, then minors). Select 'custom' to leave this part out of the LLM prompt.",
-        "lyrics": "Whether the song has lyrics: yes, sparse, only voice - no words (wordless vocalization like humming or syllables), or instrumental. Select 'custom' to leave this part out of the LLM prompt.",
-        "language": "Lyrics language. The most important languages come first, then more languages in alphabetical order. Select 'custom' to leave this part out of the LLM prompt.",
-        "voice": "Vocal description (gender, timbre, style). Select 'custom' to leave this part out of the LLM prompt.",
-        "theme": "Lyrics theme / topic. Select 'custom' to leave this part out of the LLM prompt.",
+        "lyrics": "Whether the song has lyrics: yes, sparse, only voice - no words (wordless vocalization like humming or syllables), or instrumental. Select 'custom' to leave this part out of the LLM prompt. For a YuE2 Cover the selected cover lyrics mode overrides this field ('instrumental' and 'original lyrics' both force a value), so a template's lyrics setting cannot decide the vocals of a cover.",
+        "language": "Lyrics language. The most important languages come first, then more languages in alphabetical order. Select 'custom' to leave this part out of the LLM prompt. Special cases: for an instrumental cover the mode removes this field, and for 'original lyrics' the language comes from the Whisper transcription instead of from here.",
+        "voice": "Vocal description (gender, timbre, style). Select 'custom' to leave this part out of the LLM prompt. An instrumental cover removes this field, and 'original lyrics' preserves the source voice, so the cover lyrics mode wins here too.",
+        "theme": "Lyrics theme / topic. It is what the words of a 'new lyrics' cover are written from, so it stays active there. An instrumental cover or one that keeps the original words removes it from the brief, because the mode - not the theme - decides the vocals. Select 'custom' to leave this part out of the LLM prompt.",
         "length": "Approximate song length (for example '4-5 minutes'). Prompts plan the arrangement and natural ending near this target. YuE2 may finish phrases and decay beyond it; this does not lower yue2_max_duration. Select 'custom' to leave this part out of the LLM prompt.",
         "description_override": "Further description appended to the structured brief. Selecting a prompt file copies its body text into this field, and only this field's content is used afterwards - edit it freely, or clear it to remove the description.",
         "system_prompt": "Effective system prompt sent to the LLM. Selecting a system prompt file copies its text into this field, and only this field's content is used afterwards - edit it freely. In manual mode this field is the whole system prompt.",
@@ -296,6 +331,8 @@ NODE_INPUT_TOOLTIPS = {
     "MiniMaxParseExternalLLMOutputV16": {
         "max_prompt_tokens": "Token budget for the combined Caption+Lyrics sent to MiniMax Music 3. The MiniMax text encoder hard-rejects prompts over 5000 tokens, so the default 4500 keeps a safety margin for the estimation error. The estimate is conservative (calibrated against the real MiniMax tokenizer).",
         "trim_long_prompt": "When the estimated prompt exceeds the budget: ON trims softly (whole lines from the end of the lyrics, orphan section tags removed, caption intact) and logs a warning; OFF raises a clear error instead so the MiniMax encoder never fails cryptically.",
+        "cover_lyrics": "Cover-only: source transcript with timestamps. Original words are placed in measured score sections, restored after LLM rewrites, then checked for complete word order including repetitions. New lyrics use the timing as guidance.",
+    "cover_lyrics_lock": "Cover Studio only, and empty by default. A deliberately locked lyrics block: when connected and non-empty it replaces the LLM's words verbatim and marks them as intentional, so the 'new lyrics' copy guard does not mistake a user lock for a lazy model answer. Leave it empty to keep the previous behaviour.",
     },
     "MiniMaxFlashSRAudio": {
         "audio": "Audio signal to super-resolve. FlashSR reconstructs high-frequency content at 48 kHz; the hybrid crossover later combines it with the original signal.",
@@ -310,9 +347,9 @@ NODE_INPUT_TOOLTIPS = {
         "model": "llama.cpp-compatible GGUF from models/llm. The example workflow references the same example model as before; provide the file or configure a download URL in models_config.json.",
         "max_tokens": "Maximum number of tokens the LLM may generate. The example workflow uses 16384 so complete Caption/Lyrics/Title/Image Prompt sections fit.",
         "temperature": "Sampling temperature. Lower values are more deterministic; the example uses 0.7.",
-        "top_p": "Nucleus sampling threshold. The example uses 0.8.",
+        "top_p": "Nucleus sampling threshold (the example uses 0.8). Lower values restrict sampling to more likely tokens.",
         "n_gpu_layers": "Number of model layers offloaded to the GPU. -1 offloads as many as possible. The model is reloaded when this or n_ctx changes.",
-        "n_ctx": "Context window size in tokens. The example uses 32768 for the long production system prompt plus response.",
+        "n_ctx": "Context window size in tokens. It holds the production system prompt, the response and any thinking, and is sized so that even a maximum-length answer fits; the example uses 37376.",
         "reset_session": "Integrated GGUF only: keep enabled for independent songs. Off reuses the default llama.cpp state cache (advanced). ComfyUI still executes the LLM on every queued run either way.",
         "auto_download": "When enabled and a download URL is configured in models_config.json, a missing GGUF is downloaded automatically. Missing models without a configured URL always produce a clear error.",
         "chat_format": "Chat template applied to the conversation. auto picks the verified template for the model family (chatml for Qwen-style models with clean <think> handling, the model's own embedded template for Gemma); none uses the GGUF's own template; chatml/qwen/gemma/llama-3 pass the named template through. Models verified with auto: Qwen3.8-27B and Gemma 4.",
@@ -337,15 +374,17 @@ NODE_INPUT_TOOLTIPS = {
         "minimax_models": "Check the MiniMax Music 3 files referenced by the workflow (dit, text encoder, VAE).",
         "flux2_models": "Check the FLUX.2 Klein artwork branch files (dit, text encoder, VAE).",
         "flashsr_models": "Check the FlashSR weight files used by the integrated Audio Super Resolution node.",
-        "llm_model": "Check the example LLM GGUF referenced by the workflow.",
+        "llm_model": "Also check the example LLM GGUF referenced by the workflow. Turn it off when you use a cloud or local-server model.",
         "auto_download": "Download every missing file that has a configured URL. Missing files without a URL are only reported with guidance.",
+        "whisper_models": "Check the Whisper checkpoint for new/original lyrics in YuE2 Cover only. Off excludes it from this check; auto_download controls downloads. Instrumental and other models never request it.",
+        "cover_source_json": "Connect Cover song / source audio so this node can see the selected lyrics mode and only request the Whisper weights the run actually uses.",
     },
 }
 
 NODE_DESCRIPTIONS = {
-    "MiniMaxStructuredPromptV20": "Structured prompt control for the LLM: optional metadata-prefilled fields (Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description text. Selecting a bundled/external prompt file prefills the fields and copies the file's body text into description_override, which is authoritative from then on; every field can be overridden, and 'custom' leaves the part out of the LLM prompt. The system prompt is a separate section: selecting a system prompt file copies its text into the editable system_prompt field, which is authoritative from then on. Outputs the assembled user prompt and the resolved system prompt for the integrated LLM chat node.",
+    "MiniMaxStructuredPromptV20": "Structured prompt control for the LLM: optional metadata-prefilled fields (Genre, Tempo, Time signature, Key, Lyrics, Language, Voice, Lyrics theme, Target length) plus a further-description text. Selecting a bundled/external prompt file prefills the fields and copies the file's body text into description_override, which is authoritative from then on; every field can be overridden, and 'custom' leaves the part out of the LLM prompt. The system prompt is a separate section: selecting a system prompt file copies its text into the editable system_prompt field, which is authoritative from then on. Outputs the assembled user prompt and the resolved system prompt for the integrated LLM chat node.\n\nWHERE THE INSTRUCTIONS COME FROM: this node is the master for the song's style and musical fields - the template, the fields and the description are what the LLM is told to produce, and the style rules it forwards (including STYLE PRIORITY for covers) are what the model must follow. It resolves each field as 'your explicit value > the prompt file's metadata block > left out of the prompt'.\n\nCOVER OVERRIDES: for a YuE2 Cover the selected cover lyrics mode wins over the vocal fields, so a value left over from a template cannot bring vocals back. 'instrumental' forces the Lyrics field to instrumental and removes Voice, Language and Lyrics theme from the brief; 'original lyrics' removes the Lyrics theme (the words are the Whisper transcription) and takes the language from that transcript; 'new lyrics' keeps theme, language and voice, because they are what the new words are written from. The Cover Studio never changes these fields: it only reworks the source score, and its own target_style is a hint for that rework, never a second style source.",
     "MiniMaxFlashSRAudio": "Integrated Audio Super Resolution (FlashSR): reconstructs high-frequency content at 48 kHz with 5.12 s chunks and 0.50 s overlap-add stitching. Replaces the external Egregora node; the inference code is bundled with the toolkit (flashsr_inference/) and only the weights are auto-downloaded on first use per models_config.json. Emits a settings_json report for the production JSON.",
-    "MiniMaxLLMChat": "Generate song text inside ComfyUI (GGUF), in a local app/server, or using a cloud provider. Select the mode to show its controls. External modes offer model discovery and session-only API key entry; provider keys are not stored in workflows. Each enabled queued execution generates fresh text, without a session-ID helper. Cloud requests send your prompts to the provider and may incur charges. GGUF advanced controls remain available; they do not affect external models. See LLM_PROVIDERS.md for setup.",
+    "MiniMaxLLMChat": "Generate song text inside ComfyUI (GGUF), in a local app/server, or using a cloud provider. Select the mode to show its controls. External modes offer model discovery and session-only API key entry; provider keys are not stored in workflows. Each enabled queued execution generates fresh text, without a session-ID helper. Cloud requests send your prompts to the provider and may incur charges. GGUF advanced controls remain available; they do not affect external models. See docs/LLM_PROVIDERS.md for setup.",
     "MiniMaxLLMUnload": "Releases the loaded LLM model (and optionally cached FlashSR runners) so VRAM/RAM is free for the music and artwork stages.",
     "MiniMaxModelAutodownload": "Checks the model files referenced by the example workflow and downloads missing ones when a URL is configured in models_config.json. Reports presence/download results in the log and as a text report.",
     "AudioDeclipRepair": "Detects near-ceiling hard-clipping plateaus and reconstructs plausible missing peak curvature before FlashSR. Uses local cubic-Hermite interpolation and only a single optional whole-track safety gain; it cannot recover exact information destroyed by clipping.",
@@ -373,9 +412,182 @@ NODE_DESCRIPTIONS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Tooltips for fields that had none (2026-09-17).  Kept in one additive block so
+# the older tables above stay reviewable on their own.
+# ---------------------------------------------------------------------------
+
+GENERIC_INPUT_TOOLTIPS.update({
+    "model_profile_json": "JSON profile of the selected song model: which model is active, its duration window, prompt hard limit and capabilities. This node adapts its behaviour to that profile; it comes from the song model profile node.",
+    "profile_json": "JSON profile of the selected song model (id, display name, duration window, prompt hard limit, capabilities). Everything downstream adapts to it.",
+    "settings_json": "Resolved model-settings JSON from the music settings node: active sampler group, clamped duration, seed handling and the instrumental-check options.",
+    "model_check_report": "Text report from the model preflight: which artifacts are present, already downloaded or missing. Recorded for the log and the production JSON only.",
+    "word_tolerance": "How many recognised words still count as an instrumental. Words, not letters: 0 means the render must not contain a recognisable word at all.",
+})
+
+# Indexed input families that mean the same thing in every node using them.
+GENERIC_PATTERN_TOOLTIPS = {}
+
+_NEW_NODE_TOOLTIPS = {
+    "MiniMaxInstrumentalPick": {
+        "max_retries": "How many extra takes may be generated when a take still contains words (0-10). A clean first take costs one generation; every retry is a full re-render.",
+        "re:candidate_\\d+": "One generated take (AUDIO), numbered like its report_N. Lazy: the take is only rendered when this node actually asks for it.",
+        "re:report_\\d+": "Word-check report for candidate_N: words heard, transcript, pass/fail and the path of that take's temporary WAV. Lazy, like its candidate.",
+    },
+    "MusicOptionalStage": {
+        "re:report_\\d+": "Report of an optional stage, passed through unchanged while the stage runs. Lazy: a disabled stage never wakes the node that would produce it.",
+    },
+    "MiniMaxInstrumentalVocalCheck": {
+        "whisper_model": "Whisper checkpoint used for the check. The pinned whisper-large-v3 checkpoint is downloaded by the model preflight when it is missing.",
+        "language": "Language hint for the check, or auto to detect it. Detection is usually right; pin a language when you know the source to avoid misdetection.",
+        "device": "Where Whisper runs. auto prefers CUDA and falls back to CPU after a GPU failure; cuda or cpu pins it explicitly.",
+        "compute_type": "Precision of the Whisper engine. auto uses float16 on CUDA and int8 on CPU.",
+        "beam_size": "Beam width of the transcription. 1 is fastest; higher values hear slightly more and take longer.",
+        "candidate_label": "Name of this take in the log, the report and its temporary WAV file. The generation expansion passes take-1, take-2, ...; empty uses take.",
+    },
+    "MiniMaxMusicModelSettings": {
+        "ksampler_seed_offset": "Integer added to the KSampler seed derived from the song seed, separately from the music model's own seed. 0 keeps the sampler seed equal to the song seed; a fixed value shifts every take by the same amount.",
+        "minimax_steps": "Sampling steps for MiniMax Music 3 (default 40). More steps cost time without guaranteeing a better result.",
+        "minimax_cfg": "Classifier-free guidance for MiniMax Music 3 (default 1.7). Higher values follow the caption more literally.",
+        "minimax_sampler_name": "Sampler used for MiniMax Music 3. Only the selected model's group takes effect.",
+        "minimax_scheduler": "Noise schedule for MiniMax Music 3. Only the selected model's group takes effect.",
+        "minimax_text_cfg_scale": "Guidance scale of the MiniMax text encoder (default 1.7): how strongly the caption steers the text conditioning.",
+        "minimax_text_top_k": "Top-k sampling width of the MiniMax text encoder (default 50). Lower values narrow the text conditioning.",
+        "yue2_steps": "Sampling steps for YuE2 (default 32). More steps cost time; the bundled example runs 40.",
+        "yue2_cfg": "Classifier-free guidance for YuE2 (default 1.0). Higher values follow the style text more literally.",
+        "yue2_sampler_name": "Sampler used for YuE2 (default dpm_2). Only the selected model's group takes effect.",
+        "yue2_scheduler": "Noise schedule for YuE2 (default sgm_uniform). Only the selected model's group takes effect.",
+        "yue2_temperature": "Sampling temperature for YuE2 (default 1.0). Lower values are more conservative and repeatable.",
+        "yue2_top_p": "Nucleus sampling threshold for YuE2 (default 0.95). Lower values cut unlikely tokens earlier.",
+        "yue2_top_k": "Top-k sampling width for YuE2 (default 100). Lower values cut unlikely tokens earlier.",
+        "yue2_repetition_penalty": "Repetition penalty for YuE2 (default 1.2). Higher values discourage repeated musical phrases.",
+        "instrumental_check": "Enable the instrumental vocal check: every generated take is transcribed with Whisper and re-rendered while it still contains words. Only applies to a YuE2 instrumental cover and costs one transcription per take.",
+        "instrumental_word_tolerance": "Words (not letters) that still count as instrumental for this run. 0 requires a take with no recognisable words.",
+        "instrumental_max_retries": "Maximum extra takes the check may request (0-10). When none reaches the tolerance, the take with the fewest recognised words is used and the other candidates are deleted.",
+    },
+    "MiniMaxParseExternalLLMOutputV16": {
+        "fallback_title": "Title used when the LLM answer and the manual fields contain none. A cover still takes its title from the source filename.",
+        "structured_llm_output": "Raw text answer from the LLM chat node, with the [Style], [Lyrics], [Title] and [Image_Prompt] sections the parser expects.",
+        "manual_image_prompt": "Artwork prompt used when the LLM answer contains none. The text-free prohibition is appended automatically when it is missing.",
+        "llm_status": "Status line from the LLM node, kept in the provenance so a run can be traced back to the model and provider that produced it.",
+        "structured_summary_json": "Summary JSON from the structured prompt node (template, fields, requested length). Used for provenance and to honour a requested song length.",
+    },
+    "MiniMaxSaveProductionJSON": {
+        "llm_thinking": "Reasoning the model produced next to its answer. Stored in the JSON only; it never reaches the music model.",
+        "minimax_prompt_md": "Markdown prompt report, written next to the JSON so the exact prompt survives with the song.",
+        "eq_report_json": "Per-band EQ report from automatic and manual EQ, recorded in the EQ section of the production JSON.",
+        "auto_eq_analysis_json": "Auto-EQ analysis: detected tonal difference against the target and the proposed gain per band.",
+        "mastering_json": "Mastering report: measured LUFS and true peak plus the applied gain reduction.",
+        "resource_profile_json": "Detected hardware profile and the model recommendation derived from it, recorded for reproducibility.",
+        "llm_runtime_json": "LLM runtime details (backend, model file, context size, GPU placement) as reported by the chat node.",
+        "model_identity_json": "Identifiers of the loaded song and artwork models, so the JSON records which weights produced the audio.",
+        "template_version": "Version or fingerprint of the prompt template that produced the text, so a later prompt change can be told apart.",
+        "artifact_reduction_json": "Artifact-reduction report: what was detected and how much was removed.",
+    },
+    "MiniMaxSafeAudioDecode": {
+        "samples": "Latents from the sampler, decoded with the VAE. Invalid decoder output triggers one retry with smaller tiles instead of writing broken audio.",
+        "vae": "VAE that decodes the latents; it must match the song model that produced them.",
+    },
+    "MusicGeneration": {
+        "style": "Style or caption text that drives the song model. For a cover this is the style the studio produced.",
+        "yue2_checkpoint": "YuE2 checkpoint file. Only read when the active profile is YuE2 or YuE2 Cover.",
+        "minimax_model": "MiniMax Music 3 diffusion model. Only read when the active profile is MiniMax Music 3.",
+        "minimax_encoder": "MiniMax Music 3 text encoder. Only read when the active profile is MiniMax Music 3.",
+        "minimax_vae": "MiniMax Music 3 VAE. Only read when the active profile is MiniMax Music 3.",
+        "tiled_decode": "Decode long audio in tiles instead of all at once. Slightly slower and much lighter on peak memory; invalid output retries once with smaller tiles.",
+    },
+    "MusicGenerationReceipt": {
+        "abc": "Score that was handed to the song model. For MiniMax Music 3 and non-cover runs it is empty.",
+        "seconds": "Requested duration in seconds that the model was given. The saved file can be shorter or longer.",
+        "model_files_json": "Model files used for this song, recorded so the run can be reproduced.",
+        "instrumental_check_json": "Result of the instrumental vocal check: attempts, words heard per take, the kept take and where its temporary file is.",
+    },
+    "MiniMaxAudioBranchSelect": {
+        "profile": "Which branch this node uses: keep the original recording, a careful restore, or a reconstructed-bandwidth version. Only the selected branch is executed.",
+        "mix": "Blend weight of the replacement branch against the original. 0 keeps the original audio even when a restoration branch is selected.",
+        "preview_seconds": "Length of audio emitted for a quick listen, in seconds. 0 passes the complete track through.",
+        "original_audio": "AUDIO input of the untouched original recording. Lazy: it is only evaluated when this branch is selected.",
+        "restored_audio": "AUDIO input of the carefully restored version. Lazy: it is only evaluated when this branch is selected.",
+        "bandwidth_audio": "AUDIO input of the bandwidth-reconstructed version. Lazy: it is only evaluated when this branch is selected.",
+    },
+    "MiniMaxAudioTagReader": {
+        "audio_file": "Audio file whose title, artist, album and embedded cover art are read. Pick a file, not a path from another machine.",
+        "copy_cover_art": "Also pass the embedded cover art on as an image path. Off returns an empty path.",
+        "overrides_json": "Optional JSON with tag values for fields the source file does not carry. Tags from the source always win; this only fills gaps.",
+    },
+    "MiniMaxModelAutodownload": {
+        "yue2_models": "Include the YuE2 model group in the check and download. Turn it off when you only produce MiniMax Music 3 songs or audio enhancement.",
+    },
+    "MiniMaxMasteringCompressor": {
+        "preset": "Ready-made starting points for ratio, threshold, attack, release and knee. Custom keeps your own values; a preset overwrites the compressor controls, not the loudness targets.",
+    },
+}
+
+for _node, _fields in _NEW_NODE_TOOLTIPS.items():
+    NODE_INPUT_TOOLTIPS.setdefault(_node, {}).update(_fields)
+
+
+def merge_input_tooltips(*tables):
+    """Merge per-node tooltip tables field by field into :data:`NODE_INPUT_TOOLTIPS`.
+
+    A plain ``dict.update`` replaces a whole node entry, which silently dropped
+    every field the later table did not repeat. Later tables still win per field.
+    """
+    for table in tables:
+        for node, fields in (table or {}).items():
+            NODE_INPUT_TOOLTIPS.setdefault(node, {}).update(fields)
+    return NODE_INPUT_TOOLTIPS
+
+
 def _fallback_tooltip(name: str) -> str:
     pretty = name.replace("_", " ")
     return f"Configuration input '{pretty}'. This value is passed directly to the node's processing logic; keep it at the workflow default unless you intentionally want to change that part of the production chain."
+
+
+_NODE_REGEX_PREFIX = "re:"
+
+# Tooltips for indexed input families (candidate_3, report_7, ...).  Checked after
+# the exact and per-node tables, so a node can still describe its own slots.
+GENERIC_PATTERN_TOOLTIPS: dict = {}
+
+
+def _inline_tooltip(spec) -> str:
+    """The tooltip written next to the field declaration in the node itself."""
+    if isinstance(spec, tuple) and len(spec) > 1 and isinstance(spec[1], dict):
+        text = spec[1].get("tooltip")
+        if text and str(text).strip():
+            return str(text).strip()
+    return None
+
+
+def _table_tooltip(fields, name: str) -> str:
+    """Exact entry first, then ``re:`` pattern entries, in declaration order."""
+    if not fields:
+        return None
+    if name in fields:
+        return fields[name]
+    for key, text in fields.items():
+        if isinstance(key, str) and key.startswith(_NODE_REGEX_PREFIX):
+            if re.fullmatch(key[len(_NODE_REGEX_PREFIX):], name):
+                return text
+    return None
+
+
+def resolve_tooltip(spec, name: str, node_names=()) -> str:
+    """Best available tooltip for one input, or ``None`` when only the fallback exists."""
+    inline = _inline_tooltip(spec)
+    if inline:
+        return inline
+    for node_name in node_names:
+        text = _table_tooltip(NODE_INPUT_TOOLTIPS.get(node_name), name)
+        if text:
+            return text
+    if name in GENERIC_INPUT_TOOLTIPS:
+        return GENERIC_INPUT_TOOLTIPS[name]
+    for pattern, text in GENERIC_PATTERN_TOOLTIPS.items():
+        if re.fullmatch(pattern, name):
+            return text
+    return None
 
 
 def _decorate_spec(spec, tooltip: str):
@@ -393,7 +605,11 @@ def _decorate_spec(spec, tooltip: str):
 
 
 def install_input_tooltips(node_class_mappings):
-    """Decorate every required/optional INPUT_TYPES field in every registered node."""
+    """Decorate every required/optional INPUT_TYPES field in every registered node.
+
+    An inline tooltip is kept: the source next to the field is the most specific
+    description available, and overwriting it with central text loses detail.
+    """
     for comfy_name, cls in node_class_mappings.items():
         if cls.__dict__.get("_minimax_tooltips_installed", False):
             continue
@@ -401,20 +617,21 @@ def install_input_tooltips(node_class_mappings):
         if original is None:
             continue
         class_name = getattr(cls, "__name__", comfy_name)
+        node_names = (comfy_name, class_name)
 
-        def wrapped_input_types(_cls, _original=original, _comfy_name=comfy_name, _class_name=class_name):
+        def wrapped_input_types(_cls, _original=original, _names=node_names):
             data = deepcopy(_original())
-            specific = NODE_INPUT_TOOLTIPS.get(_comfy_name, {})
-            if not specific:
-                specific = NODE_INPUT_TOOLTIPS.get(_class_name, {})
             for section in ("required", "optional"):
                 fields = data.get(section, {})
                 for name, spec in list(fields.items()):
-                    tooltip = specific.get(name) or GENERIC_INPUT_TOOLTIPS.get(name) or _fallback_tooltip(name)
+                    tooltip = resolve_tooltip(spec, name, _names) or _fallback_tooltip(name)
                     fields[name] = _decorate_spec(spec, tooltip)
             return data
 
         cls.INPUT_TYPES = classmethod(wrapped_input_types)
+        # Keep the undecorated declaration reachable: the documentation test must
+        # judge the authored tooltips, not the text this installer generated.
+        cls._minimax_raw_input_types = original
         if comfy_name in NODE_DESCRIPTIONS:
             cls.DESCRIPTION = NODE_DESCRIPTIONS[comfy_name]
         elif class_name in NODE_DESCRIPTIONS:
@@ -426,13 +643,13 @@ def find_missing_explicit_tooltips(node_class_mappings):
     """Developer/test helper: list inputs that would need the generic fallback text."""
     missing = []
     for comfy_name, cls in node_class_mappings.items():
-        original = getattr(cls, "INPUT_TYPES", None)
+        original = getattr(cls, "_minimax_raw_input_types", None) or getattr(cls, "INPUT_TYPES", None)
         if original is None:
             continue
         data = original()
-        specific = NODE_INPUT_TOOLTIPS.get(comfy_name, {}) or NODE_INPUT_TOOLTIPS.get(getattr(cls, "__name__", comfy_name), {})
+        names = (comfy_name, getattr(cls, "__name__", comfy_name))
         for section in ("required", "optional"):
-            for name in data.get(section, {}):
-                if name not in specific and name not in GENERIC_INPUT_TOOLTIPS:
+            for name, spec in data.get(section, {}).items():
+                if not resolve_tooltip(spec, name, names):
                     missing.append((comfy_name, section, name))
     return missing

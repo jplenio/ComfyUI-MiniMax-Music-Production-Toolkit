@@ -272,14 +272,19 @@ class CoverTests(unittest.TestCase):
 
     def test_cover_defaults_on_and_has_single_control_for_download_and_save(self):
         self.assertEqual(artwork.MiniMaxCoverControl().configure(), (True,))
-        path = Path(__file__).resolve().parents[1] / "example_workflows/MiniMax_Music3_Production_Toolkit.json"
+        path = Path(__file__).resolve().parents[1] / "example_workflows/Music_Production_Toolkit.json"
         workflow = json.loads(path.read_text(encoding="utf8"))
         nodes = {n["id"]: n for n in workflow["nodes"]}
-        control = next(n for n in nodes.values() if n["type"] == "MiniMaxCoverControl")
-        self.assertTrue(control["widgets_values_named"]["enabled"])
+        # One production control owns the cover choice; its cover_enabled output
+        # drives the artwork, the preview and the FLUX.2 download group.
+        control = next(n for n in nodes.values() if n["type"] == "MusicProductionControl")
+        self.assertIn("cover_artwork_enabled", [o["name"] for o in control["outputs"]])
         links = [l for l in workflow["links"] if l[1] == control["id"]]
-        self.assertEqual({(nodes[l[3]]["type"], nodes[l[3]]["inputs"][l[4]]["name"]) for l in links},
-                         {("SaveImageSmartPrefix", "enabled"), ("MiniMaxModelAutodownload", "flux2_models")})
+        connected = {(nodes[l[3]]["type"], nodes[l[3]]["inputs"][l[4]]["name"]) for l in links}
+        self.assertTrue({("SaveImageSmartPrefix", "enabled"),
+                         ("MusicOptionalCoverPreview", "enabled"),
+                         ("MiniMaxModelAutodownload", "flux2_models"),
+                         ("MiniMaxModelAutodownload", "flashsr_models")} <= connected)
         preflight = next(n for n in nodes.values() if n["type"] == "MiniMaxModelAutodownload")
         self.assertFalse(preflight["widgets_values_named"]["llm_model"])
         self.assertFalse(any(n["type"] == "MiniMaxLLMSessionId" for n in nodes.values()))

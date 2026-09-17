@@ -160,6 +160,11 @@ class MiniMaxSaveProductionJSON:
                 "model_identity_json": ("STRING", {"forceInput": True}),
                 "template_version": ("STRING", {"forceInput": True}),
                 "artifact_reduction_json": ("STRING", {"forceInput": True}),
+                # Audio-cover branch (3.1.0).  The score report says which lyrics
+                # mode ran and whether the score was rewritten; the lyrics report
+                # says which Whisper checkpoint produced the original words.
+                "cover_score_json": ("STRING", {"forceInput": True}),
+                "cover_lyrics_json": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -225,6 +230,8 @@ class MiniMaxSaveProductionJSON:
         workflow_name: str = DEFAULT_WORKFLOW_NAME,
         minimax_prompt_md: str = "",
         artifact_reduction_json: str = "",
+        cover_score_json: str = "",
+        cover_lyrics_json: str = "",
     ):
         metadata = _parse_object(metadata_json, "metadata_json")
         payload = _generation_metadata(
@@ -271,6 +278,8 @@ class MiniMaxSaveProductionJSON:
             model_identity_json=model_identity_json,
             template_version=template_version,
             workflow_name=workflow_name,
+            cover_score_json=cover_score_json,
+            cover_lyrics_json=cover_lyrics_json,
         )
         audio_tags = _parse_object(audio_tags_json, "audio_tags_json")
 

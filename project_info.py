@@ -3,6 +3,6 @@ from __future__ import annotations
 
 PROJECT_NAME = "MiniMax Music Production Toolkit"
 PACKAGE_SLUG = "comfyui-minimax-music-production-toolkit"
-VERSION = "3.0.1"
+VERSION = "3.1.0"
 AUTHOR = "Johannes Plenio"
 GITHUB_URL = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit"

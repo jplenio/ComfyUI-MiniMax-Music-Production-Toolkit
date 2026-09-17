@@ -7,6 +7,7 @@ import secrets
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .cover_score import LYRICS_MODE_ORIGINAL, normalize_lyrics_mode
 from .model_profiles import profile_from_payload
 from .prompt_library import (PLACEHOLDER, PromptLibraryError, default_combo_values, load_prompt_file, prompt_selection_fingerprint)
 from .prompt_sources import (
@@ -273,6 +274,45 @@ def _parse_sections(text: str, required_section: str = "Caption") -> Dict[str, A
     }
 
 
+_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def _cover_lyrics_payload(value: str):
+    """Split the cover-lyrics input into its record and its plain text.
+
+    The node's output is normally the Whisper record; a plain text string is
+    also accepted so a hand-written or externally produced transcript can be
+    connected without inventing a record for it.
+    """
+    raw = (value or "").strip()
+    if not raw:
+        return None, ""
+    if raw.startswith("{"):
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            data = None
+        if isinstance(data, dict) and data.get("schema") == "music_cover_lyrics_v1":
+            return data, str(data.get("text") or "").strip()
+    return None, raw
+
+
+def _lyrics_word_coverage(transcript, lyrics):
+    """Share of the transcribed words that survive into the final lyrics.
+
+    A soft, informative check - wording and casing may legitimately differ - so
+    it is reported as a ratio instead of failing a run.  ``None`` when there is
+    nothing to compare, and words shorter than four characters are ignored so
+    articles and filler cannot flatter the number.
+    """
+    source_words = {word.casefold() for word in _WORD_RE.findall(str(transcript or ""))}
+    source_words = {word for word in source_words if len(word) >= 4}
+    if not source_words:
+        return None
+    final_words = {word.casefold() for word in _WORD_RE.findall(str(lyrics or ""))}
+    return round(len(source_words & final_words) / len(source_words), 4)
+
+
 def _parse_prompt_text(text: str, source_name: str, source_path: str) -> Dict[str, Any]:
     parsed = _parse_sections(text)
     final_title = parsed["title"] or Path(source_name).stem or "song"
@@ -534,6 +574,19 @@ class MiniMaxParseExternalLLMOutputV16:
                 "model_profile_json": ("STRING", {"forceInput": True, "multiline": True}),
                 "cover_source_json": ("STRING", {"forceInput": True}),
                 "structured_summary_json": ("STRING", {"forceInput": True}),
+                # Appended optional input (3.1.0): the Whisper transcription of
+                # the original cover words.  It is recorded as provenance and
+                # used for a soft fidelity check; it never replaces the LLM's
+                # sectioned lyrics.
+                "cover_lyrics": ("STRING", {"forceInput": True}),
+                # Appended optional input (3.1.0, Cover Studio), and it stays
+                # last on purpose: ComfyUI maps a saved workflow's slots
+                # positionally, so a new input anywhere earlier would shift
+                # every socket after it.  Non-empty, it replaces whatever the
+                # LLM wrote, and the mode rules are told the words are
+                # intentional rather than a lazy copy of the source.  Empty
+                # keeps the previous behaviour byte for byte.
+                "cover_lyrics_lock": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -567,11 +620,22 @@ class MiniMaxParseExternalLLMOutputV16:
         model_profile_json="",
         cover_source_json="",
         structured_summary_json="",
+        cover_lyrics="",
+        cover_lyrics_lock="",
     ):
         profile = profile_from_payload(model_profile_json)
         required_section = profile.conditioning_section if profile is not None else "Caption"
         raw = (structured_llm_output or "").strip()
         status = (llm_status or "").strip()
+        # Read once, up front: the cover mode gates the trim guard below, and the
+        # transcription is named in the errors when the LLM returned nothing.
+        cover_lyrics_record, cover_lyrics_text = _cover_lyrics_payload(cover_lyrics)
+        cover_mode = ""
+        if profile is not None and profile.is_cover:
+            try:
+                cover_mode = normalize_lyrics_mode(json.loads(cover_source_json).get("lyrics_mode"))
+            except (ValueError, TypeError, AttributeError):
+                cover_mode = ""
         try:
             parsed = _parse_sections(raw, required_section) if raw else {}
         except ValueError as exc:
@@ -583,22 +647,75 @@ class MiniMaxParseExternalLLMOutputV16:
 
         caption = (parsed.get("caption") or "").strip() or (manual_caption or "").strip()
         lyrics = (parsed.get("lyrics") or "").strip() or (manual_lyrics or "").strip()
+        # A locked block is a user decision, not an LLM answer: it wins over the
+        # model text and is then checked by the same mode rules as any other
+        # lyrics value.
+        lyrics_lock_text = str(cover_lyrics_lock or "").strip()
+        lyrics_locked = bool(lyrics_lock_text) and profile is not None and profile.is_cover
+        if lyrics_locked:
+            if lyrics_lock_text != lyrics:
+                LOGGER.info("Cover lyrics lock applied (%d chars) and replaces the LLM lyrics.",
+                            len(lyrics_lock_text))
+            lyrics = lyrics_lock_text
+        cover_constraints = None
+        if profile is not None and profile.is_cover and caption:
+            from .cover_lyrics_contract import apply_cover_lyrics
+            before = (caption, lyrics)
+            alignment = None
+            try:
+                sections = (json.loads(structured_summary_json or '{}').get('cover_timeline') or {}).get('sections')
+            except (ValueError, AttributeError):
+                sections = None
+            if cover_mode == LYRICS_MODE_ORIGINAL:
+                from .cover_alignment import original_lyrics
+                lyrics, alignment = original_lyrics(cover_lyrics_text, cover_lyrics_record, sections, lyrics)
+                # The authoritative source layout owns section tags; a differing
+                # LLM arrangement must not silently mismatch the repaired lyrics.
+                if sections:
+                    import re
+                    entries = list(re.finditer(r'^\s*\d+[.)]?\s*\[([^\]\n]+)\]', caption, re.M))
+                    if entries and len(entries) != len(sections):
+                        raise ValueError('YuE2 Cover: Style section count differs from the measured score. Retry the arrangement.')
+                    for entry, section in reversed(list(zip(entries, sections))):
+                        caption = caption[:entry.start(1)] + section['tag'] + caption[entry.end(1):]
+            if sections:
+                from .cover_alignment import measured_style_headers
+                caption = measured_style_headers(caption, sections)
+            caption, lyrics = apply_cover_lyrics(cover_mode, caption, lyrics, cover_lyrics_text,
+                                                 lyrics_locked=lyrics_locked)
+            cover_constraints = {"mode": cover_mode, "instrumental_text_sanitized": before != (caption, lyrics),
+                                 "original_word_order_verified": cover_mode == LYRICS_MODE_ORIGINAL,
+                                 "lyrics_locked": lyrics_locked,
+                                 "original_lyrics_alignment": alignment}
         if not caption or not lyrics:
+            # A connected transcription is evidence the run should have worked;
+            # saying so turns "Lyrics stayed empty" into an actionable message.
+            transcription_hint = (
+                (" The source transcription is connected, but a musical Style is still required. "
+                 "Supply manual_caption or restore the LLM output; original words are restored automatically."
+                 if cover_mode == LYRICS_MODE_ORIGINAL else
+                 " The source transcription is connected as a phrasing reference. New words must "
+                 "be supplied by the LLM's [Lyrics] section or manual_lyrics, together with a musical Style.")
+                if cover_lyrics_text else ""
+            )
             if raw:
                 # _parse_sections already raised for non-empty unparseable text;
                 # this guards the edge case of text that parsed but stayed empty.
                 raise ValueError(
                     f"Could not parse required LLM sections. {required_section} or Lyrics stayed empty."
+                    + transcription_hint
                 )
             if status:
                 raise ValueError(
                     "The LLM chat node returned no text, so there is nothing to parse. "
-                    f"Upstream LLM status: {status} "
-                    "Fill manual_caption and manual_lyrics to continue without the LLM, or fix the LLM chat node."
+                    f"Upstream LLM status: {status}"
+                    " Fill manual_caption and manual_lyrics to continue without the LLM, or fix the LLM chat node."
+                    + transcription_hint
                 )
             raise ValueError(
                 "LLM output is empty (LLM node bypassed or disabled) and no manual fallback is configured. "
                 "Fill manual_caption and manual_lyrics, or re-enable the LLM chat node."
+                + transcription_hint
             )
 
         length_request = None
@@ -624,6 +741,14 @@ class MiniMaxParseExternalLLMOutputV16:
             raise ValueError(
                 "YuE2 prompt trimming would shorten the requested timed arrangement. "
                 "Shorten redundant Style wording or raise max_prompt_tokens; keep all sections and lyrics."
+            )
+        if cover_mode and budget_info.get("prompt_trimmed"):
+            # The user asked for the original words; dropping the end of them
+            # silently would be worse than stopping.
+            raise ValueError(
+                "YuE2 prompt trimming would drop cover sections or transcribed original lyrics. "
+                "Shorten redundant Style wording or raise max_prompt_tokens; the transcription must "
+                "stay complete, or choose the 'new lyrics' cover mode."
             )
 
         title = (parsed.get("title") or "").strip() or (manual_title or "").strip() or fallback_title or "llm-song"
@@ -658,6 +783,20 @@ class MiniMaxParseExternalLLMOutputV16:
             provenance["duration_source"] = duration_source
         if cover:
             provenance.update(cover_source=cover, title_source="audio_filename")
+            provenance['cover_lyrics_validation'] = cover_constraints
+            if cover_lyrics_record:
+                provenance["cover_lyrics"] = {
+                    "source": cover_lyrics_record.get("source"),
+                    "model": cover_lyrics_record.get("model"),
+                    "language": cover_lyrics_record.get("language"),
+                    "language_probability": cover_lyrics_record.get("language_probability"),
+                    "device": cover_lyrics_record.get("device"),
+                    "compute_type": cover_lyrics_record.get("compute_type"),
+                    "segment_count": cover_lyrics_record.get("segment_count"),
+                    "characters": cover_lyrics_record.get("characters"),
+                    "lyrics_word_coverage": _lyrics_word_coverage(
+                        cover_lyrics_record.get("text"), lyrics),
+                }
         out = {k: [] for k in ["caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json"]}
         for idx in range(int(song_count)):
             seed = _new_seed() if seed_mode == "random_each_song" else (int(base_seed) + idx) % (2**63 - 1)

@@ -20,7 +20,7 @@ try {
 const server = http.createServer(async(req,res)=>{
     try {
         if(req.url==="/scripts/app.js") {res.setHeader("Content-Type","text/javascript");res.end("export const app={registerExtension(){}};");return;}
-        if(["/web/audio_eq.js", "/web/eq_dsp.js", "/web/eq_presets.js", "/web/eq_presets.json"].includes(req.url)) {res.setHeader("Content-Type",req.url.endsWith(".json") ? "application/json" : "text/javascript");res.end(await readFile(new URL(`..${req.url}`,import.meta.url)));return;}
+        if(["/web/audio_eq.js", "/web/eq_dsp.js", "/web/eq_presets.js", "/web/prompt_ui_utils.js", "/web/eq_presets.json"].includes(req.url)) {res.setHeader("Content-Type",req.url.endsWith(".json") ? "application/json" : "text/javascript");res.end(await readFile(new URL(`..${req.url}`,import.meta.url)));return;}
         res.setHeader("Content-Type","text/html");res.end('<!doctype html><html><body style="background:#111"><main style="width:620px"></main></body></html>');
     } catch {res.statusCode=404;res.end();}
 });

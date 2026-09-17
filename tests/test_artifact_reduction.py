@@ -119,7 +119,7 @@ class ArtifactReductionTests(unittest.TestCase):
 
     def test_workflow_routes_cleaned_audio_to_analysis_application_and_master_bypass(self):
         root=Path(__file__).resolve().parents[1]
-        workflow=json.loads((root/'example_workflows/Yue2_MM3_Production_Toolkit.json').read_text(encoding='utf-8'))
+        workflow=json.loads((root/'example_workflows/Music_Production_Toolkit.json').read_text(encoding='utf-8'))
         nodes={n['id']:n for n in workflow['nodes']}; links={l[0]:l for l in workflow['links']}
         def origin(nid,name):
             inp=next(i for i in nodes[nid]['inputs'] if i['name']==name)

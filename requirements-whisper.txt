@@ -1,0 +1,16 @@
+# Whisper engine for an existing installation.
+#
+# This dependency is already part of requirements.txt. Use THIS file only when
+# you installed the toolkit before 3.1.0 and want to add the engine without
+# re-running the full requirements, or when you deliberately skipped it:
+#
+#     pip install -r requirements-whisper.txt
+#
+# Needed by the cover lyrics mode "original lyrics" and by the instrumental
+# vocal check. Without it both report exactly this command instead of failing
+# silently, and every other cover mode keeps working.
+#
+# The engine is not bundled as weights: the model check downloads the pinned
+# whisper-large-v3 checkpoint (Systran/faster-whisper-large-v3, MIT) into
+# models/audio_encoders/whisper-large-v3 on first use.
+faster-whisper>=1.0

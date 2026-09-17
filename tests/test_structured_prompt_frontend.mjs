@@ -7,12 +7,16 @@
 import assert from "node:assert/strict";
 import {
     CUSTOM,
+    DIRECTORY_MARKER_SUFFIX,
     PLACEHOLDER,
     STRUCTURED_FIELDS,
     applyStructuredFields,
     applyDescription,
     applySystemPromptText,
+    applyTextWidget,
     beginRequest,
+    buildGroupedFileOptions,
+    fileOptionLabel,
     isCurrentRequest,
     isCurrentInit,
     readSelection,
@@ -20,7 +24,48 @@ import {
     runGuardedSystemPrefill,
     sameSelection,
     scheduleInit,
+    setComboValues,
 } from "../web/prompt_ui_utils.js";
+
+// The prompt-file dropdown is shared by the structured-prompt node and the
+// style-hint node: the grouped options and their indent labels live in the shared
+// module so both nodes show exactly the same list.  A drift between them was a
+// real defect once, so it is pinned here.
+{
+    const files = [
+        "electronic/synth-pop-vocal.txt",
+        "electronic/synth-pop-instrumental.txt",
+        "yue2/production.txt",
+        "root-level.txt",
+    ];
+    const grouped = buildGroupedFileOptions(files, true);
+    assert.deepEqual(grouped.slice(0, 4),
+        [PLACEHOLDER, CUSTOM, "electronic" + DIRECTORY_MARKER_SUFFIX, files[0]]);
+    assert.ok(grouped.includes("yue2" + DIRECTORY_MARKER_SUFFIX));
+    assert.ok(grouped.includes("root-level.txt"), "files without a directory stay as they are");
+    // Each directory appears exactly once, and only before its own files.
+    assert.equal(grouped.filter((v) => v === "electronic/").length, 1);
+    assert.ok(grouped.indexOf("electronic/") < grouped.indexOf(files[0]));
+    assert.equal(buildGroupedFileOptions(files, false).includes(CUSTOM), false);
+
+    // Labels indent a file under its directory but never change the value.
+    assert.equal(fileOptionLabel(files[0]), "\u00A0\u00A0\u00A0\u00A0synth-pop-vocal.txt");
+    assert.equal(fileOptionLabel("electronic/"), "electronic/");
+    assert.equal(fileOptionLabel("root-level.txt"), "root-level.txt");
+    assert.equal(fileOptionLabel(PLACEHOLDER), PLACEHOLDER);
+    assert.equal(fileOptionLabel(CUSTOM), CUSTOM);
+}
+
+// The text applier both nodes use for their own text field.
+{
+    const node = {widgets: [{name: "style_text", value: "saved"}]};
+    assert.equal(applyTextWidget(node, "style_text", "saved"), false, "an identical value is a no-op");
+    assert.equal(applyTextWidget(node, "style_text", "new"), true);
+    assert.equal(node.widgets[0].value, "new");
+    assert.equal(applyTextWidget(node, "style_text", "other", {onlyIfEmpty: true}), false);
+    assert.equal(node.widgets[0].value, "new", "a saved edit is not overwritten on restore");
+    assert.equal(applyTextWidget(node, "missing", "x"), false);
+}
 
 const DEFERRED = [];
 

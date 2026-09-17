@@ -222,7 +222,7 @@ def main():
             if not placeholder.exists():
                 placeholder.write_bytes(b"")
 
-        workflow = json.load(open(f"{REPO}/example_workflows/MiniMax_Music3_Production_Toolkit.json", encoding="utf-8"))
+        workflow = json.load(open(f"{REPO}/example_workflows/Music_Production_Toolkit.json", encoding="utf-8"))
         api_prompt = to_api_format(workflow)
 
         # Test overrides: no downloads, LLM section off, manual fallback used.
@@ -319,7 +319,7 @@ def main():
             # Second public workflow: the audio-enhancement lab.  It skips the
             # production stage, so it must load, validate and run up to the
             # missing source audio / FlashSR weights.
-            enhance = json.load(open(f"{REPO}/example_workflows/MiniMax_Music3_Production_Toolkit_AudioEnhance.json", encoding="utf-8"))
+            enhance = json.load(open(f"{REPO}/example_workflows/Music_Production_AudioEnhance.json", encoding="utf-8"))
             enhance_prompt = to_api_format(enhance)
             if "11" in enhance_prompt:
                 enhance_prompt["11"]["inputs"]["auto_download"] = False

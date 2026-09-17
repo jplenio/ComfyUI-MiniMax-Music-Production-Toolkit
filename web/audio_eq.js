@@ -1,6 +1,7 @@
 import { app } from "../../scripts/app.js";
 import { response, TYPES, readSettings } from "./eq_dsp.js";
 import { presetControl } from "./eq_presets.js";
+import { applyTooltip } from "./prompt_ui_utils.js";
 
 // Canonical value is the existing STRING widget, not an extra serialized UI value.
 export function attachEQEditor(node) {
@@ -35,23 +36,24 @@ export function attachEQEditor(node) {
         dirty();
         draw();
     }
-    function button(label, action) {
+    function button(label, tooltip, action) {
         const el = document.createElement("button"); el.textContent = label;
         el.type = "button"; el.style.margin = "3px"; el.onclick = action; controls.append(el);
+        applyTooltip(el, tooltip);
         return el;
     }
-    button("Add band", () => {
+    button("Add band", "Adds one peak band at 1 kHz with 0 dB gain, up to the eight-band limit. Linked settings (auto-EQ connected) cannot be edited.", () => {
         if (!settings || linked() || settings.bands.length >= 8) return;
         remember();
         settings.bands.push({id: `band-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`, enabled:true,
             type:"peak", frequency_hz:1000, gain_db:0, q:1, slope:1});
         selected = settings.bands.length-1; commit(false); renderRows();
     });
-    button("Reset", () => {
+    button("Reset", "Clears every band and the preamp back to a flat curve. Undo brings the previous setting back.", () => {
         if (linked()) return;
         remember(); settings = {schema:"minimax_eq_v1", preamp_db:0, bands:[]}; commit(false); renderRows();
     });
-    button("Undo", () => {
+    button("Undo", "Restores the last edit you made in this editor. The list is cleared when you reset or connect linked settings.", () => {
         if (linked() || !undo.length) return;
         widget.value = undo.pop(); last = null; sync(); widget.callback?.(widget.value); dirty();
     });
@@ -89,6 +91,7 @@ export function attachEQEditor(node) {
             if (b.type.includes("shelf")) numeric(row,"Slope",b.slope??1,0.25,1,0.05,v=>b.slope=v);
             else numeric(row,"Q",b.q??Math.SQRT1_2,0.2,10,0.05,v=>b.q=v);
             const remove=document.createElement("button");remove.textContent="Remove";remove.disabled=linked();
+            applyTooltip(remove, "Removes this band from the curve. Linked settings (auto-EQ connected) are read-only.");
             remove.onclick=()=>{remember();settings.bands.splice(i,1);commit(false);renderRows();};row.append(remove);
             row.onfocusin=()=>{selected=i;draw();}; rows.append(row);
         });

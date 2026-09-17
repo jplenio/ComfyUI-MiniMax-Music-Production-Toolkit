@@ -8,10 +8,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
 
 from workflow_schema import JSON_NEW_INPUT_ORDER
 
-WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit.json"
+WORKFLOW = ROOT / "example_workflows" / "Music_Production_Toolkit.json"
 
 
 class WorkflowTests(unittest.TestCase):
@@ -77,8 +79,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertIn("MiniMaxSaveProductionJSON", types)
 
         llm = nodes[81]
-        self.assertEqual(llm["widgets_values_named"]["max_tokens"], 16384)
-        self.assertEqual(llm["widgets_values_named"]["n_ctx"], 32768)
+        self.assertEqual(llm["widgets_values_named"]["max_tokens"], 24576)
+        self.assertEqual(llm["widgets_values_named"]["n_ctx"], 37376)
+        self.assertEqual(llm["widgets_values_named"]["remote_max_tokens"], 65536)
 
         paths = nodes[54]
         self.assertEqual(paths["widgets_values_named"]["configuration_subdir"], "log/")
@@ -180,7 +183,8 @@ class WorkflowTests(unittest.TestCase):
     def test_section_notes_document_the_workflow(self):
         notes = [n for n in self.wf["nodes"] if n["type"] == "MarkdownNote"]
         titles = {n.get("title") for n in notes}
-        for expected in ("Models & Folders", "Save & Release (06)", "Audio Enhancement (05)"):
+        for expected in ("Models & Folders", "Save & Release (06)", "Audio Enhancement (05)",
+                         "Cover Studio · how to read it"):
             self.assertIn(expected, titles)
         # Note 39 ("Prompt library + integrated LLM") is intentionally
         # removed by the user; only the six section notes are required.
@@ -237,7 +241,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(links[parser_links["llm_status"]][1], chat["id"])
 
 
-ENHANCE_WORKFLOW = ROOT / "example_workflows" / "MiniMax_Music3_Production_Toolkit_AudioEnhance.json"
+ENHANCE_WORKFLOW = ROOT / "example_workflows" / "Music_Production_AudioEnhance.json"
 
 
 class AudioEnhanceWorkflowTests(unittest.TestCase):

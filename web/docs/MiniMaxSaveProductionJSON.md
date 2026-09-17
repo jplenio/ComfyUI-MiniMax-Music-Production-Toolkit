@@ -88,3 +88,17 @@ This affects only the filesystem name. It does not change the song Title metadat
 ## Atomic writing
 
 The JSON (and the optional prompt-report Markdown) is first written to a temporary file and then atomically renamed to the final path. This reduces the chance of leaving a partially written configuration file after an interrupted write.
+
+## Cover reports (3.1.0)
+
+Two optional inputs carry the audio-cover branch's records:
+
+- `cover_score_json` from *Cover song · score / syllable map*: lyrics mode, lead
+  instrument, whether and how the score was rewritten, and the measured melody
+  syllables per section. Stored as `cover.score`.
+- `cover_lyrics_json` from *Cover song · original lyrics (Whisper)*: checkpoint,
+  device, precision, detected language and confidence, segment count and the
+  transcript. Stored as `cover.lyrics_source`.
+
+Both sections are omitted entirely for a normal song, so a payload written
+without them stays byte-identical.

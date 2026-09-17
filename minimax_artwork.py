@@ -183,12 +183,18 @@ class SaveImageSmartPrefix:
 class MiniMaxCoverControl:
     """One visible switch for generation and the preflight download group."""
 
+    DESCRIPTION = (
+        "One visible on/off switch for FLUX.2 cover artwork. Connect its output to the image saver "
+        "and to the model preflight's flux2_models input, so a disabled cover skips both rendering "
+        "and downloads. This is not the 'YuE2 Cover' song mode: the audio export is never affected."
+    )
+
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"enabled": ("BOOLEAN", {"default": True, "tooltip": "Generate a FLUX.2 cover. Off skips FLUX execution and downloads in the bundled workflow; audio export continues without artwork."})}}
+        return {"required": {"enabled": ("BOOLEAN", {"default": True, "tooltip": "Generate FLUX.2 cover artwork. Off skips FLUX execution and downloads in the bundled workflow; audio export continues without artwork. This is not the 'YuE2 Cover' song mode."})}}
 
     RETURN_TYPES = ("BOOLEAN",)
-    RETURN_NAMES = ("cover_enabled",)
+    RETURN_NAMES = ("cover_artwork_enabled",)
     FUNCTION = "configure"
     CATEGORY = "MiniMax Music Production Toolkit/artwork"
     SEARCH_ALIASES = ["Flux", "Flux.2", "Cover", "Artwork", "Cover switch"]

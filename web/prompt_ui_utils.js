@@ -20,6 +20,23 @@ export const STRUCTURED_FIELDS = [
     "genre", "tempo", "meter", "key", "lyrics", "language", "voice", "theme", "length",
 ];
 
+/**
+ * Attach help text to a widget or a DOM element as well as the UI supports it.
+ *
+ * LiteGraph widgets read ``tooltip`` (and ``options.tooltip``); DOM-backed
+ * widgets and our own buttons also get the native ``title`` attribute, which is
+ * what the browser renders during a hover.
+ */
+export function applyTooltip(target, text) {
+    if (!target || !text) return target;
+    if (typeof target.title === "string") target.title = text;
+    if (target.inputEl) target.inputEl.title = text;
+    if (target.element) target.element.title = text;
+    target.tooltip = text;
+    target.options = { ...(target.options || {}), tooltip: text };
+    return target;
+}
+
 const REQUESTS = new WeakMap();
 
 function registryFor(node) {
@@ -123,19 +140,82 @@ export function applyDescription(node, description, { onlyIfEmpty = false } = {}
 }
 
 /** Apply a system prompt text; ``onlyIfEmpty`` protects saved edits. */
-export function applySystemPromptText(node, text, { onlyIfEmpty = false } = {}) {
-    const w = widgetByName(node, "system_prompt");
+export function applySystemPromptText(node, text, options) {
+    return applyTextWidget(node, "system_prompt", text, options);
+}
+
+export function markDirty(node) {
+    node?.setDirtyCanvas?.(true, true);
+    node?.graph?.setDirtyCanvas?.(true, true);
+}
+
+// Directory group labels in a prompt-file dropdown end with this suffix and carry
+// no file value; selecting one keeps the previous real selection.
+export const DIRECTORY_MARKER_SUFFIX = "/";
+
+export function setComboValues(w, values, firstValue = CUSTOM) {
+    if (!w) return;
+    const normalized = [firstValue, ...values.filter((v) => v && v !== firstValue)];
+    w.options = w.options || {};
+    w.options.values = normalized;
+    if (!normalized.includes(w.value)) w.value = firstValue;
+}
+
+/**
+ * Build the dropdown options for a prompt-file list.
+ *
+ * Files arrive sorted by relative path, which groups them per directory. The
+ * dropdown shows each directory once (first), then its files indented beneath it.
+ * Directory labels are display-only markers. "custom" is only meaningful for user
+ * prompts (free mode); system prompts never offer it.
+ */
+export function buildGroupedFileOptions(files, includeCustom = true) {
+    const entries = includeCustom ? [PLACEHOLDER, CUSTOM] : [PLACEHOLDER];
+    let currentDir = null;
+    for (const file of files) {
+        const slash = file.indexOf("/");
+        const dir = slash >= 0 ? file.slice(0, slash) : "";
+        if (slash >= 0 && dir !== currentDir) {
+            entries.push(dir + DIRECTORY_MARKER_SUFFIX);
+            currentDir = dir;
+        }
+        entries.push(file);
+    }
+    return entries;
+}
+
+/** The display label for one file option; the value stays the resolvable path. */
+export function fileOptionLabel(value) {
+    if (typeof value !== "string") return value;
+    if (value === PLACEHOLDER || value === CUSTOM) return value;
+    if (value.endsWith(DIRECTORY_MARKER_SUFFIX)) return value;
+    const slash = value.indexOf("/");
+    // Indent files under their directory label (non-breaking spaces survive
+    // HTML rendering; the value itself stays the resolvable relative path).
+    return slash >= 0 ? "\u00A0\u00A0\u00A0\u00A0" + value.slice(slash + 1) : value;
+}
+
+/** Chain a callback onto a widget without replacing the original one. */
+export function chainCallback(w, callback) {
+    if (!w || w.__minimaxChainedCallback) return;
+    const original = w.callback;
+    w.callback = function (...args) {
+        const result = original?.apply(this, args);
+        Promise.resolve(callback()).catch((error) => console.warn(error));
+        return result;
+    };
+    w.__minimaxChainedCallback = true;
+}
+
+/** Write *text* into a named STRING widget; ``onlyIfEmpty`` protects saved edits. */
+export function applyTextWidget(node, name, text, { onlyIfEmpty = false } = {}) {
+    const w = widgetByName(node, name);
     if (!w) return false;
     const value = typeof text === "string" ? text : "";
     if (onlyIfEmpty && (w.value || "").trim()) return false;
     if (w.value === value) return false;
     w.value = value;
     return true;
-}
-
-export function markDirty(node) {
-    node?.setDirtyCanvas?.(true, true);
-    node?.graph?.setDirtyCanvas?.(true, true);
 }
 
 /**

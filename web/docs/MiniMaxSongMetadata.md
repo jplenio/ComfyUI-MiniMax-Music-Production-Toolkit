@@ -33,3 +33,14 @@ This replaces the previous example-workflow pattern of feeding the same metadata
 - **`summary`** — compact human-readable settings summary.
 
 For the persistent file, see the `Save Production JSON` node documentation.
+
+## What it takes
+
+One input per section of the record: title, caption, lyrics, image prompt, source name and
+path, prompt origin and provenance JSON, run and variant index, generation seed, the requested
+maximum duration, sample-rate and sampler settings, the de-clipping, low-pass, FlashSR
+crossover, high-frequency repair, release-prep, mastering and artifact-reduction reports, the
+optional LLM system prompt, user prompt, answer and thinking, and the workflow label.
+
+Nothing here is mandatory: an unconnected input simply leaves its section out, and the JSON is
+still written. Connect what you want to be able to reproduce.

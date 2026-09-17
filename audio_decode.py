@@ -15,6 +15,12 @@ LOGGER = get_logger("audio_decode")
 
 
 class MiniMaxSafeAudioDecode:
+    DESCRIPTION = (
+        "Decodes sampler latents with the VAE and validates the result before anything downstream "
+        "touches it. Invalid decoder output triggers one retry with smaller tiles instead of writing "
+        "broken audio; invalid latents stop immediately."
+    )
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -26,7 +32,7 @@ class MiniMaxSafeAudioDecode:
                 "tile_size": ("INT", {"default": 512, "min": 32, "max": 8192, "step": 8,
                     "tooltip": "Latent frames per decode tile. Smaller tiles use less working memory."}),
                 "overlap": ("INT", {"default": 64, "min": 0, "max": 1024, "step": 8,
-                    "tooltip": "Overlap between tiles. Must be smaller than tile_size."}),
+                    "tooltip": "Frames shared between neighbouring decode tiles. Must be smaller than tile_size; more overlap hides seams at a higher cost."}),
                 "tiled": ("BOOLEAN", {"default": True,
                     "tooltip": "Use tiled decoding. Invalid decoder output triggers one retry with smaller tiles; invalid sampler latents stop immediately."}),
             },

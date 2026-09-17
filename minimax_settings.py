@@ -175,6 +175,13 @@ class MiniMaxMusicModelSettings:
                 "yue2_max_duration": ("FLOAT", {"default": 360.0, "min": 1.0, "max": 900.0, "step": 1.0}),
                 "cover_source_json": ("STRING", {"forceInput": True}),
                 "prompt_provenance_json": ("STRING", {"forceInput": True}),
+                # Appended optional widgets (3.1.0): the instrumental vocal check.
+                # Opt-in on purpose - it costs one Whisper pass per attempt, and it
+                # only means anything for an instrumental cover.  A new input must
+                # go last so every stored widget position keeps its meaning.
+                "instrumental_check": ("BOOLEAN", {"default": False}),
+                "instrumental_word_tolerance": ("INT", {"default": 0, "min": 0, "max": 50, "step": 1}),
+                "instrumental_max_retries": ("INT", {"default": 2, "min": 0, "max": 10, "step": 1}),
             },
         }
 
@@ -230,6 +237,9 @@ class MiniMaxMusicModelSettings:
         yue2_max_duration=None,
         cover_source_json="",
         prompt_provenance_json="",
+        instrumental_check=False,
+        instrumental_word_tolerance=0,
+        instrumental_max_retries=2,
     ):
         profile = profile_from_payload(profile_json) or default_profile()
         notes = []
@@ -318,6 +328,22 @@ class MiniMaxMusicModelSettings:
             },
             "notes": notes,
         }
+        if bool(instrumental_check):
+            from .instrumental_check import MAX_RETRIES
+            retries = max(0, min(int(instrumental_max_retries or 0), MAX_RETRIES))
+            report["instrumental_check"] = {
+                "enabled": True,
+                "word_tolerance": max(0, int(instrumental_word_tolerance or 0)),
+                "max_retries": retries,
+                "max_attempts": retries + 1,
+                "scope": "YuE2 instrumental covers only; ignored for other modes and models.",
+                "position": "raw generated audio, before refinement, EQ and mastering.",
+            }
+            notes.append(
+                f"Instrumental vocal check: up to {retries} retries, {report['instrumental_check']['word_tolerance']} "
+                "tolerated word(s).")
+        else:
+            report["instrumental_check"] = {"enabled": False}
         # Retain the effective central switches in the generation receipt.
         if length_request:
             report["duration_request"] = length_request

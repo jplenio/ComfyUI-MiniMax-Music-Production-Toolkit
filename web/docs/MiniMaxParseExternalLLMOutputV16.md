@@ -74,3 +74,18 @@ The MiniMax Music 3 text encoder rejects prompts with more than 5000 tokens (Com
 Start with the defaults used by the bundled example workflow unless you have a specific reason to change this stage. Hover each input label in ComfyUI for parameter guidance.
 
 For YuE2 Cover, connect `cover_source_json`. The source filename stem plus `-cover` overrides LLM, manual and fallback titles and the source-name override. All downstream title consumers use this result. The source is retained in prompt provenance.
+
+With `cover_lyrics` connected (original-lyrics covers), the provenance also
+records `cover_lyrics`: Whisper model, detected or forced language, device and
+precision, segment count and `lyrics_word_coverage` - the share of transcribed
+words that survive into the final lyrics. The ratio is informational; a separate
+ordered-word check verifies unchanged source words after deterministic repair of
+LLM rewrites. Original words are placed using source timestamps and the measured
+ABC sections in `structured_summary_json`; missing timing is reported. Repeated
+and short words are preserved. New mode rejects copying the
+complete original transcript. Numbered Style sections must match Lyrics tags.
+
+No cover is trimmed silently: if the token budget would
+drop sections or words, the node stops with an actionable message instead of
+quietly losing the end of the song's words. When the LLM returns no text at all,
+the error names the connected transcription and the missing musical Style.

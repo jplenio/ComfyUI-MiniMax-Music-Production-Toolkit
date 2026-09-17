@@ -13,7 +13,7 @@ const server = http.createServer(async (req, res) => {
     try {
         if (req.url === "/scripts/app.js") { res.setHeader("Content-Type", "text/javascript"); res.end("export const app={registerExtension(extension){globalThis.extension=extension;}};"); return; }
         if (req.url === "/scripts/api.js") { res.setHeader("Content-Type", "text/javascript"); res.end("export const api={fetchApi:(...args)=>fetch(...args)};"); return; }
-        if (["/web/llm_provider.js", "/web/llm_provider_ui.js"].includes(req.url)) { res.setHeader("Content-Type", "text/javascript"); res.end(await readFile(new URL(`..${req.url}`, import.meta.url))); return; }
+        if (["/web/llm_provider.js", "/web/llm_provider_ui.js", "/web/prompt_ui_utils.js"].includes(req.url)) { res.setHeader("Content-Type", "text/javascript"); res.end(await readFile(new URL(`..${req.url}`, import.meta.url))); return; }
         if (req.url.endsWith("/configure")) {
             let raw = ""; for await (const chunk of req) raw += chunk;
             const body = JSON.parse(raw); requests.push(body);

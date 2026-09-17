@@ -74,7 +74,7 @@ Update the complete toolkit, including `web/`, restart ComfyUI, refresh the
 browser and load the 3.0 main workflow. Keep personal workflow copies: they are
 not overwritten automatically. The host needs native YuE2 generation nodes plus
 `AudioEncoderLoader` and `SheetSage2AudioToABC`. No model weights are bundled.
-See [setup and usage](YUE2.md) and [installation](INSTALLATION.md).
+See [setup and usage](docs/YUE2.md) and [installation](INSTALLATION.md).
 
 ## Verification
 

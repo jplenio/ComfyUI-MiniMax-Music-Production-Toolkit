@@ -1,10 +1,18 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { fetchPromptFiles, fetchPromptMetadata, fetchPromptText } from "./prompt_api.js";
 import {
     CUSTOM,
+    DIRECTORY_MARKER_SUFFIX,
     PLACEHOLDER,
     STRUCTURED_FIELDS,
+    applyDescription,
+    applyStructuredFields,
+    applySystemPromptText,
+    applyTooltip,
     beginRequest,
+    buildGroupedFileOptions,
+    fileOptionLabel,
     isCurrentRequest,
     markDirty,
     readSelection,
@@ -12,6 +20,7 @@ import {
     runGuardedSystemPrefill,
     sameSelection,
     scheduleInit,
+    setComboValues,
     widgetByName,
 } from "./prompt_ui_utils.js";
 
@@ -32,9 +41,8 @@ import {
 const NODE_TYPES = new Set(["MiniMaxStructuredPromptV20"]);
 // PLACEHOLDER / CUSTOM / STRUCTURED_FIELDS / markDirty come from
 // prompt_ui_utils.js so the extension and its Node tests share one definition.
-// Directory group labels in the prompt-file dropdown end with this suffix and
-// carry no file value; selecting one keeps the previous real selection.
-const DIRECTORY_MARKER_SUFFIX = "/";
+// The prompt-file option building and its indent labels come from the same shared
+// module, so this dropdown and the style-hint node's cannot drift apart.
 
 // Canonical visual/serialization order of every widget (inputs + buttons +
 // section headings).  It must match the Python INPUT_TYPES order so positional
@@ -57,43 +65,6 @@ const widget = widgetByName;
 
 function nodeClass(node) {
     return node.comfyClass ?? node.type ?? node.constructor?.type;
-}
-
-function setComboValues(w, values, firstValue = CUSTOM) {
-    if (!w) return;
-    const normalized = [firstValue, ...values.filter((v) => v && v !== firstValue)];
-    w.options = w.options || {};
-    w.options.values = normalized;
-    if (!normalized.includes(w.value)) w.value = firstValue;
-}
-
-function buildGroupedFileOptions(files, includeCustom = true) {
-    // files arrive sorted by relative path, which groups them per directory.
-    // The dropdown shows each directory once (first), then its files indented
-    // beneath it.  Directory labels are display-only markers.  "custom" is only
-    // meaningful for user prompts (free mode); system prompts never offer it.
-    const entries = includeCustom ? [PLACEHOLDER, CUSTOM] : [PLACEHOLDER];
-    let currentDir = null;
-    for (const file of files) {
-        const slash = file.indexOf("/");
-        const dir = slash >= 0 ? file.slice(0, slash) : "";
-        if (slash >= 0 && dir !== currentDir) {
-            entries.push(dir + DIRECTORY_MARKER_SUFFIX);
-            currentDir = dir;
-        }
-        entries.push(file);
-    }
-    return entries;
-}
-
-function fileOptionLabel(value) {
-    if (typeof value !== "string") return value;
-    if (value === PLACEHOLDER || value === CUSTOM) return value;
-    if (value.endsWith(DIRECTORY_MARKER_SUFFIX)) return value;
-    const slash = value.indexOf("/");
-    // Indent files under their directory label (non-breaking spaces survive
-    // HTML rendering; the value itself stays the resolvable relative path).
-    return slash >= 0 ? "\u00A0\u00A0\u00A0\u00A0" + value.slice(slash + 1) : value;
 }
 
 function injectHeadingStyle() {
@@ -132,52 +103,6 @@ function orderWidgets(node, desiredNames) {
     }
     widgets.length = 0;
     widgets.push(...ordered);
-}
-
-async function fetchPromptFiles(kind, source, directory) {
-    if (source === "manual") return [];
-    const params = new URLSearchParams({ kind, source, directory: directory || "" });
-    const response = await api.fetchApi(`/minimax_music_toolkit/prompt_files?${params.toString()}`);
-    let payload = {};
-    try {
-        payload = await response.json();
-    } catch (_) {
-        throw new Error(`Prompt library returned HTTP ${response.status}`);
-    }
-    if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || `Prompt library returned HTTP ${response.status}`);
-    }
-    return Array.isArray(payload.files) ? payload.files : [];
-}
-
-async function fetchPromptMetadata(source, directory, file) {
-    const params = new URLSearchParams({ source, directory: directory || "", file });
-    const response = await api.fetchApi(`/minimax_music_toolkit/prompt_metadata?${params.toString()}`);
-    let payload = {};
-    try {
-        payload = await response.json();
-    } catch (_) {
-        throw new Error(`Prompt metadata returned HTTP ${response.status}`);
-    }
-    if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || `Prompt metadata returned HTTP ${response.status}`);
-    }
-    return payload;
-}
-
-async function fetchPromptText(kind, source, directory, file) {
-    const params = new URLSearchParams({ kind, source, directory: directory || "", file });
-    const response = await api.fetchApi(`/minimax_music_toolkit/prompt_text?${params.toString()}`);
-    let payload = {};
-    try {
-        payload = await response.json();
-    } catch (_) {
-        throw new Error(`Prompt text returned HTTP ${response.status}`);
-    }
-    if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || `Prompt text returned HTTP ${response.status}`);
-    }
-    return typeof payload.text === "string" ? payload.text : "";
 }
 
 async function refreshFiles(node, kind) {
@@ -520,18 +445,18 @@ function attach(node) {
     if (systemHeading) systemHeading.label = "SYSTEM PROMPT";
 
     // Save the current field values + description as a custom user prompt.
-    node.addWidget?.("button", "Save as custom user prompt", null, () => {
+    applyTooltip(node.addWidget?.("button", "Save as custom user prompt", null, () => {
         saveCustomUserPrompt(node).catch((error) => console.warn(error));
-    });
+    }), "Writes the current field values and description into your own user-prompt file, so a template you like can be reused. It does not overwrite bundled prompts.");
     // Save the current system_prompt text as a custom system prompt.
-    node.addWidget?.("button", "Save as custom system prompt", null, () => {
+    applyTooltip(node.addWidget?.("button", "Save as custom system prompt", null, () => {
         saveCustomSystemPrompt(node).catch((error) => console.warn(error));
-    });
+    }), "Writes the current system-prompt text into your own system-prompt file. Use it to keep a template that produced good songs.");
     // Refresh both user and system prompt libraries (lists only - never
     // overwrites edited field or description values).
-    node.addWidget?.("button", "Refresh prompt lists", null, async () => {
+    applyTooltip(node.addWidget?.("button", "Refresh prompt lists", null, async () => {
         await refreshLibraryLists(node);
-    });
+    }), "Re-reads the prompt directories so files you added outside ComfyUI appear in the lists. Edited field and description values are never overwritten.");
 
     orderWidgets(node, WIDGET_ORDER);
 }

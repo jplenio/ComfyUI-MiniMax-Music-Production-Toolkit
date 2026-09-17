@@ -22,4 +22,4 @@ are retained; totals/truncation are explicit. The main workflow saves it under
 CPU only; no weights/download. Preserves duration, sample rate, channels/batches
 and linked stereo behavior. No normalization or replacement synthesis. Does not
 repair wrong notes/lyrics, gaps, clipping or all watery artifacts. See
-`ARTIFACT_REDUCTION.md` for research, thresholds, limitations and validation.
+`docs/ARTIFACT_REDUCTION.md` for research, thresholds, limitations and validation.

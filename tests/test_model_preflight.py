@@ -302,12 +302,16 @@ class ModelManagerRouteTests(unittest.TestCase):
 
     def test_post_without_a_body_is_still_an_explicit_request(self):
         # A POST to this path is the "do it" action; the query flags are absent
-        # here, so every group is selected and the download runs.
+        # here, so every always-on group is selected and the download runs.
         response = self.call("POST", self.FakeRequest())
         flags, download = self.calls[-1]
         self.assertTrue(download)
-        self.assertTrue(all(value for key, value in flags.items() if key != "sheetsage2"))
-        self.assertFalse(flags["sheetsage2"])  # New cover-only weight requires explicit selection.
+        # sheetsage2 and whisper belong to one optional branch each and stay off
+        # unless the caller asks for them explicitly.
+        branch_only = {"sheetsage2", "whisper"}
+        self.assertTrue(all(value for key, value in flags.items() if key not in branch_only))
+        self.assertFalse(flags["sheetsage2"])
+        self.assertFalse(flags["whisper"])
         self.assertIn("ok", response.payload)
 
 

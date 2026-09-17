@@ -66,7 +66,8 @@ auto.onRemoved(); assert.equal(ui.root.removed,true);
 const source = (await readFile(new URL("../web/audio_eq.js",import.meta.url),"utf8"))
     .replace('import { app } from "../../scripts/app.js";', 'const app={registerExtension(){}};')
     .replaceAll('"./eq_dsp.js"', JSON.stringify(new URL("../web/eq_dsp.js",import.meta.url).href))
-    .replaceAll('"./eq_presets.js"', JSON.stringify(new URL("../web/eq_presets.js",import.meta.url).href));
+    .replaceAll('"./eq_presets.js"', JSON.stringify(new URL("../web/eq_presets.js",import.meta.url).href))
+    .replaceAll('"./prompt_ui_utils.js"', JSON.stringify(new URL("../web/prompt_ui_utils.js",import.meta.url).href));
 const {attachEQEditor} = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 const flat=JSON.stringify(catalog.manual[0].settings);
 const manual=makeNode([{name:"eq_settings_json",value:flat}]);

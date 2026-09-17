@@ -6,7 +6,7 @@ This repository is a ComfyUI custom-node package **and** a complete reference wo
 2. Serialized ComfyUI workflow structure, including positional input slots and nested subgraph links.
 3. Public release artifacts, documentation, prompt files and GitHub Pages demo data.
 
-The deeper maintainer hand-off context is intentionally kept outside the public repository in `KONTEXT.md` when using a code assistant.
+The deeper maintainer hand-off context is intentionally kept outside the public repository in `docs/KONTEXT.md` when using a code assistant.
 
 ## Compatibility rules
 
