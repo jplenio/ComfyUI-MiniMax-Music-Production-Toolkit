@@ -96,3 +96,51 @@ def privacy_hits(
                 hits.append((str(path.relative_to(root)), pattern.pattern))
                 break
     return hits
+
+
+# --- requirements installability --------------------------------------------
+
+# Every file a user is told to pass to ``pip install -r``.
+REQUIREMENT_FILES = ("requirements.txt", "requirements-whisper.txt")
+
+
+def requirement_parse_error(path: Path) -> Optional[str]:
+    """Return why pip cannot read ``path``, or ``None`` when it can.
+
+    pip is the consumer of these files, so pip decides what is valid. Both
+    ``validate_release`` and the tests used to read them by hand, skipping blanks
+    and ``#`` comments and taking everything else as a package name - so a Python
+    docstring header looked merely like an odd name while pip refused the file with
+    an ``Invalid requirement`` error naming that header, and the first step of the
+    3.1.0 release workflow died before a single test ran. The hand-rolled readers
+    cannot see that class of error; this one asks pip itself.
+
+    It fails closed: if pip cannot be imported, that is reported as an error rather
+    than accepted as a pass.
+    """
+    try:
+        from pip._internal.req.constructors import install_req_from_line
+        from pip._internal.req.req_file import parse_requirements
+    except ImportError as error:  # pragma: no cover - pip ships with every install
+        return f"pip is not importable, so installability cannot be verified: {error}"
+    try:
+        entries = list(parse_requirements(str(path), session=None))
+    except Exception as error:  # newer pip releases validate while parsing
+        return f"{type(error).__name__}: {error}"
+    if not entries:
+        return "the file declares no requirements"
+
+    # ``parse_requirements`` is lazy on older pip releases: 22.x strips the comments
+    # and hands back the raw line, leaving the validation to the installer. So each
+    # entry is put through the same constructor the install command uses - the step
+    # that produced the real failure message - which behaves identically on every
+    # pip version instead of only on the ones that parse eagerly.
+    for entry in entries:
+        line = getattr(entry, "requirement", None)
+        if not isinstance(line, str):
+            continue  # already a parsed requirement, so pip accepted it above
+        try:
+            install_req_from_line(line, comes_from=str(path))
+        except Exception as error:
+            return f"{type(error).__name__}: {error}"
+    return None

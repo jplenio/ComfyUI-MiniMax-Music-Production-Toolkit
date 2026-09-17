@@ -142,6 +142,14 @@ All notable changes to this project will be documented here. The project follows
   engine at load time with the exact command that fixes it (a missing *required*
   package is logged as a warning). A verified fresh-environment resolution installs
   31 packages without touching the installed PyTorch stack.
+- The release gate now reads `requirements.txt` and `requirements-whisper.txt` with
+  pip's own parser. Every reader before it skipped `#` comments by hand and took
+  everything else as a package name, so a Python docstring header passed validation
+  and then failed the first step of the release workflow (`pip install -r
+  requirements.txt`) before a single test ran. `scripts/validate_release.py` reports
+  that as `pip cannot install from ...` now, and three tests in
+  `tests/test_release_tooling_alignment.py` pin it - including the exact header that
+  broke the push.
 - **Cover instructions now have exactly one owner each**, audited end to end and
   documented in the tooltips, the node descriptions and the cover guide:
   `Song request · template & fields` is the master for the style and the musical

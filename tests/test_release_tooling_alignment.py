@@ -268,5 +268,43 @@ class ToolingDocumentationTests(unittest.TestCase):
         self.assertIn("3.11", development)
 
 
+class RequirementFileInstallabilityTests(unittest.TestCase):
+    """pip is the consumer, so pip decides whether a requirements file is valid.
+
+    Every reader in this repository used to open the file by hand, skip blanks and
+    ``#`` comments and treat everything else as a name. A Python docstring header
+    therefore looked harmless here while pip rejected the file outright - the 3.1.0
+    push died on ``pip install -r requirements.txt`` before a single test ran.
+    """
+
+    def test_every_shipped_requirements_file_is_installable(self):
+        for name in release_common.REQUIREMENT_FILES:
+            with self.subTest(name):
+                error = release_common.requirement_parse_error(ROOT / name)
+                self.assertIsNone(error, f"pip would refuse {name}: {error}")
+
+    def test_the_check_rejects_the_header_that_broke_the_push(self):
+        """Falsification: the checker must fail on the input that really failed."""
+        with tempfile.TemporaryDirectory() as tmp:
+            broken = Path(tmp) / "requirements.txt"
+            broken.write_text(
+                '"""Toolkit dependencies: one complete install."""\n\nnumpy>=1.26\n',
+                encoding="utf-8",
+            )
+            self.assertIsNotNone(
+                release_common.requirement_parse_error(broken),
+                "a docstring header must be reported, not accepted",
+            )
+
+    def test_the_check_accepts_a_well_formed_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            good = Path(tmp) / "requirements.txt"
+            good.write_text(
+                "# a comment\n\n# another comment\nnumpy>=1.26\nfaster-whisper>=1.0\n",
+                encoding="utf-8",
+            )
+            self.assertIsNone(release_common.requirement_parse_error(good))
+
+
 if __name__ == "__main__":
     unittest.main()

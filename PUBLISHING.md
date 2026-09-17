@@ -42,7 +42,7 @@ python scripts/validate_release.py
 python -m unittest discover -s tests -v
 ```
 
-The release validator checks required files, Python syntax, version consistency, publisher metadata, example-workflow links including subgraph boundary links, prompt-library integrity, privacy/placeholders, node documentation and GitHub Pages demo catalog integrity.
+The release validator checks required files, Python syntax, requirements-file installability (it hands every `requirements*.txt` to pip's own parser, so a file `pip install -r` would refuse fails the gate instead of the CI install step), version consistency, publisher metadata, example-workflow links including subgraph boundary links, prompt-library integrity, privacy/placeholders, node documentation and GitHub Pages demo catalog integrity.
 
 ## Build release assets
 

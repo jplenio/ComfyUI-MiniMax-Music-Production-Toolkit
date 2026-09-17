@@ -39,6 +39,13 @@ COMFY_PROVIDED = {
 OPTIONAL_WITH_FALLBACK = {"llama_cpp", "psutil", "soxr", "tokenizers", "safetensors", "PIL",
                           "comfy_aimdo", "faster_whisper"}
 
+# Release tooling only. pip is the installer, never a runtime dependency of the
+# toolkit, so it must not appear in a requirements file (declaring it would be a
+# lie about what the toolkit needs). The one import is lazy and fails closed - a
+# missing pip is reported as an error by ``release_common.requirement_parse_error``
+# instead of passing unnoticed.
+TOOLING_ONLY = {"pip"}
+
 SKIP_DIRS = {"flashsr_inference", "third_party", ".scratch", "__pycache__"}
 
 
@@ -105,7 +112,7 @@ class DependencyDeclarationTests(unittest.TestCase):
         for path in module_files():
             eager, lazy = external_imports(path, self.local)
             for name in eager | lazy:
-                if name in COMFY_PROVIDED or name in OPTIONAL_WITH_FALLBACK:
+                if name in COMFY_PROVIDED or name in OPTIONAL_WITH_FALLBACK or name in TOOLING_ONLY:
                     continue
                 package = known_aliases.get(name, name).lower().replace("_", "-")
                 if package in self.declared:

@@ -27,8 +27,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_common import (  # noqa: E402  (script-local tooling module)
     LOCAL_ONLY_NAMES,
     PACKAGING_EXCLUDED_NAMES,
+    REQUIREMENT_FILES,
     archive_should_include,
     privacy_hits,
+    requirement_parse_error,
 )
 
 TEXT_EXTENSIONS = {".py", ".js", ".md", ".txt", ".toml", ".json", ".yml", ".yaml", ".bat"}
@@ -517,9 +519,27 @@ def check_migration_logic() -> None:
             fail(f"Node frontend test {relative} failed:\n" + result.stdout + result.stderr)
 
 
+def check_requirement_files() -> None:
+    """The files users install from must be readable by pip.
+
+    Existence is not enough: the 3.1.0 push failed on ``pip install -r
+    requirements.txt`` because the file opened with a Python docstring, which every
+    hand-written reader here treated as harmless. This asks pip's own parser, before
+    the tree is packaged. See ``release_common.requirement_parse_error``.
+    """
+    for name in REQUIREMENT_FILES:
+        path = ROOT / name
+        if not path.exists():
+            continue  # check_required reports a missing file
+        error = requirement_parse_error(path)
+        if error:
+            fail(f"pip cannot install from {name}: {error}")
+
+
 def main() -> None:
     check_required()
     check_python_syntax()
+    check_requirement_files()
     check_pyproject()
     check_workflow()
     check_audio_enhance_workflow()

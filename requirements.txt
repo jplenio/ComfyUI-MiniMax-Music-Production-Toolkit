@@ -1,4 +1,6 @@
-"""Toolkit dependencies: one complete install, one optional engine file."""
+# Toolkit dependencies: one complete install, one optional engine file.
+#
+#     python -m pip install -r requirements.txt
 
 # Core toolkit: required for the documented audio, artwork, tag and export paths.
 numpy>=1.26
