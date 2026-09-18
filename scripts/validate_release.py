@@ -16,7 +16,7 @@ REQUIRED = [
     "README.md", "INSTALLATION.md", "docs/WORKFLOW.md", "docs/PROMPT_LIBRARY.md",
     "docs/AUDIO_PIPELINE.md", "TROUBLESHOOTING.md", "PUBLISHING.md", "LICENSE",
     "NOTICE.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md",
-    "docs/AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "CITATION.cff", "VERSION",
+    "docs/AUDIO_EXAMPLES.md", "DEVELOPMENT.md", "docs/index.html", "docs/demo-tracks.js", "docs/demo-covers.js", "CITATION.cff", "VERSION",
     "pyproject.toml", "requirements.txt", "requirements-whisper.txt", "__init__.py", "scripts/package_release.py", "scripts/update_demo_catalog.py", "scripts/workflow_schema.py",
     "example_workflows/Music_Production_Toolkit.json",
     "example_workflows/Music_Production_AudioEnhance.json",
@@ -456,6 +456,52 @@ def check_demo_catalog() -> None:
                 fail(f"Missing demo cover for {track.get('title')}: {cover}")
 
 
+def check_cover_demo_catalog() -> None:
+    """The cover-song category of the demo page (docs/demo-covers.js).
+
+    Same contract as the generated-song catalog, plus the grouping that makes this
+    section readable: every cover belongs to the original it was made from, and each
+    one points at cover art that is really in the repository. The SoundCloud URLs and
+    the freedom level are empty placeholders by design, so they are only checked when
+    they are filled in.
+    """
+    path = ROOT / "docs" / "demo-covers.js"
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"window\.DEMO_COVER_GROUPS\s*=\s*(\[.*\]);\s*$", text, re.S)
+    if not match:
+        fail("Could not parse docs/demo-covers.js")
+    try:
+        groups = json.loads(match.group(1))
+    except json.JSONDecodeError as exc:
+        fail(f"Invalid JSON payload in docs/demo-covers.js: {exc}")
+    if not groups:
+        fail("docs/demo-covers.js defines no originals")
+    group_ids: set[str] = set()
+    cover_ids: set[str] = set()
+    for group in groups:
+        if not str(group.get("title") or "") or not str(group.get("sourceFile") or ""):
+            fail("every cover original needs a title and its source file name")
+        if group.get("id") in group_ids:
+            fail(f"Duplicate cover original id: {group.get('id')}")
+        group_ids.add(group.get("id"))
+        covers = group.get("covers") or []
+        if not covers:
+            fail(f"cover original {group.get('title')} lists no covers")
+        url = str(group.get("soundcloudUrl") or "")
+        if url and not re.match(r"^https://(?:www\.)?soundcloud\.com/", url, re.I):
+            fail(f"Invalid SoundCloud URL for original {group.get('title')}")
+        for cover in covers:
+            if cover.get("id") in cover_ids:
+                fail(f"Duplicate cover id: {cover.get('id')}")
+            cover_ids.add(cover.get("id"))
+            art = str(cover.get("coverArt") or "")
+            if not art or not (ROOT / "docs" / art).is_file():
+                fail(f"Missing cover art for {cover.get('title')}: {art or '(none)'}")
+            url = str(cover.get("soundcloudUrl") or "")
+            if url and not re.match(r"^https://(?:www\.)?soundcloud\.com/", url, re.I):
+                fail(f"Invalid SoundCloud URL for cover {cover.get('title')}")
+
+
 def check_node_docs() -> None:
     keys: set[str] = set()
     for path in ROOT.glob("*.py"):
@@ -548,6 +594,7 @@ def main() -> None:
     check_prompt_library()
     check_privacy_and_placeholders()
     check_demo_catalog()
+    check_cover_demo_catalog()
     check_node_docs()
     check_migration_logic()
     print("Release validation OK")

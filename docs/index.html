@@ -53,23 +53,48 @@
     summary:hover{color:var(--accent)}
     .detail-grid{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:11px 0;font-size:.84rem}.detail-grid dt{color:#7f8d9a}.detail-grid dd{margin:0;color:#b9c4ce;overflow-wrap:anywhere}
     .prompt,.cover-concept{margin-top:10px;padding:10px 12px;border-radius:10px;background:#0d1115;color:#9eabb8;font-size:.82rem;white-space:pre-wrap}
+    .cover-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;margin-top:16px}
+    .cover-card .row{padding:12px 14px}
+    .cover-card h2{font-size:1.05rem}
+    .cover-card .thumb,.cover-card .thumb-fallback{width:64px;height:64px;border-radius:9px;font-size:.62rem;padding:6px}
+    .cover-card iframe{height:124px}
+    .cover-card details{margin:0 14px 12px}
+    .categories{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 0}
+    .cat{display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:#c6d0da;font:inherit;font-size:.94rem;cursor:pointer}
+    .cat:hover{border-color:#4a5968}
+    .cat[aria-pressed="true"]{background:#1c2733;border-color:#4a5968;color:#fff}
+    .cat-count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.82rem}
+    .section-note{margin:12px 0 0;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,#121820,#101318);color:#b7c3cf;font-size:.9rem}
+    .groups{display:flex;flex-direction:column;gap:26px;width:min(var(--list),100%);margin:0 auto;padding-bottom:48px}
+    .group{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#141a21,#101419);padding:18px}
+    .group-head h2{font-size:1.45rem}
+    .group-eyebrow{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+    .group-meta{margin-top:2px;color:var(--muted);font-size:.86rem}
+    .group-comment{margin:12px 0 0;padding:11px 13px;border-left:3px solid #3a4a5c;background:#0f1318;border-radius:0 10px 10px 0;color:#bdc8d3;font-size:.92rem;white-space:pre-wrap}
+    .source-player{margin-top:12px}
+    .cover-title{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
     footer{padding:0 0 44px;color:#82909d;font-size:.86rem}
     @media(max-width:640px){header{padding-top:34px}.controls{position:static}.count{width:100%;margin-left:0}.row{gap:12px;padding:12px 12px}.thumb,.thumb-fallback{width:62px;height:62px;border-radius:9px}h2{font-size:1.12rem}.desc{-webkit-line-clamp:2}details{margin:0 12px 12px}}
   </style>
 </head>
 <body>
 <header>
-  <div class="eyebrow">ComfyUI · MiniMax Music 3 · Open-source workflow</div>
-  <h1>Generated music, from a simple idea to a finished demo.</h1>
-  <p class="lead">Tracks created with the open-source <strong>Music Production Toolkit for ComfyUI</strong>: simple style prompts become structured MiniMax Music 3 captions, lyrics where needed, titles and cover concepts — then artwork, metadata and the final audio-processing chain. Press play and browse.</p>
+  <div class="eyebrow">ComfyUI · MiniMax Music 3 · YuE2 Cover · Open-source workflow</div>
+  <h1>Generated music, and covers of your own tracks.</h1>
+  <p class="lead">Tracks created with the open-source <strong>Music Production Toolkit for ComfyUI</strong>: simple style prompts become structured captions, lyrics where needed, titles and cover concepts — then artwork, metadata and the final audio-processing chain. The second category shows <strong>cover versions</strong>: an original track, its score read straight out of the audio, and the covers made from it.</p>
   <div class="links">
     <a id="repo-link" href="#">GitHub repository</a>
     <a id="playlist-link" href="#" hidden>SoundCloud playlist</a>
   </div>
   <div id="stats" class="stats"></div>
-  <div class="workflow-note"><strong>Shared production settings:</strong> MiniMax Music 3 · up to 300 s · 40 steps · CFG 1.7 · Euler / simple · PRE 12 kHz → FlashSR hybrid → gentle HF repair → POST 19 kHz · 44.1 kHz release targeting −14 LUFS / −1 dBTP. Track-specific seeds, prompts and musical metadata are under “Generation details”.</div>
+  <nav class="categories" id="categories" aria-label="Demo categories">
+    <button type="button" class="cat" data-cat="songs" aria-pressed="true">Generated songs <span class="cat-count" id="count-songs"></span></button>
+    <button type="button" class="cat" data-cat="covers" aria-pressed="false">Cover songs <span class="cat-count" id="count-covers"></span></button>
+  </nav>
 </header>
 <main>
+  <section id="section-songs">
+  <div class="section-note"><strong>Shared production settings:</strong> MiniMax Music 3 · up to 300 s · 40 steps · CFG 1.7 · Euler / simple · PRE 12 kHz → FlashSR hybrid → gentle HF repair → POST 19 kHz · 44.1 kHz release targeting −14 LUFS / −1 dBTP. Track-specific seeds, prompts and musical metadata are under “Generation details”.</div>
   <div class="controls">
     <div class="filters">
       <input id="search" type="search" placeholder="Search title, album, genre or description…" aria-label="Search demos">
@@ -81,11 +106,24 @@
     </div>
   </div>
   <section id="tracks" class="list" aria-live="polite"></section>
+  </section>
+
+  <section id="section-covers" hidden>
+    <div class="section-note"><strong>Cover songs:</strong> each original track was read by SheetSage2 into a score, and YuE2 then rendered a new version in a chosen style. Tempo and length below are <em>measured from the original audio</em>; the cover settings are the ones the run recorded. SoundCloud links appear as soon as a track is uploaded.</div>
+    <div class="controls">
+      <div class="filters">
+        <input id="cover-search" type="search" placeholder="Search original, genre, style template or instrument…" aria-label="Search cover demos">
+        <div id="cover-count" class="count"></div>
+      </div>
+    </div>
+    <div id="cover-groups" class="groups" aria-live="polite"></div>
+  </section>
 </main>
 <footer>
   Audio is streamed from SoundCloud. Cover images can be stored in <code>docs/assets/demo-covers/</code>. Edit <code>docs/demo-tracks.js</code> only when you want to add, replace or update SoundCloud track/playlist URLs.
 </footer>
 <script src="demo-tracks.js"></script>
+<script src="demo-covers.js"></script>
 <script>
 (() => {
   const cfg=window.MINIMAX_DEMO_CONFIG||{};
@@ -99,7 +137,11 @@
   for(const v of albums){const o=document.createElement('option');o.value=o.textContent=v;albumSel.append(o)}
   for(const v of genres){const o=document.createElement('option');o.value=o.textContent=v;genreSel.append(o)}
   const vocalCount=all.filter(x=>x.type==='Vocal').length;
-  document.getElementById('stats').innerHTML=`<span class="stat">${all.length} demo tracks</span><span class="stat">${albums.length} collections</span><span class="stat">${genres.length} genres</span><span class="stat">${all.length-vocalCount} instrumental</span><span class="stat">${vocalCount} vocal</span>`;
+  const coverGroups=[...(window.DEMO_COVER_GROUPS||[])];
+  const coverCount=coverGroups.reduce((n,g)=>n+((g.covers||[]).length),0);
+  document.getElementById('stats').innerHTML=`<span class="stat">${all.length} generated songs</span><span class="stat">${albums.length} collections</span><span class="stat">${genres.length} genres</span><span class="stat">${all.length-vocalCount} instrumental</span><span class="stat">${vocalCount} vocal</span>`+(coverCount?`<span class="stat">${coverCount} cover songs</span><span class="stat">${coverGroups.length} originals</span>`:'');
+  const songsBadge=document.getElementById('count-songs');if(songsBadge)songsBadge.textContent=all.length;
+  const coversBadge=document.getElementById('count-covers');if(coversBadge)coversBadge.textContent=coverCount;
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function card(t){
     const a=document.createElement('article');a.className='card';
@@ -144,6 +186,133 @@
   }
   for(const el of [search,albumSel,genreSel,typeSel,sortSel])el.addEventListener(el===search?'input':'change',render);
   render();
+
+  // ---- Cover songs: one original track, the covers made from it underneath ------
+  const coverGroupsEl=document.getElementById('cover-groups');
+  const coverSearch=document.getElementById('cover-search');
+  const coverCountEl=document.getElementById('cover-count');
+
+  function isValidSoundcloud(url){return !!url&&/^https:\/\/(www\.)?soundcloud\.com\//i.test(String(url).trim());}
+
+  function soundcloudBlock(url,title,extraClass){
+    const wrap=document.createElement('div');
+    if(extraClass)wrap.classList.add(extraClass);
+    if(isValidSoundcloud(url)){
+      wrap.classList.add('player-head');
+      const iframe=document.createElement('iframe');iframe.loading='lazy';iframe.allow='autoplay';
+      iframe.title=`${title} — SoundCloud player`;
+      iframe.src='https://w.soundcloud.com/player/?url='+encodeURIComponent(String(url).trim())+'&color=%233f5060&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false';
+      wrap.append(iframe);
+    }else{
+      wrap.classList.add('soundcloud-placeholder');
+      wrap.textContent='SoundCloud link will appear here after upload.';
+    }
+    return wrap;
+  }
+
+  function humanTemplate(path){
+    const name=String(path).split('/').pop().replace(/\.(txt|md|prompt)$/i,'');
+    return name.replace(/[-_]+/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+  }
+
+  function coverLink(c){
+    return isValidSoundcloud(c.soundcloudUrl)
+      ?`<a href="${esc(String(c.soundcloudUrl).trim())}" target="_blank" rel="noopener">${esc(c.title)}</a>`
+      :esc(c.title);
+  }
+
+  function coverCard(c){
+    const art=document.createElement('article');art.className='card cover-card';
+    art.append(soundcloudBlock(c.soundcloudUrl,c.title));
+    const row=document.createElement('div');row.className='row';
+    const info=document.createElement('div');info.className='info';
+    const freedomShown=c.freedom!==''&&c.freedom!==undefined&&c.freedom!==null;
+    const badges=[c.genre,c.lyricsMode,c.leadInstrument,
+      c.coverMode?`${c.coverMode} conditioning`:'',c.tempoLabel,
+      freedomShown?`freedom ${c.freedom}`:''].filter(Boolean)
+      .map(x=>`<span class="badge">${esc(x)}</span>`).join('');
+    const styleLine=c.styleTemplate?`<p class="desc">Style template: ${esc(humanTemplate(c.styleTemplate))}</p>`:'';
+    info.innerHTML=`<div class="cover-title"><span class="num">${esc(c.variant||'')}</span><h2>${coverLink(c)}</h2></div>`
+      +(badges?`<div class="badges">${badges}</div>`:'')+styleLine;
+    row.append(info);
+    const thumb=document.createElement('div');thumb.className='thumb-fallback';thumb.innerHTML=`<span>${esc(c.variant||'')}</span>`;
+    if(c.coverArt){
+      const img=new Image();img.className='thumb';img.alt=`Cover art for ${c.title}`;img.loading='lazy';
+      const swap=()=>{if(img.parentNode!==row)thumb.replaceWith(img)};
+      img.onload=swap;img.onerror=()=>{};img.src=c.coverArt;
+      if(img.complete&&img.naturalWidth)swap();
+      row.append(thumb);
+    }else{row.append(thumb);}
+    art.append(row);
+    const details=document.createElement('details');
+    details.innerHTML=`<summary>Run details</summary><dl class="detail-grid">`
+      +`<dt>Model</dt><dd>${esc(c.model||'—')}</dd>`
+      +(c.file?`<dt>File</dt><dd>${esc(c.file)}</dd>`:'')
+      +(c.seed!=null?`<dt>Seed</dt><dd>${esc(c.seed)}</dd>`:'')
+      +(c.steps!=null?`<dt>Sampler</dt><dd>${esc(c.steps)} steps · CFG ${esc(c.cfg)} · ${esc(c.sampler)} / ${esc(c.scheduler)}</dd>`:'')
+      +(c.targetDurationSeconds?`<dt>Target</dt><dd>up to ${esc(c.targetDurationSeconds)} s · release ${esc(c.outputSampleRate)} Hz</dd>`:'')
+      +(c.styleTemplate?`<dt>Template</dt><dd>${esc(c.styleTemplate)}</dd>`:'')
+      +((c.scoreChanges||[]).length?`<dt>Score edits</dt><dd>${esc((c.scoreChanges||[]).join(' · '))}</dd>`:'')
+      +`</dl>`;
+    art.append(details);
+    return art;
+  }
+
+  function groupBlock(g){
+    const sec=document.createElement('article');sec.className='group';
+    const facts=[g.sourceBpm?`${g.sourceBpm} BPM measured`:'',g.sourceDurationSeconds?`${g.sourceDurationSeconds} s`:''].filter(Boolean).join(' · ');
+    const head=document.createElement('div');head.className='group-head';
+    head.innerHTML=`<div class="group-eyebrow">Original track</div><h2>${esc(g.title)}</h2>`
+      +`<div class="group-meta">${esc(g.sourceFile||'')}${facts?' · '+esc(facts):''}</div>`;
+    sec.append(head);
+    if(g.comment&&String(g.comment).trim()){
+      const note=document.createElement('p');note.className='group-comment';note.textContent=g.comment;sec.append(note);
+    }
+    sec.append(soundcloudBlock(g.soundcloudUrl,g.title,'source-player'));
+    const grid=document.createElement('div');grid.className='cover-grid';
+    for(const cover of (g.covers||[]))grid.append(coverCard(cover));
+    sec.append(grid);
+    return sec;
+  }
+
+  function coverHaystack(g,c){
+    return [g.title,g.sourceFile,c.title,c.variant,c.genre,c.styleTemplate,c.leadInstrument,c.tempoLabel]
+      .filter(Boolean).join(' ').toLowerCase();
+  }
+
+  function renderCovers(){
+    if(!coverGroupsEl)return;
+    const q=(coverSearch?.value||'').trim().toLowerCase();
+    let shown=0;
+    const blocks=[];
+    for(const g of coverGroups){
+      const covers=q?(g.covers||[]).filter(c=>coverHaystack(g,c).includes(q)):(g.covers||[]);
+      if(q&&!covers.length)continue;
+      shown+=covers.length;
+      blocks.push(groupBlock({...g,covers}));
+    }
+    coverGroupsEl.replaceChildren(...blocks);
+    if(coverCountEl)coverCountEl.textContent=q
+      ?`${shown} of ${coverCount} covers in ${blocks.length} original(s)`
+      :`${coverCount} covers from ${coverGroups.length} original track(s)`;
+  }
+
+  const sectionSongs=document.getElementById('section-songs');
+  const sectionCovers=document.getElementById('section-covers');
+  const categoriesEl=document.getElementById('categories');
+  function selectCategory(name){
+    const showSongs=name!=='covers';
+    if(sectionSongs)sectionSongs.hidden=!showSongs;
+    if(sectionCovers)sectionCovers.hidden=showSongs;
+    categoriesEl?.querySelectorAll('.cat').forEach(btn=>
+      btn.setAttribute('aria-pressed',String(btn.dataset.cat===(showSongs?'songs':'covers'))));
+  }
+  categoriesEl?.querySelectorAll('.cat').forEach(btn=>
+    btn.addEventListener('click',()=>selectCategory(btn.dataset.cat)));
+  if(!coverCount&&categoriesEl){const empty=categoriesEl.querySelector('[data-cat="covers"]');if(empty)empty.hidden=true;}
+  coverSearch?.addEventListener('input',renderCovers);
+  renderCovers();
+  selectCategory('songs');
 })();
 </script>
 </body>
