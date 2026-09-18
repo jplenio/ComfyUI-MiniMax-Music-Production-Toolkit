@@ -95,8 +95,16 @@ class DocumentationLinkTests(unittest.TestCase):
              "RELEASE_NOTES_v2.x.md", "RELEASE_NOTES_v3.0.0.md", "RELEASE_NOTES_v3.0.1.md",
              "RELEASE_NOTES_v3.1.0.md"})
         for name in ("WORKFLOW.md", "YUE2.md", "AUDIO_PIPELINE.md", "LLM_PROVIDERS.md",
-                     "PROMPT_LIBRARY.md", "PROJECT_STATE.md", "KONTEXT.md"):
+                     "PROMPT_LIBRARY.md"):
             self.assertTrue((ROOT / "docs" / name).is_file(), f"docs/{name} is missing")
+        # The working handoff files are gitignored, so a fresh checkout has neither of
+        # them - asserting their presence failed the first Linux CI run. Where they do
+        # exist they must sit in docs/ like every other topic document, never at the
+        # root.
+        for name in ("PROJECT_STATE.md", "KONTEXT.md"):
+            self.assertFalse((ROOT / name).exists(), f"{name} belongs in docs/, not at the root")
+            if (ROOT / "docs" / name).exists():
+                self.assertTrue((ROOT / "docs" / name).is_file(), f"docs/{name} is not a file")
 
     def test_every_markdown_file_is_reachable(self):
         """Topic documents under docs/ must be linked from somewhere.

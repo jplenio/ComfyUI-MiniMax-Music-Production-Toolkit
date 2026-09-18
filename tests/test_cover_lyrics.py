@@ -7,6 +7,7 @@ transcription quality.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 from pathlib import Path
 import sys
@@ -281,17 +282,31 @@ class CoverLyricsNodeTests(unittest.TestCase):
                         self.mod.transcribe("song.wav")
 
     def test_engine_missing_is_explained_by_import_error(self):
-        real_import = __import__
+        """The gate is ``find_spec``, not an import - patch what the code calls.
+
+        Blocking ``builtins.__import__`` only looked like a test: it passed on a
+        machine where the engine happened to be absent, and on CI - where
+        requirements.txt installs it - the branch under test was never entered, so
+        the assertion failed there instead. Forcing the real check makes the test
+        mean the same thing on every machine.
+        """
+        real_find_spec = importlib.util.find_spec
 
         def blocked(name, *args, **kwargs):
             if name == "faster_whisper":
-                raise ImportError("no faster_whisper")
-            return real_import(name, *args, **kwargs)
+                return None
+            return real_find_spec(name, *args, **kwargs)
 
-        with patch("builtins.__import__", side_effect=blocked):
+        with patch("importlib.util.find_spec", side_effect=blocked):
             self.mod._MODEL_CACHE.clear()
             with self.assertRaisesRegex(RuntimeError, "faster-whisper"):
                 self.mod._load_engine()
+
+    def test_engine_present_lets_the_load_through(self):
+        """The other half: with the check satisfied, loading is not blocked."""
+        with patch("importlib.util.find_spec", return_value=object()):
+            self.mod._MODEL_CACHE.clear()
+            self.assertTrue(callable(self.mod._load_engine()))
 
     def test_the_checkpoint_is_released_after_every_transcription(self):
         class Model:

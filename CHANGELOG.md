@@ -150,6 +150,13 @@ All notable changes to this project will be documented here. The project follows
   that as `pip cannot install from ...` now, and three tests in
   `tests/test_release_tooling_alignment.py` pin it - including the exact header that
   broke the push.
+- Two tests were machine-dependent and only passed on the maintainer's PC: the
+  "engine missing" test blocked `builtins.__import__` while `_load_engine` actually
+  checks `importlib.util.find_spec`, so it proved nothing where the engine is
+  installed and failed on the first CI run that installed it; and the
+  documentation-layout test required the gitignored handoff files (`KONTEXT.md`,
+  `PROJECT_STATE.md`) that a fresh checkout never has. Both now test the real
+  condition - the install check and the file's location - instead of the machine.
 - **Cover instructions now have exactly one owner each**, audited end to end and
   documented in the tooltips, the node descriptions and the cover guide:
   `Song request · template & fields` is the master for the style and the musical
