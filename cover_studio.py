@@ -50,7 +50,7 @@ from .music_cover import cover_source
 STATE_SCHEMA = "cover_studio_state_v1"
 STATE_PREFIX = "cover-studio:"
 
-CATEGORY = "MiniMax Music Production Toolkit/generation"
+CATEGORY = "Music Production Toolkit/generation"
 
 VOCAL_RANGES = (
     "auto",

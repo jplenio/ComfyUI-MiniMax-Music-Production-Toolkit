@@ -3,7 +3,7 @@
 Saves FLAC/MP3/WAV using smart output prefixes, safe filesystem naming, standard audio tags and configurable embedded cover artwork.
 
 **Node ID:** `SaveAudioSmartPrefix`  
-**Category:** `MiniMax Music Production Toolkit/save`
+**Category:** `Music Production Toolkit/save`
 
 ## Key inputs
 

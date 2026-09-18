@@ -201,7 +201,7 @@ class FlashSRLowpassLab:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("audio", "info", "preset", "settings_json")
     FUNCTION = "run"
-    CATEGORY = "MiniMax Music Production Toolkit/audio restoration"
+    CATEGORY = "Music Production Toolkit/audio restoration"
     OUTPUT_NODE = False
 
     def run(

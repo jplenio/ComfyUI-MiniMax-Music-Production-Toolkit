@@ -3,7 +3,7 @@
 Configurable Butterworth low-pass for controlled pre/post FlashSR cleanup, with presets, custom cutoff/order/phase and reproducibility outputs.
 
 **Node ID:** `FlashSRLowpassLab`  
-**Category:** `MiniMax Music Production Toolkit/audio restoration`
+**Category:** `Music Production Toolkit/audio restoration`
 
 ## Inputs
 

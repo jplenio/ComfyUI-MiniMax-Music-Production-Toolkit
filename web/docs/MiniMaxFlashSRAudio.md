@@ -3,7 +3,7 @@
 Integrated Audio Super Resolution (FlashSR) node. It replaces the external `ComfyUI-Egregora-Audio-Super-Resolution` custom node so the example workflow has no dependency on it anymore.
 
 **Node ID:** `MiniMaxFlashSRAudio`  
-**Category:** `MiniMax Music Production Toolkit/audio`
+**Category:** `Music Production Toolkit/audio`
 
 ## Processing
 

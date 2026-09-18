@@ -300,7 +300,7 @@ class MiniMaxInstrumentalVocalCheck:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "check_report_json")
     FUNCTION = "check"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = (
         "Counts the words Whisper hears in one generated candidate and logs them. An instrumental passes "
         "when it hears none (or no more than the tolerance). The audio is passed through untouched, and the "
@@ -343,7 +343,7 @@ class MiniMaxInstrumentalPick:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "check_report_json")
     FUNCTION = "pick"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = (
         "Keeps the first instrumental candidate and asks ComfyUI for the next one only when the previous "
         "take contained words. If none reaches the tolerance, the take with the fewest words is used and "

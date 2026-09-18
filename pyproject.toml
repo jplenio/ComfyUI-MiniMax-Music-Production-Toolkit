@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-minimax-music-production-toolkit"
-version = "3.1.0"
+version = "3.1.1"
 description = "ComfyUI music production with YuE2 audio cover versions, SheetSage2 score-aware prompts, YuE2 and MiniMax Music 3 song generation, restoration, mastering, artwork and release metadata."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,6 +39,6 @@ Documentation = "https://github.com/jplenio/ComfyUI-MiniMax-Music-Production-Too
 
 [tool.comfy]
 PublisherId = "jplenio"
-DisplayName = "MiniMax Music Production Toolkit"
+DisplayName = "Music Production Toolkit"
 Icon = "https://raw.githubusercontent.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit/main/assets/branding/icon.png"
 Banner = "https://raw.githubusercontent.com/jplenio/ComfyUI-MiniMax-Music-Production-Toolkit/main/assets/branding/banner.png"

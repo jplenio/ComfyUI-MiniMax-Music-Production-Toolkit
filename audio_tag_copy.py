@@ -155,7 +155,7 @@ class MiniMaxAudioTagReader:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("audio_tags_json", "cover_image_path", "tag_report_json")
     FUNCTION = "read"
-    CATEGORY = "MiniMax Music Production Toolkit/audio"
+    CATEGORY = "Music Production Toolkit/audio"
     DESCRIPTION = (
         "Reads the title, artist, album, year, track, genre, comment and composer of an existing audio "
         "file, plus its embedded cover art, so an enhanced export carries exactly the same metadata as the "

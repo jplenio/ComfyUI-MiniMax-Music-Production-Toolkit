@@ -3,7 +3,7 @@
 Reduces smeared cymbal/hi-hat sustain and artificial high-frequency shimmer while protecting attacks and leaving low/mid-band level untouched.
 
 **Node ID:** `HFCymbalShimmerRepair`  
-**Category:** `MiniMax Music Production Toolkit/audio restoration`
+**Category:** `Music Production Toolkit/audio restoration`
 
 ## Inputs
 

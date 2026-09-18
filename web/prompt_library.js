@@ -107,7 +107,7 @@ async function refreshKind(node, kind) {
         node.__minimaxPromptLibraryError = null;
     } catch (error) {
         if (!isCurrentRequest(token)) return;
-        console.warn(`[MiniMax Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
+        console.warn(`[Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
         setComboValues(fileWidget, []);
         node.__minimaxPromptLibraryError = String(error?.message || error);
     }

@@ -8,7 +8,7 @@ whether missing files are fetched; the default target is `models/audio_encoders`
 Checks the model files referenced by the bundled workflow and downloads missing ones on first use when a URL is configured in `models_config.json`.
 
 **Node ID:** `MiniMaxModelAutodownload`  
-**Category:** `MiniMax Music Production Toolkit/utilities`
+**Category:** `Music Production Toolkit/utilities`
 
 ## Inputs
 

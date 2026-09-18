@@ -102,7 +102,7 @@ class MiniMaxAutoEQAnalyze:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("eq_settings_json", "analysis_json", "info")
     FUNCTION = "analyze"
-    CATEGORY = "MiniMax Music Production Toolkit/mastering"
+    CATEGORY = "Music Production Toolkit/mastering"
 
     def analyze(self, audio, target_mode="Reference track", strength_percent=50,
                 max_gain_db=3, max_bands=6, min_frequency_hz=40, max_frequency_hz=16000, reference_audio=None,

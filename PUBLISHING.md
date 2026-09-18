@@ -47,7 +47,7 @@ The release validator checks required files, Python syntax, requirements-file in
 ## Build release assets
 
 ```bash
-python scripts/package_release.py --output-dir dist/v3.1.0
+python scripts/package_release.py --output-dir dist/v3.1.1
 ```
 
 This runs validation/tests first and creates:
@@ -59,16 +59,19 @@ Music_Production_AudioEnhance_vX.Y.Z.json
 SHA256SUMS.txt
 ```
 
-The assets are written to `dist/v3.1.0/`; this keeps previous release checksums
+The assets are written to `dist/v3.1.1/`; this keeps previous release checksums
 and archives intact. The ZIP excludes VCS state, Python caches and earlier builds.
 
-## Commit v3.1.0
+The published `v3.1.0` tag, its assets and its checksums stay exactly as they were
+released; a fix after the tag ships as the next version, never as a replacement.
+
+## Commit v3.1.1
 
 For an existing checkout:
 
 ```bash
 git add -A
-git commit -m "Release v3.1.0"
+git commit -m "Release v3.1.1"
 git push
 ```
 
@@ -79,26 +82,26 @@ Do not re-run `git init` for an already existing repository.
 Create a new GitHub Release with:
 
 ```text
-Tag:   v3.1.0
-Title: MiniMax Music Production Toolkit 3.1.0 — Cover Studio, Instrumental Check, Consolidation
+Tag:   v3.1.1
+Title: Music Production Toolkit 3.1.1 — Cover Studio, Run Logging, Rebranding
 ```
 
-Use `RELEASE_NOTES_v3.1.0.md` as the release description and upload the four generated release assets (ZIP, both workflow JSON files, checksums).
+Use `RELEASE_NOTES_v3.1.1.md` as the release description and upload the four generated release assets (ZIP, both workflow JSON files, checksums).
 
 `docs/REDDIT_POST_v3.0.1.md` is the previous announcement draft and shows the format
 if you want to write a new one for this version. Post it only after the release
 and Registry publication have succeeded. Preparing local assets does not create
 a remote GitHub release or publish to the Registry.
 
-The Git tag uses a leading `v`; the package/Registry version remains `3.1.0` without the leading `v`.
+The Git tag uses a leading `v`; the package/Registry version remains `3.1.1` without the leading `v`.
 
 After committing and pushing the checked release tree above, the equivalent
 GitHub CLI commands are:
 
 ```bash
-git tag -a v3.1.0 -m "Release v3.1.0"
-git push origin v3.1.0
-gh release create v3.1.0 --verify-tag --title "MiniMax Music Production Toolkit 3.1.0 — Cover Studio, Instrumental Check, Consolidation" --notes-file RELEASE_NOTES_v3.1.0.md dist/v3.1.0/ComfyUI-MiniMax-Music-Production-Toolkit-v3.1.0.zip dist/v3.1.0/Music_Production_Toolkit_v3.1.0.json dist/v3.1.0/Music_Production_AudioEnhance_v3.1.0.json dist/v3.1.0/SHA256SUMS.txt
+git tag -a v3.1.1 -m "Release v3.1.1"
+git push origin v3.1.1
+gh release create v3.1.1 --verify-tag --title "Music Production Toolkit 3.1.1 — Cover Studio, Run Logging, Rebranding" --notes-file RELEASE_NOTES_v3.1.1.md dist/v3.1.1/ComfyUI-MiniMax-Music-Production-Toolkit-v3.1.1.zip dist/v3.1.1/Music_Production_Toolkit_v3.1.1.json dist/v3.1.1/Music_Production_AudioEnhance_v3.1.1.json dist/v3.1.1/SHA256SUMS.txt
 ```
 
 Run these only once for this new version. A successful local build alone does
@@ -111,7 +114,7 @@ The project is configured with:
 ```toml
 [tool.comfy]
 PublisherId = "jplenio"
-DisplayName = "MiniMax Music Production Toolkit"
+DisplayName = "Music Production Toolkit"
 ```
 
 Create a Registry Publishing API Key for the publisher and store it in GitHub:

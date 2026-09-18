@@ -98,6 +98,34 @@ def privacy_hits(
     return hits
 
 
+# --- branding assets ---------------------------------------------------------
+
+# Text files that may refer to an image. A branding asset nothing points at is dead
+# weight in the release archive.
+BRANDING_REFERENCE_PATTERNS = ("*.md", "*.toml", "*.html")
+
+
+def unreferenced_branding_assets(root: Path, directory: str = "assets/branding") -> List[str]:
+    """Branding files that no document mentions.
+
+    The 3.1.1 preparation packed ``banner-old.png`` and ``icon-old.png`` - superseded
+    art kept as a backup - into the release archive, because the packager walks the
+    working tree and nothing said those files were unused. A leftover whose name still
+    looks plausible is exactly the kind of file that needs a machine to notice it.
+    """
+    folder = root / directory
+    if not folder.is_dir():
+        return []
+    names = sorted(path.name for path in folder.iterdir() if path.is_file())
+    mentioned: List[str] = []
+    for pattern in BRANDING_REFERENCE_PATTERNS:
+        for path in root.rglob(pattern):
+            if any(part in SCAN_SKIPPED_PARTS for part in path.parts):
+                continue
+            mentioned.append(path.read_text(encoding="utf-8", errors="replace"))
+    return [name for name in names if not any(name in text for text in mentioned)]
+
+
 # --- requirements installability --------------------------------------------
 
 # Every file a user is told to pass to ``pip install -r``.

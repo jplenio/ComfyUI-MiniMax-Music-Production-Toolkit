@@ -577,7 +577,7 @@ Node-Typ: `MiniMaxSaveProductionJSON`. Vorhandene Werte und vollständige Auswah
 | `N99.collision_mode` – collision mode | auto_increment | auto_increment / overwrite / error_if_exists; Standardfeld; native App-Bindung prüfen | K | — |
 | `N99.filename_mode` – filename mode | album - title | album - title / title only / prefix as provided; Standardfeld; native App-Bindung prüfen | K | — |
 | `N99.create_directories` – create directories | True | Standardfeld; native App-Bindung prüfen | K | — |
-| `N99.workflow_name` – workflow name | YuE2 Cover / YuE2 / MiniMax Music Production Toolkit 3.0.1 | Standardfeld; native App-Bindung prüfen | K | — |
+| `N99.workflow_name` – workflow name | YuE2 Cover / YuE2 / Music Production Toolkit 3.0.1 | Standardfeld; native App-Bindung prüfen | K | — |
 
 ## Technische Stufenauswahl
 

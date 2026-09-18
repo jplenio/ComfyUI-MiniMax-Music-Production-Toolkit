@@ -3,7 +3,7 @@
 Builds standard interoperable audio metadata tags such as Artist, Album, Year, Genre and Composer.
 
 **Node ID:** `MiniMaxStandardAudioTags`  
-**Category:** `MiniMax Music Production Toolkit/metadata`
+**Category:** `Music Production Toolkit/metadata`
 
 ## Inputs
 

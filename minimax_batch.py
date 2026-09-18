@@ -114,7 +114,7 @@ class MiniMaxPromptBatchLoader:
     RETURN_NAMES = ("caption", "lyrics", "title", "source_name", "seed", "run_index", "source_path")
     OUTPUT_IS_LIST = (True, True, True, True, True, True, True)
     FUNCTION = "load"
-    CATEGORY = "MiniMax Music Production Toolkit/batch"
+    CATEGORY = "Music Production Toolkit/batch"
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -233,7 +233,7 @@ class MiniMaxOutputPaths:
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("original_prefix", "sr_flac_prefix", "sr_mp3_prefix", "artwork_prefix", "configuration_prefix")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/batch"
+    CATEGORY = "Music Production Toolkit/batch"
 
     def _join(self, base: str, subdir: str, source: str) -> str:
         base = (base or "").strip().replace("\\", "/")

@@ -48,7 +48,7 @@ class MiniMaxMusicModelProfile:
         "info",
     )
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/config"
+    CATEGORY = "Music Production Toolkit/config"
     DESCRIPTION = (
         "Choose the song-generation model (MiniMax Music 3 or YuE2). Its profile drives the system-prompt "
         "family, the LLM prompt-token budget, the duration window and the recommended generation settings "

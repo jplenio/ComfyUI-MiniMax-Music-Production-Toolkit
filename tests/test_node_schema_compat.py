@@ -287,5 +287,118 @@ class NodeSchemaCompatibilityTests(unittest.TestCase):
                 self.assertEqual(names_count, types_count, node_type)
 
 
+class WorkflowWidgetValueTests(unittest.TestCase):
+    """A serialized widget value must be a choice the node actually offers.
+
+    The 3.1.0 workflow shipped ``language: "custom"`` on the Whisper node - the
+    toolkit's own "field not set" sentinel, which that node never offers - and every
+    original-lyrics cover aborted with ``unsupported Whisper source language 'custom'``
+    before a single frame was decoded. The dropdown is rebuilt from LANGUAGE_CHOICES,
+    so the stored value is exactly what the run receives: this field is ``auto`` or a
+    concrete language, never a placeholder.
+
+    Node 80 keeps its own ``custom`` values legitimately: its dropdowns are built from
+    the same sentinel and offer it. Only nodes with a closed choice list are checked
+    here, by the position ComfyUI serializes widgets in.
+    """
+
+    # node type -> the widgets whose choices are a closed list
+    CLOSED_CHOICE_WIDGETS = {
+        "MusicCoverLyrics": ("whisper_model", "language", "device", "compute_type"),
+    }
+
+    @classmethod
+    def setUpClass(cls):
+        cls.workflows = {path.name: json.loads(path.read_text(encoding="utf-8"))
+                         for path in {path for path in WORKFLOWS} if path.exists()}
+
+    @staticmethod
+    def widget_names(cls):
+        """Input names ComfyUI serializes as widgets: declared, not forceInput."""
+        data = cls.INPUT_TYPES()
+        names = []
+        for section in ("required", "optional"):
+            for name, spec in (data.get(section) or {}).items():
+                options = spec[1] if isinstance(spec, tuple) and len(spec) > 1 else {}
+                if isinstance(options, dict) and options.get("forceInput"):
+                    continue
+                names.append(name)
+        return names
+
+    # Prompt-file widgets that must never ship with a private path baked in. The
+    # directory only matters for `user_prompt_source = external_directory`, and a saved
+    # workflow carrying one would publish a maintainer's local folder to everyone who
+    # downloads the file.
+    PRIVATE_PATH_WIDGETS = ("user_prompt_directory", "system_prompt_directory")
+
+    def test_no_shipped_workflow_bakes_in_a_prompt_directory(self):
+        checked = 0
+        for name, wf in self.workflows.items():
+            for node in wf["nodes"]:
+                named = node.get("widgets_values_named")
+                if not isinstance(named, dict):
+                    continue
+                for widget in self.PRIVATE_PATH_WIDGETS:
+                    if widget not in named:
+                        continue
+                    checked += 1
+                    self.assertEqual(
+                        named[widget], "",
+                        f"{name}: {node.get('type')} (id {node.get('id')}) ships "
+                        f"{widget}={named[widget]!r} - a personal folder must not travel "
+                        "in a published workflow",
+                    )
+        self.assertGreater(checked, 0, "no prompt-directory widget was checked at all")
+
+    def test_every_closed_choice_widget_holds_an_offered_value(self):
+        checked = 0
+        for name, wf in self.workflows.items():
+            for node in wf["nodes"]:
+                node_type = node.get("type")
+                if node_type not in self.CLOSED_CHOICE_WIDGETS:
+                    continue
+                cls = MODULES[NODE_MODULE[node_type]].NODE_CLASS_MAPPINGS[node_type]
+                data = cls.INPUT_TYPES()
+                declared = self.widget_names(cls)
+                values = node.get("widgets_values")
+                self.assertIsInstance(
+                    values, list,
+                    f"{name}: {node_type} (id {node.get('id')}) has no widget values to check",
+                )
+                self.assertEqual(
+                    len(values), len(declared),
+                    f"{name}: {node_type} (id {node.get('id')}): {len(values)} serialized values "
+                    f"for {len(declared)} widgets ({declared}) - the position mapping this test "
+                    "relies on no longer holds",
+                )
+                stored = dict(zip(declared, values))
+                # A newer frontend also writes a named copy of the same widgets. When the
+                # two disagree, the next save resurrects the positional value - so they
+                # must hold the same thing.
+                named = node.get("widgets_values_named")
+                if isinstance(named, dict):
+                    for widget, value in named.items():
+                        self.assertEqual(
+                            stored.get(widget), value,
+                            f"{name}: {node_type} (id {node.get('id')}) serializes {widget} "
+                            f"twice with different values ({stored.get(widget)!r} vs {value!r})",
+                        )
+                for widget in self.CLOSED_CHOICE_WIDGETS[node_type]:
+                    if widget not in stored:
+                        continue
+                    spec = (data.get("required", {}) | data.get("optional", {})).get(widget)
+                    choices = spec[0] if isinstance(spec, tuple) else None
+                    if not isinstance(choices, list) or not choices:
+                        continue
+                    checked += 1
+                    self.assertIn(
+                        stored[widget], choices,
+                        f"{name}: {node_type} (id {node.get('id')}) stores {widget}="
+                        f"{stored[widget]!r}, which the node does not offer - this field is "
+                        "auto or a concrete language, never a placeholder",
+                    )
+        self.assertGreater(checked, 0, "no closed-choice widget was checked at all")
+
+
 if __name__ == "__main__":
     unittest.main()

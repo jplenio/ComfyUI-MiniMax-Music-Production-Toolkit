@@ -191,7 +191,7 @@ class AudioReleasePrep:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "release_prep_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/mastering"
+    CATEGORY = "Music Production Toolkit/mastering"
 
     def process(self, audio, target_sample_rate, processing, custom_target_lufs, custom_true_peak_dbtp):
         waveform, sr_in = _validate_audio(audio)

@@ -3,7 +3,7 @@
 Centralizes PRE/POST low-pass settings and FlashSR lowpass_input so one configuration can drive the processing nodes and metadata consistently.
 
 **Node ID:** `FlashSRProcessingSettings`  
-**Category:** `MiniMax Music Production Toolkit/config`
+**Category:** `Music Production Toolkit/config`
 
 ## Inputs
 

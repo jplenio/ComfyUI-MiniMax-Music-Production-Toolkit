@@ -199,6 +199,31 @@ If the new error says:
   destination free space and the SoundFile/libsndfile installation used by
   ComfyUI. Include the new diagnostic and full traceback in a bug report.
 
+## `Exception in callback _ProactorBasePipeTransport._call_connection_lost` during a run
+
+```text
+[ERROR] Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+ConnectionResetError: [WinError 10054] Eine vorhandene Verbindung wurde vom Remotehost geschlossen
+```
+
+This message is not produced by the toolkit, and it does not affect the result: the run
+continues and writes every file.
+
+ComfyUI executes each prompt inside its own event loop (`asyncio.run` in `execution.py`),
+which on Windows is a *Proactor* loop. That transport class carries sockets as well as
+pipes; when a peer resets a connection, asyncio's `_call_connection_lost` tries to
+`shutdown()` the already-closed socket and the loop reports the `ConnectionResetError`.
+The toolkit opens no socket and starts no asyncio subprocess while it processes audio -
+resampling, EQ and mastering run in-process - so the message names a connection that
+belongs to the surrounding ComfyUI session, not to a toolkit stage.
+
+In practice it shows up when a client of the ComfyUI server goes away mid-run. The
+usual one is the browser tab that queued the prompt being reloaded, closed, or timing
+out during a long prompt; another client of the same server does it as well. Note that
+the message names only the transport, never the owner, so the exact connection cannot
+be identified from the log alone. Leave the tab open while a long prompt runs, and
+judge the run by its finished files.
+
 ## Long batch fails with CUDA graph / allocator errors
 
 This is normally a ComfyUI/PyTorch/CUDA/model interaction rather than the prompt toolkit itself. Restart ComfyUI after a CUDA capture failure. If the error specifically mentions `CUDAMallocAsyncAllocator` / stream capture invalidation, testing ComfyUI with `--disable-cuda-malloc` can help isolate allocator/capture instability. Expect a possible performance trade-off.

@@ -1,16 +1,25 @@
-"""Logging helpers for MiniMax Music Production Toolkit.
+"""Logging helpers for Music Production Toolkit.
 
 The package deliberately uses Python logging instead of configuring ComfyUI's
 root logger.  Users can raise or lower the package verbosity with the
 ``MINIMAX_MUSIC_TOOLKIT_LOG_LEVEL`` environment variable.
+
+Every line this package emits carries the local wall-clock time, so a ComfyUI log
+can be read as a timeline: when a run started, how long a stage took and which
+result belongs to which attempt.  That is done with a record filter rather than a
+formatter, because ComfyUI owns the handler that prints these lines - adding a
+second handler would print every message twice, and replacing the root formatter
+would change every other node's output as well.
 """
 from __future__ import annotations
 
 import logging
 import os
+import time
 
 LOGGER_NAME = "minimax_music_toolkit"
 _DEFAULT_LEVEL = "INFO"
+_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def _level_from_env() -> int:
@@ -45,8 +54,34 @@ _base_logger = logging.getLogger(LOGGER_NAME)
 _base_logger.setLevel(_level_from_env())
 
 
+class _TimestampFilter(logging.Filter):
+    """Prefix every toolkit record with the local time it was created.
+
+    It is attached to each logger this module hands out, not only to the parent:
+    a logger's filters run for records logged *on that logger*, never for records
+    that merely propagate up from its children.  The marker keeps a record from
+    being stamped twice if it passes more than one of these filters.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:  # noqa: A003 - logging's API
+        if not getattr(record, "_minimax_timestamped", False):
+            try:
+                stamp = time.strftime(_TIMESTAMP_FORMAT)
+            except (ValueError, OSError):  # pragma: no cover - defensive
+                stamp = ""
+            if stamp:
+                record.msg = f"{stamp} {record.msg}"
+            record._minimax_timestamped = True
+        return True
+
+
+_TIMESTAMP_FILTER = _TimestampFilter()
+
+
 def get_logger(component: str | None = None) -> logging.Logger:
     """Return the toolkit logger (or a child logger) without adding handlers."""
-    if not component:
-        return _base_logger
-    return _base_logger.getChild(component)
+    logger = _base_logger if not component else _base_logger.getChild(component)
+    if not getattr(logger, "_minimax_timestamp_filter", False):
+        logger.addFilter(_TIMESTAMP_FILTER)
+        logger._minimax_timestamp_filter = True
+    return logger

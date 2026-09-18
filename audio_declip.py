@@ -289,7 +289,7 @@ class AudioDeclipRepair:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "declip_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/audio restoration"
+    CATEGORY = "Music Production Toolkit/audio restoration"
 
     def process(self, audio, mode, detection_threshold_percent, plateau_tolerance_percent,
                 min_flat_samples, slope_context_samples, max_repair_ms,

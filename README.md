@@ -1,7 +1,7 @@
-# Music Production Toolkit 3.1.0 for ComfyUI
+# Music Production Toolkit 3.1.1 for ComfyUI
 
 <p align="center">
-  <img src="assets/branding/banner.png" alt="Music Production Toolkit for ComfyUI" width="100%" />
+  <img src="assets/branding/banner.png" alt="Music Production Toolkit for ComfyUI — YuE2, YuE2 Cover and MiniMax Music 3" width="100%" />
 </p>
 
 **A Swiss Army knife for local music production on ComfyUI.** Generate a song from
@@ -27,16 +27,39 @@ style you want, and queue. That is the whole minimum. Everything else is
 **optional** and off the critical path: leave it on auto and one slider decides
 how far the cover departs from the original.
 
+This is not a remix that keeps a loop and hopes for the best. SheetSage2 reads the
+**actual musical score out of your recording** — melody, chords, phrases, sections —
+and everything after that works on real notes:
+
+1. **Listen.** SheetSage2 transcribes your file into a score with measured section
+   boundaries, inside ComfyUI.
+2. **Plan.** The Cover Studio states what it will preserve and what it will change
+   *before* touching a note, from the freedom slider and, if you want, from the
+   advanced settings.
+3. **Rewrite.** The score is rewritten in ABC — transposed, re-temped, thinned to a
+   melody line, restructured — exactly as far as your freedom setting allows.
+4. **Verify.** Every model answer is validated against the native ABC dialect and
+   the plan. An answer that breaks the contract is rejected and the validated
+   deterministic result is used instead; the engine never receives unchecked model
+   output.
+5. **Render.** YuE2 performs the new version. For an instrumental, the notes that
+   carried the vocals move into the native instrumental part and are played by the
+   **lead instrument** you named, while the vocal line becomes rests.
+6. **Check, if you want it.** The optional vocal check listens to the render,
+   counts the words it hears, and re-renders within the limit you set.
+
 If you do want to steer it, almost every part of the arrangement is a knob:
 
 - **Interpretation Freedom (0–100)** — from a faithful re-recording of the same
-  song to a free recomposition that keeps only its character.
+  song to a free recomposition that keeps only its character. At `0` the source
+  score is *enforced*: a model that rewrites a note, a chord, a bar or the tempo is
+  rejected, and a `full` cover keeps its harmony at every freedom level.
 - **Advanced mode** — decide element by element what stays: main melody, chorus
   hook, structure, harmony, tempo and key; plus how much melody, rhythm, harmony
   and structure may vary, a key shift in semitones, a tempo change and the vocal
   range of the new version.
 - **Lyrics policy** — let the mode decide, lock the source words, or supply your
-  own and keep them exactly.
+  own and keep them exactly. The words never follow the slider.
 - **Cover mode and lyrics mode** — condition on melody and harmony, or on melody
   alone; then choose new lyrics, the original words, or a pure instrumental.
 - **Lead instrument** — which instrument carries the former vocal line when no
@@ -47,16 +70,22 @@ If you do want to steer it, almost every part of the arrangement is a knob:
 - **The rest of the chain** — length target, steps and sampler, artwork, refinement
   and mastering, each with its own on/off switch.
 
-Nothing here is required, and nothing here overrides you: the style and the lyrics
-keep priority at every freedom level. See [Cover Studio](docs/YUE2.md#yue2-cover-studio)
-and [cover lyrics modes](docs/YUE2.md#cover-lyrics-modes).
+Nothing here is required, and nothing overrides you: **the style you chose and the
+lyrics keep priority at every freedom level.** More freedom means that less of the
+*original audio* survives — never that less of *your* template is delivered.
 
-**Also new in 3.1: an honest answer to "is it really instrumental?"** and **two
-workflows instead of three** — the main workflow handles YuE2, YuE2 Cover and
-MiniMax Music 3, the audio-enhancement workflow carries every restoration and
-mastering stage of the main one plus your original file's own tags and cover art.
+Hear what it produces: the [demo gallery](https://jplenio.github.io/ComfyUI-MiniMax-Music-Production-Toolkit/)
+holds instrumental and vocal covers across the freedom range. See
+[Cover Studio](docs/YUE2.md#yue2-cover-studio) and
+[cover lyrics modes](docs/YUE2.md#cover-lyrics-modes).
 
-[What's new in 3.1](RELEASE_NOTES_v3.1.0.md) · [Complete workflow guide](docs/WORKFLOW.md) ·
+**Also new: an honest answer to "is it really instrumental?"**, **two workflows
+instead of three**, and **every run logged with its date, time and source file** —
+the main workflow handles YuE2, YuE2 Cover and MiniMax Music 3, and the
+audio-enhancement workflow carries every restoration and mastering stage of the
+main one plus your original file's own tags and cover art.
+
+[What's new in 3.1.1](RELEASE_NOTES_v3.1.1.md) · [Complete workflow guide](docs/WORKFLOW.md) ·
 [Installation](INSTALLATION.md)
 
 ## What the toolkit does
@@ -100,9 +129,29 @@ to enhance and master the recording you already have.
 
 Created by [Johannes Plenio](https://github.com/jplenio).
 
-## What's new in 3.1
+## What's new in 3.1.1
 
-**You decide what happens to the vocals.** *Cover song · source audio* has a new
+A patch that makes long runs easier to follow, fixes one cover stopper and refreshes
+the look:
+
+- **Every log line now carries the date and time** (`2026-09-18 14:22:31 Saved
+  artwork: …`), so a ComfyUI log reads as a timeline: when a run started, how long a
+  stage took, which result belongs to which attempt.
+- **A cover run names the audio file it was made from** — the file, its full path,
+  its size and the three cover choices, once when the file is selected and again for
+  every generated song.
+- **Fixed: `original lyrics` covers stopped before the first note.** The bundled
+  workflow carried the toolkit's "field not set" placeholder in the Whisper node's
+  language field. It now stores `auto`, and a workflow test refuses any stored value
+  the node does not offer.
+- **New banner, icon and workflow screenshots.** The toolkit is no longer MiniMax
+  only — YuE2, YuE2 Cover and MiniMax Music 3 live side by side, and the branding now
+  says so. Both workflows are pictured above.
+- **Documented:** the `_ProactorBasePipeTransport` message a long Windows run can
+  print is a dropped client connection, not a toolkit failure — see
+  [troubleshooting](TROUBLESHOOTING.md#exception-in-callback-_proactorbasepipetransport_call_connection_lost-during-a-run).
+
+**The cover feature in detail.** *Cover song · source audio* has a
 **Cover lyrics** setting with three modes, and the choice reaches the score node,
 the Whisper node, the LLM prompt, the parser provenance and the production JSON.
 See [cover lyrics modes](docs/YUE2.md#cover-lyrics-modes).
@@ -182,6 +231,13 @@ Two workflows, and that is the whole set:
 Open the JSON in ComfyUI or drag it onto the canvas. The grouped notes inside each
 workflow explain where to start and which controls matter.
 
+<p align="center">
+  <img src="assets/branding/screenshot-main-workflow.png" alt="The main workflow in ComfyUI, grouped and labelled: CHOOSE, START, WRITE, GENERATE, REFINE, ILLUSTRATE, MASTERING and DELIVER" width="100%" />
+</p>
+
+*The main workflow in ComfyUI: labelled groups from the first choice to the finished
+release — CHOOSE → START → WRITE → GENERATE → REFINE → ILLUSTRATE → MASTERING → DELIVER.*
+
 ### Create a new song
 
 1. Choose YuE2 or MiniMax Music 3 in CHOOSE. Set your output folder, artist and album.
@@ -255,6 +311,13 @@ The chain includes de-clipping, FlashSR, high-frequency blending and repair,
 followed by the new mastering section. Each recording is different: compare
 versions at similar listening loudness and keep the processing that helps.
 
+<p align="center">
+  <img src="assets/branding/screenshot-audio-enhancement.png" alt="The audio-enhancement workflow in ComfyUI: load a file, run the restoration chain, master it and export" width="100%" />
+</p>
+
+*The audio-enhancement workflow: bring your own file, run the same restoration and
+mastering chain, and receive both exports carrying your original tags and cover art.*
+
 ## Mastering, with as much control as you want
 
 **Auto-EQ is enabled by default when Mastering runs.** The main workflow starts with
@@ -315,6 +378,27 @@ settings that fit your available RAM and VRAM.
 - **CPU mastering:** EQ, analysis, compression and limiting do not require GPU
   memory. Full audio buffers and generation models still need system memory.
 
+**A smaller local model is a memory saving, not a free one — the text side is the hard
+part.** The toolkit's prompts are long and tightly structured: the cover path hands the
+model the source score, the arrangement plan and the style template together and asks
+for a complete rewritten score back. Small local models — a few billion parameters, or
+heavily quantised — can lose the thread: a truncated answer, invented notation, an
+ignored constraint. **The cover feature is by far the most demanding part of the
+toolkit in this respect**; a plain song request is easier, and the audio-enhancement
+workflow needs no language model at all. Expect to experiment here.
+
+Two things make that worse, and both are easy to avoid. Lowering the context or output
+budget to save memory also removes the room the rewritten cover score needs — a budget
+that is generous for a caption can be too small for a score. And a vague style
+description gives a weak model more room to invent; a short, concrete one helps.
+
+What the toolkit does about it: an answer that breaks the notation contract is
+rejected, and the validated deterministic score is used instead. A weak model therefore
+degrades the result rather than producing a broken file — but it cannot rescue a cover
+the model never managed to write. If a small model keeps failing on the cover path,
+try a larger one, a cloud provider for the text, or the advanced settings that make the
+rework simpler before you conclude the cover itself cannot work.
+
 The full example retains a demanding 27B LLM selection and large context settings;
 these are configurable examples, not automatic hardware recommendations.
 Check them before your first run. Smaller settings can trade speed or capacity
@@ -365,6 +449,7 @@ See [installation](INSTALLATION.md) and [troubleshooting](TROUBLESHOOTING.md).
 
 ## Documentation
 
+- [Release 3.1.1 notes](RELEASE_NOTES_v3.1.1.md)
 - [Release 3.1.0 notes](RELEASE_NOTES_v3.1.0.md)
 - [Release 3.0.1 notes](RELEASE_NOTES_v3.0.1.md)
 - [Release 3.0.0 notes](RELEASE_NOTES_v3.0.0.md)

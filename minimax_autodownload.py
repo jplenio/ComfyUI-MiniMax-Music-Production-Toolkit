@@ -75,7 +75,7 @@ class MiniMaxModelAutodownload:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("report",)
     FUNCTION = "check"
-    CATEGORY = "MiniMax Music Production Toolkit/utilities"
+    CATEGORY = "Music Production Toolkit/utilities"
 
     def check(self, minimax_models=True, flux2_models=True, flashsr_models=True, llm_model=True, auto_download=True,
               yue2_models=None, model_profile_json="", sheetsage2_models=True, whisper_models=True,

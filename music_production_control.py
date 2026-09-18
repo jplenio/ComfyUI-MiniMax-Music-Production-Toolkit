@@ -68,7 +68,7 @@ class MusicOptionalStage:
     RETURN_TYPES = ("AUDIO",) + ("STRING",) * 8
     RETURN_NAMES = ("audio",) + tuple(f"report_{i}" for i in range(1, 9))
     FUNCTION = "select"
-    CATEGORY = "MiniMax Music Production Toolkit/config"
+    CATEGORY = "Music Production Toolkit/config"
     DESCRIPTION = (
         "Skip an entire audio stage including its report dependencies. Disabled stages "
         "pass the original audio through unchanged and report that processing was bypassed."
@@ -102,7 +102,7 @@ class MusicOptionalCoverPreview:
     RETURN_NAMES = ("images",)
     FUNCTION = "preview"
     OUTPUT_NODE = True
-    CATEGORY = "MiniMax Music Production Toolkit/artwork"
+    CATEGORY = "Music Production Toolkit/artwork"
     DESCRIPTION = "Preview cover artwork only when cover creation is enabled. Off also skips upstream rendering."
 
     def check_lazy_status(self, enabled, images=None):

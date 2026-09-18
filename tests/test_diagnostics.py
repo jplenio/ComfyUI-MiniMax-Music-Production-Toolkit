@@ -4,6 +4,7 @@ from __future__ import annotations
 import importlib
 import logging
 import os
+import re
 import sys
 import types
 import unittest
@@ -71,6 +72,60 @@ class LoggingLevelTests(unittest.TestCase):
     def test_blank_value_falls_back(self):
         module = _load_logging_module("   ")
         self.assertEqual(module.get_logger().level, logging.INFO)
+
+
+class LogTimestampTests(unittest.TestCase):
+    """Every toolkit line must say when it happened, so a log reads as a timeline."""
+
+    STAMP = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} ")
+
+    @staticmethod
+    def _messages(module, *loggers):
+        records = []
+
+        class Capture(logging.Handler):
+            def emit(self, record):
+                records.append(record.getMessage())
+
+        handler = Capture()
+        base = module.get_logger()
+        base.addHandler(handler)
+        previous = base.propagate
+        base.propagate = False
+        try:
+            for logger in loggers:
+                logger.info("line from %s", logger.name)
+        finally:
+            base.removeHandler(handler)
+            base.propagate = previous
+        return records
+
+    def test_base_child_and_grandchild_lines_are_stamped(self):
+        module = _load_logging_module(None)
+        loggers = [module.get_logger(), module.get_logger("cover_lyrics"),
+                   module.get_logger("cover_lyrics.deep")]
+        messages = self._messages(module, *loggers)
+        self.assertEqual(len(messages), 3)
+        for message, logger in zip(messages, loggers):
+            self.assertTrue(self.STAMP.match(message), f"{logger.name}: {message!r}")
+            self.assertIn(logger.name, message)
+
+    def test_the_stamp_keeps_lazy_format_arguments_working(self):
+        module = _load_logging_module(None)
+        messages = self._messages(module, module.get_logger("music_cover"))
+        self.assertTrue(self.STAMP.match(messages[0]), messages[0])
+        self.assertTrue(messages[0].endswith("line from minimax_music_toolkit.music_cover"),
+                        messages[0])
+
+    def test_looking_a_logger_up_again_does_not_stack_the_filter(self):
+        """Two filters would print the date twice on every line."""
+        module = _load_logging_module(None)
+        logger = module.get_logger("music_generation")
+        before = len(logger.filters)
+        self.assertIs(module.get_logger("music_generation"), logger)
+        self.assertEqual(len(logger.filters), before)
+        messages = self._messages(module, logger)
+        self.assertEqual(len(self.STAMP.findall(messages[0])), 1, messages[0])
 
 
 class LlmDiagnosticsSourceTests(unittest.TestCase):

@@ -1,6 +1,6 @@
 # Notices and third-party components
 
-MiniMax Music Production Toolkit is an independent open-source project by Johannes Plenio and is not affiliated with or endorsed by MiniMax, ComfyUI/Comfy Org, Black Forest Labs, FlashSR, or the authors of third-party custom nodes used by the example workflow.
+Music Production Toolkit is an independent open-source project by Johannes Plenio and is not affiliated with or endorsed by MiniMax, ComfyUI/Comfy Org, Black Forest Labs, FlashSR, or the authors of third-party custom nodes used by the example workflow.
 
 The repository does **not** redistribute third-party model weights. Users must obtain models and weights from their respective official sources and comply with the applicable licenses and terms.
 

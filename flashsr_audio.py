@@ -575,7 +575,7 @@ class MiniMaxFlashSRAudio:
     RETURN_TYPES = ("AUDIO", "STRING")
     RETURN_NAMES = ("audio", "settings_json")
     FUNCTION = "upscale"
-    CATEGORY = "MiniMax Music Production Toolkit/audio"
+    CATEGORY = "Music Production Toolkit/audio"
 
     def upscale(self, audio=None, lowpass_input=False, output_sr="48000", auto_download=True, seed=None):
         """Upscale **every** batch item and return one ``[B, C, T]`` AUDIO.

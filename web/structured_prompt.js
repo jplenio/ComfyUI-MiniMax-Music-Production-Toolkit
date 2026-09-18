@@ -133,7 +133,7 @@ async function refreshFiles(node, kind) {
         node.__minimaxStructuredPromptError = null;
     } catch (error) {
         if (!isCurrentRequest(token)) return;
-        console.warn(`[MiniMax Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
+        console.warn(`[Music Production Toolkit] Could not refresh ${kind} prompt library:`, error);
         setComboValues(fileWidget, [], PLACEHOLDER);
         node.__minimaxStructuredPromptError = String(error?.message || error);
     }
@@ -177,7 +177,7 @@ async function prefillStructuredFields(node, file, { mode = "overwrite" } = {}) 
         { mode },
     );
     if (result.status === "error") {
-        console.warn(`[MiniMax Music Production Toolkit] Could not prefill structured prompt fields:`, result.error);
+        console.warn(`[Music Production Toolkit] Could not prefill structured prompt fields:`, result.error);
         node.__minimaxStructuredPromptError = String(result.error?.message || result.error);
     } else if (result.status === "applied") {
         node.__minimaxStructuredPromptError = null;
@@ -194,7 +194,7 @@ async function prefillSystemPrompt(node, file, { mode = "overwrite" } = {}) {
         { mode },
     );
     if (result.status === "error") {
-        console.warn(`[MiniMax Music Production Toolkit] Could not load system prompt text:`, result.error);
+        console.warn(`[Music Production Toolkit] Could not load system prompt text:`, result.error);
         node.__minimaxStructuredPromptError = String(result.error?.message || result.error);
     } else if (result.status === "applied") {
         node.__minimaxStructuredPromptError = null;
@@ -221,7 +221,7 @@ async function refreshOptionLists(node) {
         markDirty(node);
     } catch (error) {
         if (!isCurrentRequest(token)) return;
-        console.warn(`[MiniMax Music Production Toolkit] Could not refresh structured options:`, error);
+        console.warn(`[Music Production Toolkit] Could not refresh structured options:`, error);
     }
 }
 
@@ -321,7 +321,7 @@ async function saveCustomUserPrompt(node) {
         }
         markDirty(node);
     } catch (error) {
-        console.warn("[MiniMax Music Production Toolkit] Could not save custom user prompt:", error);
+        console.warn("[Music Production Toolkit] Could not save custom user prompt:", error);
         alert("Could not save custom user prompt: " + (error?.message || error));
     }
 }
@@ -370,7 +370,7 @@ async function saveCustomSystemPrompt(node) {
         }
         markDirty(node);
     } catch (error) {
-        console.warn("[MiniMax Music Production Toolkit] Could not save custom system prompt:", error);
+        console.warn("[Music Production Toolkit] Could not save custom system prompt:", error);
         alert("Could not save custom system prompt: " + (error?.message || error));
     }
 }

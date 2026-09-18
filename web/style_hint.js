@@ -60,7 +60,7 @@ async function refreshFiles(node) {
         markDirty(node);
     } catch (error) {
         if (!isCurrentRequest(token)) return;
-        console.warn(`[MiniMax Music Production Toolkit] Could not refresh the style-hint library:`, error);
+        console.warn(`[Music Production Toolkit] Could not refresh the style-hint library:`, error);
         setComboValues(fileWidget, [], PLACEHOLDER);
         markDirty(node);
     }
@@ -84,7 +84,7 @@ async function applyHintText(node, file, { mode = "overwrite" } = {}) {
         text = await fetchPromptText("user", selection.source, selection.directory, file);
     } catch (error) {
         if (isCurrentRequest(token)) {
-            console.warn(`[MiniMax Music Production Toolkit] Could not load the style hint text:`, error);
+            console.warn(`[Music Production Toolkit] Could not load the style hint text:`, error);
         }
         return;
     }

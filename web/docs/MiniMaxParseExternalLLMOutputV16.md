@@ -7,7 +7,7 @@ The legacy output socket remains named `caption` for both formats. Section order
 is tolerated defensively even though system prompts require the canonical order.
 
 **Node ID:** `MiniMaxParseExternalLLMOutputV16`  
-**Category:** `MiniMax Music Production Toolkit/prompts`
+**Category:** `Music Production Toolkit/prompts`
 
 ## Inputs
 

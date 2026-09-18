@@ -186,7 +186,7 @@ class MiniMaxStructuredPromptV20:
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("system_prompt", "user_prompt", "source_name", "structured_summary_json")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/prompts"
+    CATEGORY = "Music Production Toolkit/prompts"
 
     @classmethod
     def VALIDATE_INPUTS(cls, **kwargs):

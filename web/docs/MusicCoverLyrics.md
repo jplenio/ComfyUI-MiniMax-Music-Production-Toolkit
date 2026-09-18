@@ -30,10 +30,14 @@ DLL directories are exposed inside the Windows worker; no libraries are installe
 The child exits and releases its weights before the music stage.
 
 The source language accepts codes such as `en`/`de` and common names such as
-`English`, `German` or `Deutsch`, normalized before model loading. Invalid input
-does not cause a pointless CPU retry. The report preserves both the requested
-language and the effective code. VAD retained duration/fraction describes the
-initial filtered attempt; `vad_filter` describes the accepted attempt.
+`English`, `German` or `Deutsch`, normalized before model loading. The field offers
+`auto` or a concrete language and has no placeholder choice: a cover that never
+chooses one auto-detects. A legacy saved workflow can still carry the toolkit's
+`custom` placeholder here; that counts as auto-detect and is logged as such, while a
+real value Whisper does not know is refused. Invalid input does not cause a pointless
+CPU retry. The report preserves both the requested language and the effective code.
+VAD retained duration/fraction describes the initial filtered attempt; `vad_filter`
+describes the accepted attempt.
 
 Outputs: `cover_lyrics` is plain text; `lyrics_report_json` includes that text,
 segment/word timestamps and engine settings. **Connect the report output to the

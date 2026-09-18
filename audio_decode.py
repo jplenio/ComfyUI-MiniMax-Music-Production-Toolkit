@@ -41,7 +41,7 @@ class MiniMaxSafeAudioDecode:
     RETURN_TYPES = ("AUDIO",)
     RETURN_NAMES = ("AUDIO",)
     FUNCTION = "decode"
-    CATEGORY = "MiniMax Music Production Toolkit/audio"
+    CATEGORY = "Music Production Toolkit/audio"
 
     @staticmethod
     def _attempt(vae, latent, tiled, tile_size, overlap, rate):

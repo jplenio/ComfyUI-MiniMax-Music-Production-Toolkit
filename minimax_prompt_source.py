@@ -357,7 +357,7 @@ class MiniMaxPromptSourceArtworkV16:
     RETURN_NAMES = ("caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json")
     OUTPUT_IS_LIST = (True, True, True, True, True, True, True, True, True, True, True)
     FUNCTION = "load"
-    CATEGORY = "MiniMax Music Production Toolkit/batch"
+    CATEGORY = "Music Production Toolkit/batch"
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -460,7 +460,7 @@ class MiniMaxLLMTemplateV16:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("system_prompt", "user_prompt", "source_name")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/prompts"
+    CATEGORY = "Music Production Toolkit/prompts"
 
     @classmethod
     def VALIDATE_INPUTS(cls, **kwargs):
@@ -594,7 +594,7 @@ class MiniMaxParseExternalLLMOutputV16:
     RETURN_NAMES = ("caption", "lyrics", "title", "image_prompt", "source_name", "generation_seed", "run_index", "variant_count", "source_path", "prompt_origin", "prompt_provenance_json")
     OUTPUT_IS_LIST = (True, True, True, True, True, True, True, True, True, True, True)
     FUNCTION = "parse"
-    CATEGORY = "MiniMax Music Production Toolkit/prompts"
+    CATEGORY = "Music Production Toolkit/prompts"
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):

@@ -22,6 +22,9 @@ from .cover_score import (
     score_syllable_brief,
 )
 from .model_profiles import profile_from_payload
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("music_cover")
 
 SELECT_AUDIO = "<select audio>"
 SHEETSAGE_MODEL = "sheetsage2_bf16.safetensors"
@@ -138,6 +141,23 @@ def cover_prompt_instructions(
     return instructions
 
 
+def resolve_source_path(audio) -> "Path | None":
+    """Absolute path of a selected source file, or ``None`` outside ComfyUI.
+
+    Shared by the source node and the generation node so both name the same file in
+    the log, and so neither has to re-implement ComfyUI's annotated-path lookup.
+    """
+    name = str(audio or "").strip()
+    if not name:
+        return None
+    try:
+        import folder_paths
+
+        return Path(folder_paths.get_annotated_filepath(name))
+    except (ImportError, OSError, TypeError, ValueError):
+        return None
+
+
 def source_basename(filename):
     # ComfyUI can append a storage annotation to an input selection.
     name = re.sub(r"\s+\[(?:input|output|temp)\]$", "", str(filename).strip())
@@ -198,7 +218,7 @@ class MusicCoverSource:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("cover_source_json", "cover_title")
     FUNCTION = "select"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = (
         "Choose audio for YuE2 Cover and what happens to the vocals. Ignored for other models. "
         "Full retains melody/chord planning; melody gives the new accompaniment more freedom. "
@@ -239,11 +259,18 @@ class MusicCoverSource:
         data = cover_source({"schema": "music_cover_source_v1", "audio": audio,
                              "mode": mode, "audio_encoder": sheetsage2_model,
                              "lyrics_mode": lyrics_mode, "lead_instrument": lead_instrument})
-        import folder_paths
-        path = Path(folder_paths.get_annotated_filepath(audio))
-        if not path.is_file():
+        path = resolve_source_path(audio)
+        if path is None or not path.is_file():
             raise ValueError(f"YuE2 Cover: audio file not found: {source_basename(audio)}")
         data["source_bytes"] = path.stat().st_size
+        # Which file a cover used is part of the run record: the exports and the
+        # production JSON carry only the derived title, so without this line a log
+        # cannot say what the run was made from.
+        LOGGER.info(
+            "Cover source: %s | mode=%s | lyrics=%s | lead instrument=%s | %.1f MB | %s",
+            data["source_filename"], data["mode"], data["lyrics_mode"],
+            data["lead_instrument"], path.stat().st_size / 1e6, path,
+        )
         return (json.dumps(data, ensure_ascii=False), data["title"])
 
 
@@ -259,7 +286,7 @@ class MusicCoverTranscription:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("cover_abc",)
     FUNCTION = "transcribe"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = "For YuE2 Cover only: load the selected audio and transcribe its melody/score with native SheetSage2 after model preflight. Other modes load nothing."
 
     def transcribe(self, model_profile_json, cover_source_json="", model_check_report=""):
@@ -293,7 +320,7 @@ class MusicCoverScore:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("cover_abc", "syllable_brief", "score_report_json")
     FUNCTION = "adapt"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = (
         "Adapts the SheetSage2 score to the selected cover lyrics mode. Instrumental covers "
         "mute Vocal notes and transfer the melody to Ins, replacing overlapping Ins material; "

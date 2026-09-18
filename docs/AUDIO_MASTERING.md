@@ -13,7 +13,7 @@ Restart ComfyUI and refresh the frontend after installing the files.
 
 ## Nodes and connections
 
-Find the three nodes in **MiniMax Music Production Toolkit / mastering**:
+Find the three nodes in **Music Production Toolkit / mastering**:
 
 1. **Auto-EQ – Analyze / Propose** (`MiniMaxAutoEQAnalyze`, optional).
 2. **Parametric EQ – 8 Bands** (`MiniMaxParametricEQ`).

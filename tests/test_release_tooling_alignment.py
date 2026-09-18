@@ -306,5 +306,39 @@ class RequirementFileInstallabilityTests(unittest.TestCase):
             self.assertIsNone(release_common.requirement_parse_error(good))
 
 
+class BrandingAssetTests(unittest.TestCase):
+    """A branding asset nothing refers to must not reach a release.
+
+    Preparing 3.1.1 packed `banner-old.png` and `icon-old.png` - superseded art kept as
+    a backup - into the release archive: the packager walks the working tree, and no
+    check said those two files were unused. Their names still looked plausible, which
+    is why a machine has to look.
+    """
+
+    def test_no_branding_asset_is_an_orphan(self):
+        orphans = release_common.unreferenced_branding_assets(ROOT)
+        self.assertEqual(
+            orphans, [],
+            "branding assets no document refers to - they would still be packed into the "
+            "release archive: " + ", ".join(orphans),
+        )
+
+    def test_the_guard_notices_a_leftover(self):
+        """Falsification: the guard has to fail on the situation that really happened."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "assets" / "branding").mkdir(parents=True)
+            (root / "assets" / "branding" / "banner.png").write_bytes(b"png")
+            (root / "assets" / "branding" / "banner-old.png").write_bytes(b"png")
+            (root / "README.md").write_text(
+                '<img src="assets/branding/banner.png" />', encoding="utf-8")
+            self.assertEqual(release_common.unreferenced_branding_assets(root),
+                             ["banner-old.png"])
+
+    def test_an_empty_branding_folder_is_not_an_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(release_common.unreferenced_branding_assets(Path(tmp)), [])
+
+
 if __name__ == "__main__":
     unittest.main()

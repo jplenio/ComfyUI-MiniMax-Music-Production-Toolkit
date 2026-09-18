@@ -3,7 +3,7 @@
 Loads prompt files or manual prompt fields and emits one or more song variants with reproducible source metadata and seeds.
 
 **Node ID:** `MiniMaxPromptBatchLoader`  
-**Category:** `MiniMax Music Production Toolkit/batch`
+**Category:** `Music Production Toolkit/batch`
 
 ## Inputs
 

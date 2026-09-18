@@ -72,7 +72,7 @@ class AudioArtifactReduction:
     RETURN_TYPES = ("AUDIO", "AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "removed_audio", "artifact_reduction_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/audio restoration"
+    CATEGORY = "Music Production Toolkit/audio restoration"
 
     def process(self, audio, enabled=True, mode="Reduce", sensitivity="Balanced",
                 min_frequency_hz=3000.0, max_frequency_hz=18000.0, max_reduction_db=3.0,

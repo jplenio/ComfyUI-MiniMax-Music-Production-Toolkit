@@ -56,7 +56,7 @@ class MiniMaxSongMetadata:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("metadata_json", "summary")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/metadata"
+    CATEGORY = "Music Production Toolkit/metadata"
 
     def build(self, title, caption, lyrics, image_prompt, source_name, source_path, prompt_origin, prompt_provenance_json,
               run_index, variant_count, generation_seed, max_duration, text_seed, text_cfg_scale, text_top_k,
@@ -179,7 +179,7 @@ class MiniMaxMetadataLoader:
         "pre_preset", "post_preset", "metadata_json"
     )
     FUNCTION = "load"
-    CATEGORY = "MiniMax Music Production Toolkit/metadata"
+    CATEGORY = "Music Production Toolkit/metadata"
 
     def load(self, metadata_file):
         raw = (metadata_file or "").strip()

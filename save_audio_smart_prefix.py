@@ -188,7 +188,7 @@ class SaveAudioSmartPrefix:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("audio", "saved_path", "metadata_path", "save_info_json")
     FUNCTION = "save"
-    CATEGORY = "MiniMax Music Production Toolkit/save"
+    CATEGORY = "Music Production Toolkit/save"
     OUTPUT_NODE = True
 
     def save(self, audio, filename_prefix, format, collision_mode, create_directories, mp3_quality,

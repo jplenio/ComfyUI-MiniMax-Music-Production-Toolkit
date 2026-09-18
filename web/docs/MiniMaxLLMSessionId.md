@@ -8,7 +8,7 @@ or another LLM implementation.
 Creates a changing text session ID from a seed so an external LLM node is re-executed when the creative prompt itself is unchanged. Set the seed widget's control-after-generate mode to Randomize or Increment for batch use.
 
 **Node ID:** `MiniMaxLLMSessionId`  
-**Category:** `MiniMax Music Production Toolkit/utilities`
+**Category:** `Music Production Toolkit/utilities`
 
 ## Inputs
 

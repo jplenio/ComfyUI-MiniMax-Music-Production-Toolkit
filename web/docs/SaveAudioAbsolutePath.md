@@ -3,7 +3,7 @@
 Saves FLAC/MP3/WAV to an explicit absolute directory with configurable quality, bit depth and safe clipping handling.
 
 **Node ID:** `SaveAudioAbsolutePath`  
-**Category:** `MiniMax Music Production Toolkit/save`
+**Category:** `Music Production Toolkit/save`
 
 ## Inputs
 

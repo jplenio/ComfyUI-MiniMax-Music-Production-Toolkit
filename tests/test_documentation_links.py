@@ -86,14 +86,20 @@ class DocumentationLinkTests(unittest.TestCase):
 
     def test_the_documentation_layout_is_the_intended_one(self):
         root_docs = {path.name for path in ROOT.glob("*.md")}
-        # GitHub-conventional files stay at the root; topic docs live in docs/.
+        # Release notes are matched by pattern instead of being listed one by one: a new
+        # version must not require editing this test, and the validator already demands
+        # the notes file for the current VERSION. Everything else at the root is pinned
+        # exactly, so a stray document still fails here.
+        notes = {name for name in root_docs if name.startswith("RELEASE_NOTES_")}
         self.assertEqual(
-            root_docs,
+            root_docs - notes,
             {"README.md", "CHANGELOG.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md",
              "SECURITY.md", "NOTICE.md", "INSTALLATION.md", "TROUBLESHOOTING.md",
-             "DEVELOPMENT.md", "PUBLISHING.md", "RELEASE_NOTES_v1.0.x.md",
-             "RELEASE_NOTES_v2.x.md", "RELEASE_NOTES_v3.0.0.md", "RELEASE_NOTES_v3.0.1.md",
-             "RELEASE_NOTES_v3.1.0.md"})
+             "DEVELOPMENT.md", "PUBLISHING.md"})
+        self.assertTrue(notes, "the root must carry at least one release-notes file")
+        for name in sorted(notes):
+            self.assertRegex(name, r"^RELEASE_NOTES_v\d+(\.(?:\d+|x)){1,2}\.md$",
+                             f"{name} is not a conventional release-notes name")
         for name in ("WORKFLOW.md", "YUE2.md", "AUDIO_PIPELINE.md", "LLM_PROVIDERS.md",
                      "PROMPT_LIBRARY.md"):
             self.assertTrue((ROOT / "docs" / name).is_file(), f"docs/{name} is missing")
@@ -116,7 +122,7 @@ class DocumentationLinkTests(unittest.TestCase):
         """
         deliberately_unlinked = {
             "KONTEXT.md", "PROJECT_STATE.md", "REFACTOR-PLAN.md", "IMPROVE-TODO.md",
-            "REDDIT_POST_v3.0.0.md", "REDDIT_POST_v3.0.1.md",
+            "REDDIT_POST_v3.0.0.md", "REDDIT_POST_v3.0.1.md", "REDDIT_POST_v3.1.1.md",
         }
         linked = set()
         for path in markdown_files():

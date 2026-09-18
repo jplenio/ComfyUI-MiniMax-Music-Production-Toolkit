@@ -161,7 +161,7 @@ class MiniMaxPromptReport:
     # include it in the execution set and the node never produces its ui text.
     OUTPUT_NODE = True
     FUNCTION = "report"
-    CATEGORY = "MiniMax Music Production Toolkit/prompt"
+    CATEGORY = "Music Production Toolkit/prompt"
     DESCRIPTION = (
         "Builds a readable Markdown report of the exact prompt text MiniMax Music 3 "
         "received (caption + lyrics, cleaned exactly like the MiniMax tokenizer, plus "

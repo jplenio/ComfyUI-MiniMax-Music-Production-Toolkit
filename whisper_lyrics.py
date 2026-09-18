@@ -59,11 +59,33 @@ kk km kn ko la lb ln lo lt lv mg mi mk ml mn mr ms mt my ne nl nn no oc pa pl
 ps pt ro ru sa sd si sk sl sn so sq sr su sv sw ta te tg th tk tl tr tt uk ur
 uz vi yi yo zh yue'''.split())
 
+# The toolkit's own "this field is not set" choice. It reaches the language parameter
+# whenever a graph links a structured field's output into this node - the language
+# dropdown of *Song request · template & fields* is built from the same sentinel - or
+# when a saved workflow kept the placeholder in the widget. It is not a typo, and
+# refusing it aborts a run that could simply auto-detect: the toolkit shipped exactly
+# this value on the Whisper node, and every original-lyrics cover died with
+# "unsupported Whisper source language 'custom'". tests/test_whisper_language.py
+# asserts that it stays identical to ``prompt_metadata.CUSTOM``.
+_UNSET_LANGUAGE_VALUES = frozenset({'custom'})
+
 
 def normalize_whisper_language(value) -> Optional[str]:
-    """Validate before decoding/loading; never turn an unknown value into auto."""
+    """Validate before decoding/loading; never turn an unknown value into auto.
+
+    One deliberate exception: the toolkit's own "not set" sentinel means auto-detect,
+    because that is what it means in every other field of this toolkit. Any other
+    unknown value still fails loudly rather than silently transcribing in the wrong
+    language.
+    """
     requested = str(value or '').strip().casefold()
     if requested in {'', 'auto', 'automatic', 'auto-detect', 'automatisch'}:
+        return None
+    if requested in _UNSET_LANGUAGE_VALUES:
+        LOGGER.info(
+            "Whisper source language %r means 'not set'; detecting the language instead.",
+            value,
+        )
         return None
     code = _LANGUAGE_ALIASES.get(requested, requested)
     if code not in _WHISPER_LANGUAGE_CODES:
@@ -448,7 +470,7 @@ class MusicCoverLyrics:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("cover_lyrics", "lyrics_report_json")
     FUNCTION = "transcribe_lyrics"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
     DESCRIPTION = (
         "For YuE2 Cover with new/original lyrics: transcribe source words and timings as a "
         "phrasing reference for new lyrics or authoritative text for original lyrics. "

@@ -1,7 +1,7 @@
 {
   "AudioArtifactReduction": {
     "python_class": "AudioArtifactReduction",
-    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "category": "Music Production Toolkit/audio restoration",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -96,7 +96,7 @@
   },
   "AudioDeclipRepair": {
     "python_class": "AudioDeclipRepair",
-    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "category": "Music Production Toolkit/audio restoration",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -207,7 +207,7 @@
   },
   "AudioReleasePrep": {
     "python_class": "AudioReleasePrep",
-    "category": "MiniMax Music Production Toolkit/mastering",
+    "category": "Music Production Toolkit/mastering",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -274,7 +274,7 @@
   },
   "FlashSRHybridCrossover": {
     "python_class": "FlashSRHybridCrossover",
-    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "category": "Music Production Toolkit/audio restoration",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -342,7 +342,7 @@
   },
   "FlashSRLowpassLab": {
     "python_class": "FlashSRLowpassLab",
-    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "category": "Music Production Toolkit/audio restoration",
     "function": "run",
     "output_node": false,
     "output_is_list": [],
@@ -448,7 +448,7 @@
   },
   "FlashSRProcessingSettings": {
     "python_class": "FlashSRProcessingSettings",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -590,7 +590,7 @@
   },
   "HFCymbalShimmerRepair": {
     "python_class": "HFCymbalShimmerRepair",
-    "category": "MiniMax Music Production Toolkit/audio restoration",
+    "category": "Music Production Toolkit/audio restoration",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -709,7 +709,7 @@
   },
   "KSamplerWithConfig": {
     "python_class": "KSamplerWithConfig",
-    "category": "MiniMax Music Production Toolkit/utilities",
+    "category": "Music Production Toolkit/utilities",
     "function": "sample",
     "output_node": false,
     "output_is_list": [],
@@ -798,7 +798,7 @@
   },
   "MiniMaxAudioBranchSelect": {
     "python_class": "MiniMaxAudioBranchSelect",
-    "category": "MiniMax Music Production Toolkit/audio",
+    "category": "Music Production Toolkit/audio",
     "function": "select",
     "output_node": false,
     "output_is_list": [],
@@ -861,7 +861,7 @@
   },
   "MiniMaxAudioTagReader": {
     "python_class": "MiniMaxAudioTagReader",
-    "category": "MiniMax Music Production Toolkit/audio",
+    "category": "Music Production Toolkit/audio",
     "function": "read",
     "output_node": false,
     "output_is_list": [],
@@ -905,7 +905,7 @@
   },
   "MiniMaxAutoEQAnalyze": {
     "python_class": "MiniMaxAutoEQAnalyze",
-    "category": "MiniMax Music Production Toolkit/mastering",
+    "category": "Music Production Toolkit/mastering",
     "function": "analyze",
     "output_node": false,
     "output_is_list": [],
@@ -994,7 +994,7 @@
   },
   "MiniMaxCoverControl": {
     "python_class": "MiniMaxCoverControl",
-    "category": "MiniMax Music Production Toolkit/artwork",
+    "category": "Music Production Toolkit/artwork",
     "function": "configure",
     "output_node": false,
     "output_is_list": [],
@@ -1018,7 +1018,7 @@
   },
   "MiniMaxFlashSRAudio": {
     "python_class": "MiniMaxFlashSRAudio",
-    "category": "MiniMax Music Production Toolkit/audio",
+    "category": "Music Production Toolkit/audio",
     "function": "upscale",
     "output_node": false,
     "output_is_list": [],
@@ -1064,7 +1064,7 @@
   },
   "MiniMaxInstrumentalPick": {
     "python_class": "MiniMaxInstrumentalPick",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "pick",
     "output_node": false,
     "output_is_list": [],
@@ -1235,7 +1235,7 @@
   },
   "MiniMaxInstrumentalVocalCheck": {
     "python_class": "MiniMaxInstrumentalVocalCheck",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "check",
     "output_node": false,
     "output_is_list": [],
@@ -1308,7 +1308,7 @@
   },
   "MiniMaxLLMChat": {
     "python_class": "MiniMaxLLMChat",
-    "category": "MiniMax Music Production Toolkit/llm",
+    "category": "Music Production Toolkit/llm",
     "function": "chat",
     "output_node": false,
     "output_is_list": [],
@@ -1604,7 +1604,7 @@
   },
   "MiniMaxLLMSessionId": {
     "python_class": "MiniMaxLLMSessionId",
-    "category": "MiniMax Music Production Toolkit/utilities",
+    "category": "Music Production Toolkit/utilities",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -1641,7 +1641,7 @@
   },
   "MiniMaxLLMTemplateV16": {
     "python_class": "MiniMaxLLMTemplateV16",
-    "category": "MiniMax Music Production Toolkit/prompts",
+    "category": "Music Production Toolkit/prompts",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -1998,7 +1998,7 @@
   },
   "MiniMaxLLMUnload": {
     "python_class": "MiniMaxLLMUnload",
-    "category": "MiniMax Music Production Toolkit/llm",
+    "category": "Music Production Toolkit/llm",
     "function": "unload",
     "output_node": false,
     "output_is_list": [],
@@ -2036,7 +2036,7 @@
   },
   "MiniMaxMasteringCompressor": {
     "python_class": "MiniMaxMasteringCompressor",
-    "category": "MiniMax Music Production Toolkit/mastering",
+    "category": "Music Production Toolkit/mastering",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -2225,7 +2225,7 @@
   },
   "MiniMaxMetadataLoader": {
     "python_class": "MiniMaxMetadataLoader",
-    "category": "MiniMax Music Production Toolkit/metadata",
+    "category": "Music Production Toolkit/metadata",
     "function": "load",
     "output_node": false,
     "output_is_list": [],
@@ -2284,7 +2284,7 @@
   },
   "MiniMaxModelAutodownload": {
     "python_class": "MiniMaxModelAutodownload",
-    "category": "MiniMax Music Production Toolkit/utilities",
+    "category": "Music Production Toolkit/utilities",
     "function": "check",
     "output_node": false,
     "output_is_list": [],
@@ -2363,7 +2363,7 @@
   },
   "MiniMaxMusic3GenerationSettings": {
     "python_class": "MiniMaxMusic3GenerationSettings",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -2464,7 +2464,7 @@
   },
   "MiniMaxMusicModelProfile": {
     "python_class": "MiniMaxMusicModelProfile",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -2506,7 +2506,7 @@
   },
   "MiniMaxMusicModelSettings": {
     "python_class": "MiniMaxMusicModelSettings",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -2775,7 +2775,7 @@
   },
   "MiniMaxOutputPaths": {
     "python_class": "MiniMaxOutputPaths",
-    "category": "MiniMax Music Production Toolkit/batch",
+    "category": "Music Production Toolkit/batch",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -2862,7 +2862,7 @@
   },
   "MiniMaxParametricEQ": {
     "python_class": "MiniMaxParametricEQ",
-    "category": "MiniMax Music Production Toolkit/mastering",
+    "category": "Music Production Toolkit/mastering",
     "function": "process",
     "output_node": false,
     "output_is_list": [],
@@ -2901,7 +2901,7 @@
   },
   "MiniMaxParseExternalLLMOutputV16": {
     "python_class": "MiniMaxParseExternalLLMOutputV16",
-    "category": "MiniMax Music Production Toolkit/prompts",
+    "category": "Music Production Toolkit/prompts",
     "function": "parse",
     "output_node": false,
     "output_is_list": [
@@ -3095,7 +3095,7 @@
   },
   "MiniMaxPromptBatchLoader": {
     "python_class": "MiniMaxPromptBatchLoader",
-    "category": "MiniMax Music Production Toolkit/batch",
+    "category": "Music Production Toolkit/batch",
     "function": "load",
     "output_node": false,
     "output_is_list": [
@@ -3210,7 +3210,7 @@
   },
   "MiniMaxPromptReport": {
     "python_class": "MiniMaxPromptReport",
-    "category": "MiniMax Music Production Toolkit/prompt",
+    "category": "Music Production Toolkit/prompt",
     "function": "report",
     "output_node": true,
     "output_is_list": [],
@@ -3262,7 +3262,7 @@
   },
   "MiniMaxPromptSourceArtworkV16": {
     "python_class": "MiniMaxPromptSourceArtworkV16",
-    "category": "MiniMax Music Production Toolkit/batch",
+    "category": "Music Production Toolkit/batch",
     "function": "load",
     "output_node": false,
     "output_is_list": [
@@ -3396,7 +3396,7 @@
   },
   "MiniMaxSafeAudioDecode": {
     "python_class": "MiniMaxSafeAudioDecode",
-    "category": "MiniMax Music Production Toolkit/audio",
+    "category": "Music Production Toolkit/audio",
     "function": "decode",
     "output_node": false,
     "output_is_list": [],
@@ -3447,7 +3447,7 @@
   },
   "MiniMaxSaveProductionJSON": {
     "python_class": "MiniMaxSaveProductionJSON",
-    "category": "MiniMax Music Production Toolkit/save",
+    "category": "Music Production Toolkit/save",
     "function": "save",
     "output_node": true,
     "output_is_list": [],
@@ -3738,7 +3738,7 @@
       "workflow_name": [
         "STRING",
         {
-          "default": "MiniMax Music Production Toolkit 3.1.0",
+          "default": "Music Production Toolkit 3.1.1",
           "multiline": false
         }
       ],
@@ -3813,7 +3813,7 @@
   },
   "MiniMaxSongMetadata": {
     "python_class": "MiniMaxSongMetadata",
-    "category": "MiniMax Music Production Toolkit/metadata",
+    "category": "Music Production Toolkit/metadata",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -4027,7 +4027,7 @@
   },
   "MiniMaxSquareImageSize": {
     "python_class": "MiniMaxSquareImageSize",
-    "category": "MiniMax Music Production Toolkit/artwork",
+    "category": "Music Production Toolkit/artwork",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -4071,7 +4071,7 @@
   },
   "MiniMaxStandardAudioTags": {
     "python_class": "MiniMaxStandardAudioTags",
-    "category": "MiniMax Music Production Toolkit/metadata",
+    "category": "Music Production Toolkit/metadata",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -4151,7 +4151,7 @@
   },
   "MiniMaxStructuredPromptV20": {
     "python_class": "MiniMaxStructuredPromptV20",
-    "category": "MiniMax Music Production Toolkit/prompts",
+    "category": "Music Production Toolkit/prompts",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -5080,7 +5080,7 @@
   },
   "MiniMaxStyleHint": {
     "python_class": "MiniMaxStyleHint",
-    "category": "MiniMax Music Production Toolkit/prompts",
+    "category": "Music Production Toolkit/prompts",
     "function": "resolve",
     "output_node": false,
     "output_is_list": [],
@@ -5371,7 +5371,7 @@
   },
   "MusicCoverLyrics": {
     "python_class": "MusicCoverLyrics",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "transcribe_lyrics",
     "output_node": false,
     "output_is_list": [],
@@ -5496,7 +5496,7 @@
   },
   "MusicCoverScore": {
     "python_class": "MusicCoverScore",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "adapt",
     "output_node": false,
     "output_is_list": [],
@@ -5530,7 +5530,7 @@
   },
   "MusicCoverSource": {
     "python_class": "MusicCoverSource",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "select",
     "output_node": false,
     "output_is_list": [],
@@ -5609,7 +5609,7 @@
   },
   "MusicCoverTranscription": {
     "python_class": "MusicCoverTranscription",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "transcribe",
     "output_node": false,
     "output_is_list": [],
@@ -5645,7 +5645,7 @@
   },
   "MusicGeneration": {
     "python_class": "MusicGeneration",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "generate",
     "output_node": false,
     "output_is_list": [],
@@ -5736,7 +5736,7 @@
   },
   "MusicGenerationReceipt": {
     "python_class": "MusicGenerationReceipt",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -5791,7 +5791,7 @@
   },
   "MusicOptionalCoverPreview": {
     "python_class": "MusicOptionalCoverPreview",
-    "category": "MiniMax Music Production Toolkit/artwork",
+    "category": "Music Production Toolkit/artwork",
     "function": "preview",
     "output_node": true,
     "output_is_list": [],
@@ -5821,7 +5821,7 @@
   },
   "MusicOptionalStage": {
     "python_class": "MusicOptionalStage",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "select",
     "output_node": false,
     "output_is_list": [],
@@ -5945,7 +5945,7 @@
   },
   "MusicProductionControl": {
     "python_class": "MusicProductionControl",
-    "category": "MiniMax Music Production Toolkit/config",
+    "category": "Music Production Toolkit/config",
     "function": "build",
     "output_node": false,
     "output_is_list": [],
@@ -6023,7 +6023,7 @@
   },
   "SaveAudioAbsolutePath": {
     "python_class": "SaveAudioAbsolutePath",
-    "category": "MiniMax Music Production Toolkit/save",
+    "category": "Music Production Toolkit/save",
     "function": "save",
     "output_node": true,
     "output_is_list": [],
@@ -6125,7 +6125,7 @@
   },
   "SaveAudioSmartPrefix": {
     "python_class": "SaveAudioSmartPrefix",
-    "category": "MiniMax Music Production Toolkit/save",
+    "category": "Music Production Toolkit/save",
     "function": "save",
     "output_node": true,
     "output_is_list": [],
@@ -6281,7 +6281,7 @@
   },
   "SaveImageSmartPrefix": {
     "python_class": "SaveImageSmartPrefix",
-    "category": "MiniMax Music Production Toolkit/artwork",
+    "category": "Music Production Toolkit/artwork",
     "function": "save",
     "output_node": true,
     "output_is_list": [],
@@ -6365,7 +6365,7 @@
   },
   "YuE2CoverStudioApply": {
     "python_class": "CoverStudioApply",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "apply",
     "output_node": false,
     "output_is_list": [],
@@ -6420,7 +6420,7 @@
   },
   "YuE2CoverStudioPlan": {
     "python_class": "CoverStudioPlan",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "plan",
     "output_node": false,
     "output_is_list": [],
@@ -6656,7 +6656,7 @@
   },
   "YuE2CoverStudioTransform": {
     "python_class": "CoverStudioTransform",
-    "category": "MiniMax Music Production Toolkit/generation",
+    "category": "Music Production Toolkit/generation",
     "function": "transform",
     "output_node": false,
     "output_is_list": [],

@@ -3,7 +3,7 @@
 Derives MiniMax Music generation parameters and reproducible text/sampler seeds from the primary generation seed.
 
 **Node ID:** `MiniMaxMusic3GenerationSettings`  
-**Category:** `MiniMax Music Production Toolkit/config`
+**Category:** `Music Production Toolkit/config`
 
 ## Inputs
 

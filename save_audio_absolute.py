@@ -261,7 +261,7 @@ class SaveAudioAbsolutePath:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("saved_paths",)
     FUNCTION = "save"
-    CATEGORY = "MiniMax Music Production Toolkit/save"
+    CATEGORY = "Music Production Toolkit/save"
     OUTPUT_NODE = True
 
     def save(

@@ -3,7 +3,7 @@
 Detects near-ceiling hard-clipping plateaus and reconstructs plausible missing peak curvature before FlashSR. Uses local cubic-Hermite interpolation and only a single optional whole-track safety gain; it cannot recover exact information destroyed by clipping.
 
 **Node ID:** `AudioDeclipRepair`  
-**Category:** `MiniMax Music Production Toolkit/audio restoration`
+**Category:** `Music Production Toolkit/audio restoration`
 
 ## Inputs
 

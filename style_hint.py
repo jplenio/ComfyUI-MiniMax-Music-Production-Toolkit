@@ -115,7 +115,7 @@ class MiniMaxStyleHint:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("style_hint",)
     FUNCTION = "resolve"
-    CATEGORY = "MiniMax Music Production Toolkit/prompts"
+    CATEGORY = "Music Production Toolkit/prompts"
     DESCRIPTION = (
         "Provides the style text the Cover Studio may use as a hint for reworking the source "
         "material. Use it when you want the studio's planning and transformation calls to see the "

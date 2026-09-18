@@ -3,7 +3,7 @@
 Builds the in-memory reproducibility metadata for one generated song.
 
 **Node ID:** `MiniMaxSongMetadata`  
-**Category:** `MiniMax Music Production Toolkit/metadata`
+**Category:** `Music Production Toolkit/metadata`
 
 The metadata includes:
 

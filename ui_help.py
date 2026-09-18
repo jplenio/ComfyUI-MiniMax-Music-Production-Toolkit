@@ -137,7 +137,7 @@ NODE_INPUT_TOOLTIPS = {
         "cover_source_json": "Connect Cover song / source audio; it carries the lyrics mode and the audio file.",
         "model_check_report": "Connect the model check node so configured downloads finish before Whisper loads.",
         "whisper_model": "CTranslate2 Whisper checkpoint from models_config.json. The bundled default is whisper-large-v3; no singing-specific quality optimum is claimed. Extend the catalog for another checkpoint.",
-        "language": "Auto detects the language; forcing it improves accuracy and is the documented remedy for wrong-language or repeated output. Use the language actually sung.",
+        "language": "Auto detects the language; forcing it improves accuracy and is the documented remedy for wrong-language or repeated output. Use the language actually sung - the source audio's, not the new lyrics'. The field offers auto or a concrete language and has no placeholder choice; a legacy 'custom' value from an older saved workflow is treated as auto.",
         "device": "Auto prefers CUDA and falls back to CPU with int8 precision when the GPU cannot run the checkpoint.",
         "compute_type": "Precision for the checkpoint. Auto uses float16 on CUDA and int8 on CPU, which is the recommended default on a 16 GB card.",
         "vad_filter": "Off by default for songs. Speech detection may miss singing. If enabled and it retains less than half the audio or no segments, retry the full audio without VAD and record both attempts. Review recognition errors/hallucinations either way.",

@@ -3,7 +3,7 @@
 High-quality sample-rate conversion plus optional BS.1770 loudness/true-peak measurement and constant full-program gain. It never uses compressor/AGC/time-varying loudness riding.
 
 **Node ID:** `AudioReleasePrep`  
-**Category:** `MiniMax Music Production Toolkit/mastering`
+**Category:** `Music Production Toolkit/mastering`
 
 ## Inputs
 

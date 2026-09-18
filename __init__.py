@@ -1,4 +1,4 @@
-"""ComfyUI MiniMax Music Production Toolkit.
+"""ComfyUI Music Production Toolkit.
 
 The node class identifiers intentionally remain backwards-compatible with the
 earlier workflow versions, while display names and documentation use the

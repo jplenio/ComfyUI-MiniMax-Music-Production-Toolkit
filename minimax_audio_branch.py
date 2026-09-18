@@ -127,7 +127,7 @@ class MiniMaxAudioBranchSelect:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "branch_report_json", "info")
     FUNCTION = "select"
-    CATEGORY = "MiniMax Music Production Toolkit/audio"
+    CATEGORY = "Music Production Toolkit/audio"
     DESCRIPTION = (
         "Picks one audio branch explicitly (keep original / careful restore / reconstruct bandwidth) and uses "
         "ComfyUI's lazy evaluation so only the needed branch is executed. The output rate and length always follow "

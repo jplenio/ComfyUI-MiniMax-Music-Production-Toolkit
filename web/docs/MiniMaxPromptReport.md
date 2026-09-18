@@ -7,7 +7,7 @@ without claiming to reconstruct their internal tokenizer prompt. The artwork
 prompt is displayed separately. The legacy node ID stays unchanged.
 
 **Node ID:** `MiniMaxPromptReport`  
-**Category:** `MiniMax Music Production Toolkit/prompt`
+**Category:** `Music Production Toolkit/prompt`
 
 ## Inputs
 

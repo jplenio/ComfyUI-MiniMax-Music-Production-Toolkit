@@ -3,7 +3,7 @@
 Loads compatible values from a previously saved MiniMax production JSON (or compatible legacy sidecar JSON) for inspection or reconstruction of a generation setup.
 
 **Node ID:** `MiniMaxMetadataLoader`  
-**Category:** `MiniMax Music Production Toolkit/metadata`
+**Category:** `Music Production Toolkit/metadata`
 
 ## Inputs
 

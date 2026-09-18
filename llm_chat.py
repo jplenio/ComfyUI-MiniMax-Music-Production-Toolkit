@@ -1143,7 +1143,7 @@ class MiniMaxLLMChat:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("text", "status", "thinking")
     FUNCTION = "chat"
-    CATEGORY = "MiniMax Music Production Toolkit/llm"
+    CATEGORY = "Music Production Toolkit/llm"
 
     @classmethod
     def IS_CHANGED(cls, enabled=True, **kwargs):
@@ -1334,7 +1334,7 @@ class MiniMaxLLMUnload:
     RETURN_TYPES = ("*", "INT")
     RETURN_NAMES = ("trigger", "released_count")
     FUNCTION = "unload"
-    CATEGORY = "MiniMax Music Production Toolkit/llm"
+    CATEGORY = "Music Production Toolkit/llm"
 
     def unload(self, trigger=None, unload_now=True, unload_flashsr=False):
         released = 0

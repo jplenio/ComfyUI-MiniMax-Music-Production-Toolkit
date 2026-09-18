@@ -918,7 +918,7 @@ def format_preflight_report(preflight: Dict[str, Any]) -> List[str]:
     """Human-readable lines for the node's text panel and the HTTP route."""
     summary = preflight.get("summary") or {}
     lines = [
-        "MiniMax Music Production Toolkit - model preflight:",
+        "Music Production Toolkit - model preflight:",
         f"  artifacts: {summary.get('total', 0)} "
         f"(present {summary.get('present', 0)}, downloaded {summary.get('downloaded', 0)}, "
         f"missing {summary.get('missing', 0)}, failed {summary.get('failed', 0)})",
@@ -936,7 +936,7 @@ def format_preflight_report(preflight: Dict[str, Any]) -> List[str]:
 
 def format_check_report(report: List[Dict[str, Any]]) -> str:
     """Render a human-readable multi-line report."""
-    lines = ["MiniMax Music Production Toolkit – model check:"]
+    lines = ["Music Production Toolkit – model check:"]
     for item in report:
         status = item["status"]
         marker = {"present": "OK ", "downloaded": "DL ", "missing": "-- ", "failed": "ERR"}[status]

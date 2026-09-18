@@ -50,7 +50,7 @@ def _read_demo_js(path: Path) -> tuple[dict, list[dict]]:
 
 
 def _write_demo_js(path: Path, config: dict, tracks: list[dict]) -> None:
-    header = """// MiniMax Music Production Toolkit — public demo configuration
+    header = """// Music Production Toolkit — public demo configuration
 //
 // HOW TO ADD SOUNDCLOUD LINKS:
 // 1. Upload the track to SoundCloud and make it publicly playable.

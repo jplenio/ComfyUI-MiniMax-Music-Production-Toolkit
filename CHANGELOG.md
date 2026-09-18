@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented here. The project follows Semantic Versioning.
 
+## [3.1.1] - 2026-09-18
+
+- **Fixed: every `original lyrics` cover stopped before the first note.** The bundled
+  workflow stored `custom` - the toolkit's own "field not set" choice, and the first
+  entry of the *Song request* language dropdown - in the Whisper node's language
+  widget, which never offers it, and the run aborted with `unsupported Whisper source
+  language 'custom'` before a single frame was decoded. The shipped workflow now stores
+  `auto`, and a workflow test rejects any stored value the node does not offer - it also
+  requires the positional and the named serialization of the widgets to agree, or the
+  next save would restore the old value. A misspelled language is still refused, and a
+  legacy saved workflow that carries the old placeholder auto-detects instead of
+  aborting.
+- **Every toolkit log line now carries the local date and time** (`2026-09-18 14:22:31
+  Saved artwork: ...`), so a ComfyUI log can be read as a timeline: when a run started,
+  how long a stage took, which result belongs to which attempt. It is a record filter
+  rather than a formatter, because ComfyUI owns the handler that prints these lines - a
+  second handler would print every message twice, and replacing the root formatter
+  would change every other node's output as well.
+- **A cover run now names the audio file it was made from.** The source node logs the
+  file, its absolute path, size and the three cover choices; the generation node logs
+  it again per song, because the source node can be skipped by ComfyUI's cache when only
+  the seed changed while the generation node always runs. The exports carry only the
+  derived `<name>-cover` title, so the log is what answers "what was this made from?".
+- **Branding and README for a toolkit that is no longer MiniMax only.** New banner and
+  icon, and the two workflows are pictured in the README where they are described. The
+  cover path is presented as what it is - the highlight of this line - including the six
+  steps it actually performs, from reading the score out of the source audio to the
+  optional vocal check. `[tool.comfy]` already points at `assets/branding/icon.png`
+  and `banner.png`, so the refreshed art reaches the Registry listing with this release.
+- **Documented the `_ProactorBasePipeTransport` message** that a long Windows run can
+  print. It is CPython's asyncio proactor transport reporting a connection a client of
+  the ComfyUI server dropped - typically the browser tab that queued the prompt. The
+  toolkit opens no socket and starts no asyncio subprocess while it processes audio
+  (resampling, EQ and mastering run in-process), and the run and its files are
+  unaffected. See TROUBLESHOOTING.md.
+
 ## [3.1.0] - 2026-09-18
 
 - **Added the instrumental vocal check (opt-in).** YuE2 can add vocal-like material to an

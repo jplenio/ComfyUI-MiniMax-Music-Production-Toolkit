@@ -21,7 +21,7 @@ app.registerExtension({
         const previewApi = window.comfyAPI?.textPreviewWidgets;
         if (!previewApi?.addTextPreviewWidgets || !previewApi?.updateTextPreviewWidgets) {
             console.warn(
-                "[MiniMax Music Production Toolkit] This ComfyUI frontend does not expose the Markdown text-preview API; the prompt report will show as plain text."
+                "[Music Production Toolkit] This ComfyUI frontend does not expose the Markdown text-preview API; the prompt report will show as plain text."
             );
             return;
         }
@@ -45,7 +45,7 @@ app.registerExtension({
                 this.setDirtyCanvas?.(true, true);
             } catch (error) {
                 console.warn(
-                    "[MiniMax Music Production Toolkit] Could not enable the Markdown preview for MiniMaxPromptReport:",
+                    "[Music Production Toolkit] Could not enable the Markdown preview for MiniMaxPromptReport:",
                     error
                 );
             }
@@ -63,7 +63,7 @@ app.registerExtension({
                 }
             } catch (error) {
                 console.warn(
-                    "[MiniMax Music Production Toolkit] Could not update the Markdown preview for MiniMaxPromptReport:",
+                    "[Music Production Toolkit] Could not update the Markdown preview for MiniMaxPromptReport:",
                     error
                 );
             }

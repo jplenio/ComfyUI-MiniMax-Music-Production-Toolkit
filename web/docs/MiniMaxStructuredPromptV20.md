@@ -5,7 +5,7 @@ Structured prompt control for the integrated LLM. Instead of one free-form user 
 The node body is split into two visually separated sections: **User Prompt** (structured fields + description) and **System Prompt** (source/file selection + editable text).
 
 **Node ID:** `MiniMaxStructuredPromptV20`  
-**Category:** `MiniMax Music Production Toolkit/prompts`
+**Category:** `Music Production Toolkit/prompts`
 
 ## Prompt file metadata (optional)
 

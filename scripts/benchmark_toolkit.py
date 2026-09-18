@@ -446,7 +446,7 @@ def run_benchmark(
 
 
 def format_report(report: Dict[str, Any]) -> str:
-    lines = ["MiniMax Music Production Toolkit - performance baseline", ""]
+    lines = ["Music Production Toolkit - performance baseline", ""]
     environment = report["environment"]
     lines.append(
         f"Python {environment.get('python')} on {environment.get('platform')} "

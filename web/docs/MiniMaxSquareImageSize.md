@@ -3,7 +3,7 @@
 Produces equal width/height values for square album artwork using common presets or a custom size.
 
 **Node ID:** `MiniMaxSquareImageSize`  
-**Category:** `MiniMax Music Production Toolkit/artwork`
+**Category:** `Music Production Toolkit/artwork`
 
 ## Inputs
 

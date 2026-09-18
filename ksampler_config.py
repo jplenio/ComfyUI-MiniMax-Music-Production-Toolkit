@@ -49,7 +49,7 @@ class KSamplerWithConfig:
     RETURN_TYPES = ("LATENT", "STRING", "STRING")
     RETURN_NAMES = ("LATENT", "sampler_name", "scheduler")
     FUNCTION = "sample"
-    CATEGORY = "MiniMax Music Production Toolkit/utilities"
+    CATEGORY = "Music Production Toolkit/utilities"
 
     @staticmethod
     def _finite_latent(result):

@@ -28,7 +28,7 @@ For addresses, keys, memory advice and troubleshooting, see **docs/LLM_PROVIDERS
 in the repository.
 
 **Node ID:** `MiniMaxLLMChat`  
-**Category:** `MiniMax Music Production Toolkit/llm`
+**Category:** `Music Production Toolkit/llm`
 
 ## Inputs
 

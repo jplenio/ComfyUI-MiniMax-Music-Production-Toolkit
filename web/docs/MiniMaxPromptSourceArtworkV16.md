@@ -3,7 +3,7 @@
 Folder/manual structured prompt source retained for non-LLM or file-driven workflows.
 
 **Node ID:** `MiniMaxPromptSourceArtworkV16`  
-**Category:** `MiniMax Music Production Toolkit/batch`
+**Category:** `Music Production Toolkit/batch`
 
 ## Inputs
 

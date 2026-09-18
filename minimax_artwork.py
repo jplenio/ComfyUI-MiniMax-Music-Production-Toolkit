@@ -92,7 +92,7 @@ class MiniMaxSquareImageSize:
     RETURN_TYPES = ("INT", "INT")
     RETURN_NAMES = ("width", "height")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/artwork"
+    CATEGORY = "Music Production Toolkit/artwork"
 
     def build(self, size_preset, custom_size):
         presets = {
@@ -132,7 +132,7 @@ class SaveImageSmartPrefix:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("saved_path",)
     FUNCTION = "save"
-    CATEGORY = "MiniMax Music Production Toolkit/artwork"
+    CATEGORY = "Music Production Toolkit/artwork"
     OUTPUT_NODE = True
 
     def check_lazy_status(self, image=None, enabled=True, **kwargs):
@@ -196,7 +196,7 @@ class MiniMaxCoverControl:
     RETURN_TYPES = ("BOOLEAN",)
     RETURN_NAMES = ("cover_artwork_enabled",)
     FUNCTION = "configure"
-    CATEGORY = "MiniMax Music Production Toolkit/artwork"
+    CATEGORY = "Music Production Toolkit/artwork"
     SEARCH_ALIASES = ["Flux", "Flux.2", "Cover", "Artwork", "Cover switch"]
 
     def configure(self, enabled=True):

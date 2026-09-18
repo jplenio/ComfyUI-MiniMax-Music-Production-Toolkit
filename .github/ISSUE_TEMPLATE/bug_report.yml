@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping improve MiniMax Music Production Toolkit. Please remove private paths, prompts, API keys, and personal metadata before posting logs or workflow JSON.
+        Thanks for helping improve Music Production Toolkit. Please remove private paths, prompts, API keys, and personal metadata before posting logs or workflow JSON.
   - type: input
     id: comfy_version
     attributes:

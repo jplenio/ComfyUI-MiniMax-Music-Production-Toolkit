@@ -250,13 +250,13 @@ export function repairParserNodeLinks(node) {
             structuredLinked = true;
             repaired = true;
             console.info(
-                `[MiniMax Music Production Toolkit] Migrated old ${PARSER_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${PARSER_INPUT_NAME}).`
+                `[Music Production Toolkit] Migrated old ${PARSER_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${PARSER_INPUT_NAME}).`
             );
         }
         if (repaired) markDirty(node);
         return repaired;
     } catch (error) {
-        console.warn(`[MiniMax Music Production Toolkit] Workflow migration failed for ${PARSER_NODE_TYPE}:`, error);
+        console.warn(`[Music Production Toolkit] Workflow migration failed for ${PARSER_NODE_TYPE}:`, error);
         return false;
     }
 }
@@ -297,13 +297,13 @@ export function repairJsonNodeLinks(node) {
             metadataLinked = true;
             repaired = true;
             console.info(
-                `[MiniMax Music Production Toolkit] Migrated old ${JSON_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${JSON_METADATA_INPUT_NAME}).`
+                `[Music Production Toolkit] Migrated old ${JSON_NODE_TYPE} link #${link.id} from slot ${oldIndex} to ${targetIndex} (${JSON_METADATA_INPUT_NAME}).`
             );
         }
         if (repaired) markDirty(node);
         return repaired;
     } catch (error) {
-        console.warn(`[MiniMax Music Production Toolkit] Workflow migration failed for ${JSON_NODE_TYPE}:`, error);
+        console.warn(`[Music Production Toolkit] Workflow migration failed for ${JSON_NODE_TYPE}:`, error);
         return false;
     }
 }
@@ -364,11 +364,11 @@ export function repairStructuredPromptWidgets(node) {
         }
         markDirty(node);
         console.info(
-            `[MiniMax Music Production Toolkit] Repaired ${STRUCTURED_PROMPT_TYPE} widget values (${applied} value(s) corrected).`
+            `[Music Production Toolkit] Repaired ${STRUCTURED_PROMPT_TYPE} widget values (${applied} value(s) corrected).`
         );
         return true;
     } catch (error) {
-        console.warn(`[MiniMax Music Production Toolkit] Structured Song Prompt widget repair failed:`, error);
+        console.warn(`[Music Production Toolkit] Structured Song Prompt widget repair failed:`, error);
         return false;
     }
 }
@@ -391,10 +391,10 @@ export function repairLLMChatWidgets(node) {
             if (w) w.value = value;
         }
         markDirty(node);
-        console.info("[MiniMax Music Production Toolkit] Repaired LLM chat widget values:", repairs);
+        console.info("[Music Production Toolkit] Repaired LLM chat widget values:", repairs);
         return true;
     } catch (error) {
-        console.warn("[MiniMax Music Production Toolkit] LLM chat widget repair failed:", error);
+        console.warn("[Music Production Toolkit] LLM chat widget repair failed:", error);
         return false;
     }
 }

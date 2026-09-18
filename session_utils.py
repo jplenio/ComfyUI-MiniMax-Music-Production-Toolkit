@@ -32,7 +32,7 @@ class MiniMaxLLMSessionId:
     RETURN_TYPES = ("STRING", "INT")
     RETURN_NAMES = ("session_id", "seed")
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/utilities"
+    CATEGORY = "Music Production Toolkit/utilities"
 
     def build(self, seed, prefix):
         value = int(seed)

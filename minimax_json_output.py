@@ -171,7 +171,7 @@ class MiniMaxSaveProductionJSON:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("saved_path", "configuration_json")
     FUNCTION = "save"
-    CATEGORY = "MiniMax Music Production Toolkit/save"
+    CATEGORY = "Music Production Toolkit/save"
     OUTPUT_NODE = True
 
     def save(

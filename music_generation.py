@@ -8,6 +8,9 @@ from __future__ import annotations
 import json
 
 from .model_profiles import profile_from_payload
+from .toolkit_logging import get_logger
+
+LOGGER = get_logger("music_generation")
 
 
 class MusicGeneration:
@@ -37,7 +40,7 @@ class MusicGeneration:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING", "STRING")
     RETURN_NAMES = ("audio", "sampler_name", "scheduler", "generation_json")
     FUNCTION = "generate"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
 
     def generate(self, profile_json, settings_json, style, lyrics,
                  yue2_checkpoint, minimax_model, minimax_encoder, minimax_vae,
@@ -67,9 +70,19 @@ class MusicGeneration:
             text = settings["yue2"]
             if profile.is_cover:
                 from .cover_score import adapt_cover_score
-                from .music_cover import cover_source
+                from .music_cover import cover_source, resolve_source_path
                 source = cover_source(cover_source_json)
                 cover_lyrics_mode = source["lyrics_mode"]
+                # This node is the one that produces the audio, so it names the file
+                # every run was made from - the source node can be cache-skipped when
+                # only the seed changed, and the exports carry merely the derived title.
+                LOGGER.info(
+                    "Cover run: source audio %s | title=%s | model=%s | mode=%s | lyrics=%s | "
+                    "lead instrument=%s | %s",
+                    source["source_filename"], source["title"], profile.id, source["mode"],
+                    source["lyrics_mode"], source["lead_instrument"],
+                    resolve_source_path(source.get("audio")) or "path not resolved",
+                )
                 if not isinstance(cover_abc, str) or not cover_abc.strip():
                     raise ValueError("YuE2 Cover requires non-empty SheetSage2 ABC transcription.")
                 from .cover_lyrics_contract import apply_cover_lyrics
@@ -205,7 +218,7 @@ class MusicGenerationReceipt:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("generation_json",)
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/generation"
+    CATEGORY = "Music Production Toolkit/generation"
 
     def build(self, settings_json, abc, seconds, model_files_json, cover_source_json="",
               instrumental_check_json=""):

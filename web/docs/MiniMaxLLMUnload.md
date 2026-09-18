@@ -7,7 +7,7 @@ Ollama, llama.cpp, Unsloth Studio or other servers remain under that app's
 control; this node does not send external unload/shutdown requests.
 
 **Node ID:** `MiniMaxLLMUnload`  
-**Category:** `MiniMax Music Production Toolkit/llm`
+**Category:** `Music Production Toolkit/llm`
 
 ## Inputs
 

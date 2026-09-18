@@ -1,4 +1,4 @@
-// MiniMax Music Production Toolkit — public demo configuration
+// Music Production Toolkit — public demo configuration
 //
 // HOW TO ADD SOUNDCLOUD LINKS:
 // 1. Upload the track to SoundCloud and make it publicly playable.

@@ -3,7 +3,7 @@
 Resolves manual, bundled-library or external-directory user/system prompts for any external ComfyUI LLM. It performs no network/model call itself and keeps legacy workflow compatibility while providing a reusable file-backed prompt library.
 
 **Node ID:** `MiniMaxLLMTemplateV16`  
-**Category:** `MiniMax Music Production Toolkit/prompts`
+**Category:** `Music Production Toolkit/prompts`
 
 ## Inputs
 

@@ -3,7 +3,7 @@
 Creates consistent relative output prefixes for original audio, release FLAC/MP3, artwork and the centralized production JSON.
 
 **Node ID:** `MiniMaxOutputPaths`  
-**Category:** `MiniMax Music Production Toolkit/batch`
+**Category:** `Music Production Toolkit/batch`
 
 ## Inputs
 

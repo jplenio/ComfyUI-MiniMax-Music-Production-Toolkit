@@ -3,7 +3,7 @@
 Core KSampler-compatible wrapper that additionally returns the effective sampler and scheduler names for reproducibility metadata.
 
 **Node ID:** `KSamplerWithConfig`  
-**Category:** `MiniMax Music Production Toolkit/utilities`
+**Category:** `Music Production Toolkit/utilities`
 
 ## Inputs
 

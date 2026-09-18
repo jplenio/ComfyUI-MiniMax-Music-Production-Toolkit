@@ -3,7 +3,7 @@
 Combines a cleanly resampled original with FlashSR in a controlled high-frequency crossover, preserving original transients while adding only as much reconstructed 'air' as desired.
 
 **Node ID:** `FlashSRHybridCrossover`  
-**Category:** `MiniMax Music Production Toolkit/audio restoration`
+**Category:** `Music Production Toolkit/audio restoration`
 
 ## Inputs
 

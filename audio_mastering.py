@@ -91,7 +91,7 @@ class MiniMaxMasteringCompressor:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "mastering_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/mastering"
+    CATEGORY = "Music Production Toolkit/mastering"
 
     def process(self, audio, bypass=False, target_lufs=-14, ceiling_dbtp=-1, target_sample_rate="keep",
                 compressor_enabled=True, threshold_db=-18, ratio=1.5, knee_db=6, attack_ms=20,

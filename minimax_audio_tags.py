@@ -27,7 +27,7 @@ class MiniMaxStandardAudioTags:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("audio_tags_json",)
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/metadata"
+    CATEGORY = "Music Production Toolkit/metadata"
 
     def build(self, title, artist, album, year, track, genre, comment, album_artist, composer):
         data = {

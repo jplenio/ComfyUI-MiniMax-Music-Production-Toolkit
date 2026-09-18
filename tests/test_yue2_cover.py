@@ -67,6 +67,43 @@ class CoverTests(unittest.TestCase):
                 path.write_bytes(b'audio fixture changed')
                 self.assertNotEqual(before, self.node('MusicCoverSource').IS_CHANGED(self.profile(), 'song.wav'))
 
+    def test_a_cover_run_names_the_source_audio_in_the_log(self):
+        """Which file a run was made from belongs in the log, not only in the JSON.
+
+        The exports and the production record carry the derived title ("…-cover"), so
+        without these lines a log cannot say what the run was made from.
+        """
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'song.wav'
+            path.write_bytes(b'x' * 1000)
+            host = types.SimpleNamespace(get_annotated_filepath=lambda _: str(path))
+            with patch.dict(sys.modules, {'folder_paths': host}):
+                with self.assertLogs('minimax_music_toolkit.music_cover', level='INFO') as logs:
+                    self.node('MusicCoverSource').select(self.profile(), 'song.wav')
+        joined = '\n'.join(logs.output)
+        self.assertIn('Cover source: song.wav', joined)
+        self.assertIn(str(path), joined)
+        self.assertIn('lyrics=instrumental', joined)
+
+    def test_the_generation_log_names_the_source_audio_too(self):
+        """The source node can be skipped by the cache; generation always runs."""
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'song.wav'
+            path.write_bytes(b'x' * 1000)
+            host = types.SimpleNamespace(get_annotated_filepath=lambda _: str(path))
+            with patch.dict(sys.modules, {'folder_paths': host,
+                                          'comfy_execution.graph_utils': self.graph_module()}):
+                with self.assertLogs('minimax_music_toolkit.music_generation',
+                                     level='INFO') as logs:
+                    self.node('MusicGeneration').generate(
+                        self.profile(), self.settings('full'), 'folk',
+                        '[Verse]\nWe follow the road', 'yue.safetensors', 'dit', 'clip', 'vae',
+                        cover_source_json=self.source('full'), cover_abc=ABC)
+        joined = '\n'.join(logs.output)
+        self.assertIn('Cover run: source audio Night.theme.wav', joined)
+        self.assertIn(str(path), joined)
+        self.assertIn('lyrics=new lyrics', joined)
+
     def test_transcription_and_generation_use_same_abc_and_mode(self):
         for mode in ['melody', 'full']:
             with patch.dict(sys.modules, {'comfy_execution.graph_utils': self.graph_module()}):

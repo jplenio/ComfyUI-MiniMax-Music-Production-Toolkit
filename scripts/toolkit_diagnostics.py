@@ -169,7 +169,7 @@ def run_diagnostics(comfy_dir: str | None = None, models_directory: str | None =
 
 
 def format_report(report: dict) -> str:
-    lines = ["MiniMax Music Production Toolkit – diagnostics"]
+    lines = ["Music Production Toolkit – diagnostics"]
     lines.append(f"Python:  {report['python']} ({report['python_executable']})")
     lines.append(f"ComfyUI: {report['comfy_dir']}")
     ok, detail = report["ffmpeg"]

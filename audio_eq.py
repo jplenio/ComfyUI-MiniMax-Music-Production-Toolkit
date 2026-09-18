@@ -38,7 +38,7 @@ class MiniMaxParametricEQ:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "eq_report_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/mastering"
+    CATEGORY = "Music Production Toolkit/mastering"
 
     def process(self, audio, eq_settings_json=DEFAULT_SETTINGS, bypass=False):
         import numpy as np

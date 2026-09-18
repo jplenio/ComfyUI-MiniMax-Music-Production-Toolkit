@@ -150,6 +150,20 @@ not a workaround.
   `n_ctx = 37376` or at least above ~16000: the production system prompt alone is about
   11.6k tokens, so a smaller window truncates the request instead of saving memory.
   A smaller *model* or a lower quantization is the lever, not the context.
+
+  Expect to experiment here. The text side is the hard part, and the cover path feels it
+  first: it hands the model the source score, the arrangement plan and the style template
+  together and asks for a complete rewritten score back, so a few-billion-parameter or
+  heavily quantised model can lose the thread - a truncated answer, invented notation, an
+  ignored constraint. A plain song request is easier, and the audio-enhancement workflow
+  needs no language model at all. Keep `max_tokens` at `24576` for the same reason: a
+  budget that is generous for a caption can be too small for a rewritten score. What the
+  toolkit does about it: an answer that breaks the notation contract is rejected and the
+  validated score is used instead, so a weak model degrades the result rather than
+  corrupting it - it cannot, however, rescue a cover it never managed to write. If a small
+  model keeps failing on that path, try a more capable one, a cloud provider for the text,
+  or the advanced settings that make the rework simpler. See
+  [Built for different computers](README.md#built-for-different-computers).
 - **YuE2 instead of MiniMax Music 3.** YuE2 3B bf16 is far lighter than the MiniMax
   DiT + text encoder pair.
 - **Shorter songs.** `Length` in the prompt and `max_duration` / `yue2_max_duration` in

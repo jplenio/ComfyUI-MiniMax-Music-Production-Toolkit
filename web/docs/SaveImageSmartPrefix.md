@@ -10,7 +10,7 @@ workflow, the Cover Generation control connects this input and the FLUX model
 preflight flag. Keep the saver active; do not bypass it to disable a cover.
 An independent image preview/output can still request the same image branch.
 
-**Category:** `MiniMax Music Production Toolkit/artwork`
+**Category:** `Music Production Toolkit/artwork`
 
 ## Inputs
 

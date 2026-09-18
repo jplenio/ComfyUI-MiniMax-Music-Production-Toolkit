@@ -55,7 +55,7 @@ class MiniMaxMusic3GenerationSettings:
         "ksampler_steps", "ksampler_cfg", "denoise",
     )
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/config"
+    CATEGORY = "Music Production Toolkit/config"
 
     def build(self, generation_seed, max_duration, text_cfg_scale, text_top_k, ksampler_seed_offset,
               ksampler_steps, ksampler_cfg, denoise):
@@ -103,7 +103,7 @@ class FlashSRProcessingSettings:
         "flashsr_lowpass_input"
     )
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/config"
+    CATEGORY = "Music Production Toolkit/config"
 
     def build(self, pre_preset, pre_custom_cutoff_hz, pre_custom_order, pre_custom_phase, pre_bypass,
               post_preset, post_custom_cutoff_hz, post_custom_order, post_custom_phase, post_bypass,
@@ -198,7 +198,7 @@ class MiniMaxMusicModelSettings:
         "settings_json",
     )
     FUNCTION = "build"
-    CATEGORY = "MiniMax Music Production Toolkit/config"
+    CATEGORY = "Music Production Toolkit/config"
     DESCRIPTION = (
         "Generation settings that follow the selected song model. The active value group (MiniMax Music 3 "
         "or YuE2) is chosen by the profile wire, the duration is clamped to that model's window, and "

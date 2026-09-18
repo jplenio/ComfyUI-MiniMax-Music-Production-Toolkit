@@ -113,7 +113,7 @@ class FlashSRHybridCrossover:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "hybrid_crossover_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/audio restoration"
+    CATEGORY = "Music Production Toolkit/audio restoration"
 
     def process(self, original_audio, flashsr_audio, mode, crossover_hz, transition_hz, flashsr_hf_mix):
         ow, osr = _validate_audio(original_audio, "FlashSR Hybrid original_audio")
@@ -221,7 +221,7 @@ class HFCymbalShimmerRepair:
     RETURN_TYPES = ("AUDIO", "STRING", "STRING")
     RETURN_NAMES = ("audio", "hf_repair_json", "info")
     FUNCTION = "process"
-    CATEGORY = "MiniMax Music Production Toolkit/audio restoration"
+    CATEGORY = "Music Production Toolkit/audio restoration"
 
     def process(self, audio, mode, start_frequency_hz, sustain_reduction_db, fast_envelope_ms, slow_envelope_ms,
                 transient_sensitivity, side_hf_reduction_db, static_hf_trim_db, min_hf_level_dbfs, mix):
