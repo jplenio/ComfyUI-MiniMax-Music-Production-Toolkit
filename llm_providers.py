@@ -118,7 +118,7 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def request_json(url, key, protocol, payload=None, timeout=120):
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    headers = {"Accept": "application/json", "Content-Type": "application/json", "User-Agent": "ComfyUI-LLM-Adapter/1.0"}
     if protocol == "anthropic":
         headers["anthropic-version"] = "2023-06-01"
         if key:
