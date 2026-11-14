@@ -1,3 +1,21 @@
+> [!IMPORTANT]
+> ## ⛔ This repository is no longer maintained
+>
+> **Its successor is the [Plenio Music Production System 2.0](https://github.com/jplenio/Plenio-Music-Production-System)**, which unites everything in one place:
+> YuE2 and MiniMax Music 3 songs, covers, an editable Song Sheet and score editor, mastering and release export -
+> and new since then: Plenio Setup (the right model files for your graphics card, downloaded and checked), the
+> Plenio Player, a Song API, and Plenio VST3 for your DAW.
+>
+> ### ➡️ [Plenio Music Production System 2.0](https://github.com/jplenio/Plenio-Music-Production-System) · [Listen to it](https://jplenio.github.io/Plenio-Music-Production-System/) · [Download](https://github.com/jplenio/Plenio-Music-Production-System/releases/latest)
+>
+> In ComfyUI's Manager: *Plenio Music Production System*, or `comfy node install comfyui-plenio-music`.
+>
+> This repository (the Music Production Toolkit, last version 3.1.3) stays readable as it is, but gets no updates,
+> fixes or answers any more. Please open new issues and questions
+> [in the Plenio Music Production System](https://github.com/jplenio/Plenio-Music-Production-System/issues).
+
+---
+
 # Music Production Toolkit 3.1.3 for ComfyUI
 
 <p align="center">
